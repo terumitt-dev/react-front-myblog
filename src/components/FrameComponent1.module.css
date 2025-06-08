@@ -1,0 +1,64 @@
+.frameChild,
+.h3 {
+  position: relative;
+}
+.frameChild {
+  height: 289.3px;
+  width: 217.5px;
+  border-radius: var(--br-30);
+  background-color: var(--color-white);
+  display: none;
+}
+.h3 {
+  margin: 0;
+  flex: 1;
+  font-size: inherit;
+  font-weight: 400;
+  font-family: inherit;
+  z-index: 1;
+}
+.rectangleParent {
+  width: 217.5px;
+  border-radius: var(--br-30);
+  background-color: var(--color-white);
+  justify-content: flex-start;
+  padding: 125px 13px 124.3px;
+  box-sizing: border-box;
+  cursor: pointer;
+  z-index: 2;
+}
+.frameParent,
+.rectangleGroup,
+.rectangleParent {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+}
+.rectangleGroup {
+  width: 217.5px;
+  border-radius: var(--br-30);
+  background-color: var(--color-white);
+  justify-content: flex-start;
+  padding: 125px 13px 124.3px;
+  box-sizing: border-box;
+  z-index: 2;
+}
+.frameParent {
+  align-self: stretch;
+  justify-content: space-between;
+  gap: var(--gap-20);
+  text-align: center;
+  font-size: var(--font-size-24);
+  color: var(--color-black);
+  font-family: var(--font-inter);
+}
+@media screen and (max-width: 1125px) {
+  .frameParent {
+    justify-content: center;
+  }
+}
+@media screen and (max-width: 450px) {
+  .h3 {
+    font-size: var(--font-size-19);
+  }
+}

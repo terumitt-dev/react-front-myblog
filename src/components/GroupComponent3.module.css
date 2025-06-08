@@ -1,0 +1,146 @@
+.frameChild {
+  width: 866px;
+  height: 436px;
+  position: relative;
+  border-radius: var(--br-30);
+  background-color: var(--color-gainsboro-200);
+  display: none;
+  max-width: 100%;
+}
+.div {
+  height: 67.2px;
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+.wrapper {
+  align-self: stretch;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 0 266px 0 267px;
+}
+.frameItem,
+.h3 {
+  position: relative;
+}
+.frameItem {
+  height: 289.3px;
+  width: 217.5px;
+  border-radius: var(--br-30);
+  background-color: var(--color-white);
+  display: none;
+}
+.h3 {
+  margin: 0;
+  height: 40px;
+  font-size: inherit;
+  font-weight: 400;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+.rectangleGroup {
+  flex: 1;
+  border-radius: var(--br-30);
+  background-color: var(--color-white);
+  flex-direction: row;
+  padding: 102.3px var(--padding-12) 102px 13px;
+  cursor: pointer;
+  z-index: 1;
+}
+.recentPostsColumn,
+.recentPostsColumnInner,
+.rectangleContainer,
+.rectangleGroup,
+.rectangleParent {
+  align-self: stretch;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+.recentPostsColumnInner {
+  flex: 1;
+  flex-direction: column;
+  padding: 2.4px 0 0;
+}
+.recentPostsColumn,
+.rectangleContainer,
+.rectangleParent {
+  flex-direction: row;
+}
+.rectangleContainer {
+  flex: 0.8897;
+  border-radius: var(--br-30);
+  background-color: var(--color-white);
+  padding: 109.8px var(--padding-12) 110px;
+  cursor: pointer;
+  z-index: 1;
+}
+.recentPostsColumn,
+.rectangleParent {
+  flex: 1;
+  gap: 74.8px;
+  font-size: var(--font-size-24);
+}
+.rectangleParent {
+  border-radius: var(--br-30);
+  background-color: var(--color-gainsboro-200);
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 17.6px 33px 29.7px 31px;
+  box-sizing: border-box;
+  gap: 29.8px;
+  max-width: 100%;
+  text-align: center;
+  font-size: var(--font-size-32);
+  color: var(--color-black);
+  font-family: var(--font-inter);
+}
+@media screen and (max-width: 1050px) {
+  .div {
+    font-size: var(--font-size-26);
+  }
+  .wrapper {
+    padding-left: 133px;
+    padding-right: 133px;
+    box-sizing: border-box;
+  }
+  .rectangleContainer {
+    min-height: auto;
+  }
+  .recentPostsColumn {
+    gap: 37px;
+    flex-wrap: wrap;
+  }
+}
+@media screen and (max-width: 450px) {
+  .div {
+    font-size: var(--font-size-19);
+  }
+  .wrapper {
+    padding-left: var(--padding-20);
+    padding-right: var(--padding-20);
+    box-sizing: border-box;
+  }
+  .h3 {
+    font-size: var(--font-size-19);
+  }
+  .rectangleContainer {
+    flex: 1;
+  }
+  .recentPostsColumn {
+    gap: var(--gap-19);
+  }
+  .rectangleParent {
+    padding-top: var(--padding-20);
+    padding-bottom: var(--padding-20);
+    box-sizing: border-box;
+  }
+}
