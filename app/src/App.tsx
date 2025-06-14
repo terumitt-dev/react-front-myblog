@@ -17,6 +17,7 @@ function App() {
   const location = useLocation();
   const pathname = location.pathname;
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (action !== "POP") {
       window.scrollTo(0, 0);
@@ -32,6 +33,7 @@ function App() {
         title = "";
         metaDescription = "";
         break;
+      // biome-ignore lint/suspicious/noDuplicateCase: <explanation>
       case "/":
         title = "";
         metaDescription = "";
@@ -71,7 +73,7 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Component1 />} />
-      <Route path="/" element={<Component2 />} />
+      {/*<Route path="/" element={<Component2 />} />*/}
       <Route path="/1" element={<Component3 />} />
       <Route path="/top-page" element={<Component4 />} />
       <Route path="/show-page" element={<Component5 />} />
