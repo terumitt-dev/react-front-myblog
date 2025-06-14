@@ -1,0 +1,135 @@
+.frameChild,
+.h3 {
+  position: relative;
+}
+.frameChild {
+  height: 289.3px;
+  width: 217.5px;
+  border-radius: var(--br-30);
+  background-color: var(--color-white);
+  display: none;
+}
+.h3 {
+  margin: 0;
+  align-self: stretch;
+  flex: 1;
+  font-size: inherit;
+  font-weight: 400;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+.column1,
+.frameParent,
+.rectangleParent {
+  align-self: stretch;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+}
+.rectangleParent {
+  width: 217.5px;
+  border-radius: var(--br-30);
+  background-color: var(--color-white);
+  justify-content: flex-start;
+  padding: 125px 13px 124.3px;
+  box-sizing: border-box;
+  z-index: 3;
+}
+.column1,
+.frameParent {
+  flex: 1;
+  max-width: 100%;
+}
+.frameParent {
+  justify-content: space-between;
+  gap: var(--gap-20);
+}
+.column1 {
+  justify-content: flex-end;
+  padding: 0 var(--padding-10) 0 0;
+  box-sizing: border-box;
+  text-align: center;
+  font-size: var(--font-size-24);
+  color: var(--color-black);
+  font-family: var(--font-inter);
+}
+.frameChild1 {
+  height: 102px;
+  width: 311px;
+  position: relative;
+  border-radius: var(--br-8);
+  background-color: var(--color-gainsboro-200);
+  display: none;
+}
+.top {
+  height: 69.2px;
+  flex: 1;
+  position: relative;
+  font-size: var(--font-size-36);
+  font-family: var(--font-inter);
+  color: var(--color-black);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+.column,
+.groupButton {
+  display: flex;
+  justify-content: flex-start;
+}
+.groupButton {
+  cursor: pointer;
+  border: 0;
+  padding: var(--padding-16) 46px 16.8px;
+  background-color: var(--color-gainsboro-200);
+  width: 311px;
+  border-radius: var(--br-8);
+  flex-direction: row;
+  align-items: flex-start;
+  box-sizing: border-box;
+  z-index: 3;
+}
+.groupButton:hover {
+  background-color: var(--color-silver);
+}
+.column {
+  align-self: stretch;
+  height: 430px;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 38.7px;
+  max-width: 100%;
+}
+@media screen and (max-width: 1125px) {
+  .frameParent {
+    justify-content: center;
+  }
+}
+@media screen and (max-width: 1050px) {
+  .top {
+    font-size: 29px;
+  }
+}
+@media screen and (max-width: 750px) {
+  .column {
+    gap: var(--gap-19);
+  }
+}
+@media screen and (max-width: 450px) {
+  .h3 {
+    font-size: var(--font-size-19);
+  }
+  .top {
+    font-size: var(--font-size-22);
+  }
+  .groupButton {
+    padding-left: var(--padding-20);
+    padding-right: var(--padding-20);
+    box-sizing: border-box;
+  }
+}
