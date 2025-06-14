@@ -17,6 +17,7 @@ const ArticleContainer: FunctionComponent<ArticleContainerType> = ({
 
   return (
     <div className={[styles.articleContainer, className].join(" ")}>
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
       <div className={styles.rectangleParent} onClick={onGroupContainerClick}>
         <div className={styles.frameChild} />
         <h3 className={styles.h3}>ブログ記事①</h3>
