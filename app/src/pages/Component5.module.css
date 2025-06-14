@@ -1,0 +1,111 @@
+.frameChild {
+  width: 555px;
+  height: 962px;
+  position: relative;
+  border-radius: var(--br-12);
+  background-color: var(--color-gainsboro);
+  display: none;
+  max-width: 100%;
+}
+.div {
+  height: 65px;
+  width: 198.6px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  z-index: 1;
+}
+.wrapper {
+  align-self: stretch;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 0 1px;
+}
+.dividers,
+.dividers1 {
+  width: 461.7px;
+  position: relative;
+  border-radius: var(--br-12);
+  background-color: var(--color-white);
+  max-width: 100%;
+  z-index: 1;
+}
+.dividers {
+  flex: 1;
+}
+.dividers1 {
+  height: 256px;
+}
+.rectangleParent,
+.showPage {
+  display: flex;
+  justify-content: flex-start;
+  box-sizing: border-box;
+}
+.rectangleParent {
+  height: 962px;
+  border-radius: var(--br-12);
+  background-color: var(--color-gainsboro);
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 17px 52px 31px var(--padding-10);
+  gap: 27px;
+  min-width: 555px;
+  max-width: 100%;
+}
+.showPage {
+  width: 100%;
+  position: relative;
+  background: linear-gradient(180deg, #4161ec, #bc7af2);
+  overflow: hidden;
+  flex-direction: row;
+  align-items: flex-start;
+  padding: 45px 44px 17px 48px;
+  gap: 43px;
+  line-height: normal;
+  letter-spacing: normal;
+  text-align: center;
+  font-size: var(--font-size-32);
+  color: var(--color-black);
+  font-family: var(--font-inter);
+}
+@media screen and (max-width: 1125px) {
+  .rectangleParent {
+    flex: 1;
+  }
+  .showPage {
+    flex-wrap: wrap;
+  }
+}
+@media screen and (max-width: 1050px) {
+  .div {
+    font-size: var(--font-size-26);
+  }
+  .rectangleParent {
+    padding-top: var(--padding-20);
+    padding-bottom: var(--padding-20);
+    box-sizing: border-box;
+  }
+}
+@media screen and (max-width: 750px) {
+  .rectangleParent {
+    padding-right: var(--padding-26);
+    box-sizing: border-box;
+    min-width: 100%;
+  }
+  .showPage {
+    gap: 21px;
+    padding-left: var(--padding-24);
+    padding-right: 22px;
+    box-sizing: border-box;
+  }
+}
+@media screen and (max-width: 450px) {
+  .div {
+    font-size: var(--font-size-19);
+  }
+}

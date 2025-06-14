@@ -1,0 +1,107 @@
+.frameChild {
+  height: 83px;
+  width: 274px;
+  position: relative;
+  border-radius: var(--br-12);
+  background-color: var(--color-thistle);
+  display: none;
+}
+.div {
+  flex: 1;
+  position: relative;
+  font-size: var(--font-size-32);
+  font-family: var(--font-inter);
+  color: var(--color-black);
+  text-align: center;
+  z-index: 1;
+}
+.rectangleParent {
+  cursor: pointer;
+  border: 0;
+  padding: var(--padding-18) 37px var(--padding-19);
+  background-color: var(--color-thistle);
+  flex: 1;
+  border-radius: var(--br-12);
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+.rectangleParent:hover {
+  background-color: var(--color-plum);
+}
+.frameItem,
+.h2 {
+  position: relative;
+}
+.frameItem {
+  height: 83px;
+  width: 274px;
+  border-radius: var(--br-12);
+  background-color: var(--color-lightblue);
+  display: none;
+}
+.h2 {
+  margin: 0;
+  flex: 1;
+  font-size: inherit;
+  font-weight: 400;
+  font-family: inherit;
+  z-index: 1;
+}
+.rectangleGroup {
+  flex: 1;
+  border-radius: var(--br-12);
+  background-color: var(--color-lightblue);
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: var(--padding-16) 37px 21px;
+}
+.frameInner {
+  height: 83px;
+  width: 274px;
+  position: relative;
+  border-radius: var(--br-12);
+  background-color: var(--color-palegoldenrod);
+  display: none;
+}
+.categoryColumn,
+.rectangleContainer {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+.rectangleContainer {
+  flex: 1;
+  border-radius: var(--br-12);
+  background-color: var(--color-palegoldenrod);
+  padding: var(--padding-18) 37px var(--padding-19);
+}
+.categoryColumn {
+  align-self: stretch;
+  gap: var(--gap-22);
+  text-align: center;
+  font-size: var(--font-size-32);
+  color: var(--color-black);
+  font-family: var(--font-inter);
+}
+@media screen and (max-width: 1050px) {
+  .div,
+  .h2 {
+    font-size: var(--font-size-26);
+  }
+}
+@media screen and (max-width: 750px) {
+  .div,
+  .h2 {
+    font-size: var(--font-size-19);
+  }
+}
+@media screen and (max-width: 450px) {
+  .categoryColumn {
+    flex-wrap: wrap;
+  }
+}
