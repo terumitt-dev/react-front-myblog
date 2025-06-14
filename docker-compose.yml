@@ -2,11 +2,12 @@ version: '3.8'
 
 services:
   frontend:
-    build: ./react-front-myblog
+    build: ./app
     ports:
-      - "3000:3000"
+      - "5173:5173"
     volumes:
-      - ./react-front-myblog:/app
+      - ./app:/app
       - /app/node_modules
     environment:
       - CHOKIDAR_USEPOLLING=true
+    command: ["npm", "run", "dev", "--", "--host"]
