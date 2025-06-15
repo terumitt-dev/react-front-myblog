@@ -2,7 +2,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Top from '@/pages/Top'
 import Home from '@/pages/Home'
-import CategoryPage from '@/pages/Category'
+import Category from '@/pages/Category'
 import PostDetail from '@/pages/PostDetail'
 
 function App() {
