@@ -2,7 +2,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Top from '@/pages/Top'
 import Home from '@/pages/Home'
-import CategoryPage from '@/pages/CategoryPage' // 仮に1つでまとめておく
+import CategoryPage from '@/pages/CategoryPage'
+import PostDetail from '@/pages/PostDetail'
 
 function App() {
   return (
@@ -11,9 +12,11 @@ function App() {
         <Route path="/" element={<Top />} />
         <Route path="/home" element={<Home />} />
         <Route path="/category/:category" element={<CategoryPage />} />
+        <Route path="/posts/:id" element={<PostDetail />} />
       </Routes>
     </BrowserRouter>
   )
 }
 
 export default App
+

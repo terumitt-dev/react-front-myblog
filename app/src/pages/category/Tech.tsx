@@ -1,4 +1,6 @@
 // app/src/pages/category/Tech.tsx
+import { Link } from 'react-router-dom'
+
 const Tech = () => {
   const articles = [
     { id: 4, title: 'ReactのuseEffectまとめ' },
@@ -11,7 +13,9 @@ const Tech = () => {
       <h1>テック カテゴリーの記事</h1>
       <ul>
         {articles.map((article) => (
-          <li key={article.id}>{article.title}</li>
+          <li key={article.id}>
+            <Link to={`/posts/${article.id}`}>{article.title}</Link>
+          </li>
         ))}
       </ul>
     </div>

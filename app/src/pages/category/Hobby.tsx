@@ -1,4 +1,6 @@
 // app/src/pages/category/Hobby.tsx
+import { Link } from 'react-router-dom'
+
 const Hobby = () => {
   const articles = [
     { id: 1, title: 'ギターはじめました' },
@@ -11,7 +13,9 @@ const Hobby = () => {
       <h1>しゅみ カテゴリーの記事</h1>
       <ul>
         {articles.map((article) => (
-          <li key={article.id}>{article.title}</li>
+          <li key={article.id}>
+            <Link to={`/posts/${article.id}`}>{article.title}</Link>
+          </li>
         ))}
       </ul>
     </div>
