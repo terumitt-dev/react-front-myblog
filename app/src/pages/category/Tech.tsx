@@ -1,18 +1,15 @@
 // app/src/pages/category/Tech.tsx
+import { posts } from '@/data/posts'
 import { Link } from 'react-router-dom'
 
 const Tech = () => {
-  const articles = [
-    { id: 4, title: 'ReactのuseEffectまとめ' },
-    { id: 5, title: 'Vite入門ガイド' },
-    { id: 6, title: 'GitHub Actions超入門' },
-  ]
+  const techPosts = posts.filter((post) => post.category === 'tech')
 
   return (
     <div>
-      <h1>テック カテゴリーの記事</h1>
+      <h1>しゅみ カテゴリーの記事</h1>
       <ul>
-        {articles.map((article) => (
+        {techPosts.map((article) => (
           <li key={article.id}>
             <Link to={`/posts/${article.id}`}>{article.title}</Link>
           </li>

@@ -1,4 +1,5 @@
 // app/src/pages/Top.tsx
+import { Link } from 'react-router-dom'
 import CategoryButtons from '@/components/organisms/CategoryButtons'
 
 const Top = () => {
@@ -31,9 +32,9 @@ const Top = () => {
       <ul style={{ paddingLeft: '1rem' }}>
         {latestArticles.map((article) => (
           <li key={article.id}>
-            <a href={`/category/${article.category}`}>
+            <Link to={`/posts/${article.id}`}>
               {article.title}
-            </a>
+            </Link>
           </li>
         ))}
       </ul>
