@@ -1,8 +1,19 @@
-// src/App.tsx
-import AppRouter from "./router/Router";
+// app/src/App.tsx
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import Top from '@/pages/Top'
+import Home from '@/pages/Home'
+import CategoryPage from '@/pages/CategoryPage' // 仮に1つでまとめておく
 
 function App() {
-  return <AppRouter />;
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Top />} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/category/:category" element={<CategoryPage />} />
+      </Routes>
+    </BrowserRouter>
+  )
 }
 
-export default App;
+export default App
