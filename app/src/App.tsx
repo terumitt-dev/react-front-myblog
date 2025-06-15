@@ -11,7 +11,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Top />} />
         <Route path="/home" element={<Home />} />
-        <Route path="/category/:category" element={<CategoryPage />} />
+        <Route path="/category/:category" element={<Category />} />
         <Route path="/posts/:id" element={<PostDetail />} />
       </Routes>
     </BrowserRouter>

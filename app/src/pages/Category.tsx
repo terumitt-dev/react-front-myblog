@@ -1,15 +1,29 @@
-// app/src/pages/CategoryPage.tsx
-import { useParams } from 'react-router-dom'
+// app/src/pages/Category.tsx
+import { useParams, Link } from 'react-router-dom'
+import { posts } from '@/data/posts'
 
-const CategoryPage = () => {
-  const { category } = useParams()
+const Category = () => {
+  const { category } = useParams<{ category: string }>()
+
+  const filteredPosts = posts.filter((post) => post.category === category)
 
   return (
     <div>
-      <h1>カテゴリー: {category}</h1>
-      <p>ここに {category} の記事が表示されます。</p>
+      <h1>「{category}」カテゴリの記事一覧</h1>
+
+      {filteredPosts.length === 0 ? (
+        <p>該当する記事がありません。</p>
+      ) : (
+        <ul>
+          {filteredPosts.map((post) => (
+            <li key={post.id}>
+              <Link to={`/posts/${post.id}`}>{post.title}</Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }
 
-export default CategoryPage
+export default Category
