@@ -20,8 +20,6 @@ const Other = () => {
       </ul>
     </div>
   )
-
-
 }
 
 export default Other
