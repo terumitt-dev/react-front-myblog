@@ -14,8 +14,9 @@ const Admin = () => {
   const [content, setContent] = useState('')
   const [category, setCategory] = useState('tech')
   const [posts, setPosts] = useState<Post[]>([])
+  const [editingPostId, setEditingPostId] = useState<number | null>(null)
 
-  // 投稿を localStorage から読み込む
+  // localStorage から投稿を読み込む
   useEffect(() => {
     const saved = localStorage.getItem('myblog-posts')
     if (saved) {
@@ -23,7 +24,7 @@ const Admin = () => {
     }
   }, [])
 
-  // 投稿追加 → localStorage に保存
+  // 投稿を追加
   const handleAddPost = () => {
     if (!title.trim() || !content.trim()) return
 
@@ -38,18 +39,46 @@ const Admin = () => {
     const updatedPosts = [...posts, newPost]
     setPosts(updatedPosts)
     localStorage.setItem('myblog-posts', JSON.stringify(updatedPosts))
-
-    // 入力リセット
-    setTitle('')
-    setContent('')
-    setCategory('tech')
+    resetForm()
   }
 
-  // 投稿削除処理
+  // 投稿を更新
+  const handleUpdatePost = () => {
+    if (!editingPostId) return
+
+    const updatedPosts = posts.map((post) =>
+      post.id === editingPostId
+        ? { ...post, title, content, category }
+        : post
+    )
+
+    setPosts(updatedPosts)
+    localStorage.setItem('myblog-posts', JSON.stringify(updatedPosts))
+    resetForm()
+  }
+
+  // 編集開始
+  const startEdit = (post: Post) => {
+    setEditingPostId(post.id)
+    setTitle(post.title)
+    setContent(post.content)
+    setCategory(post.category)
+  }
+
+  // 投稿を削除
   const handleDelete = (id: number) => {
     const updatedPosts = posts.filter((post) => post.id !== id)
     setPosts(updatedPosts)
     localStorage.setItem('myblog-posts', JSON.stringify(updatedPosts))
+    if (editingPostId === id) resetForm() // 編集中の投稿を削除した場合もリセット
+  }
+
+  // 入力リセット
+  const resetForm = () => {
+    setEditingPostId(null)
+    setTitle('')
+    setContent('')
+    setCategory('tech')
   }
 
   return (
@@ -79,13 +108,35 @@ const Admin = () => {
           <option value="hobby">Hobby</option>
           <option value="other">Other</option>
         </select>
-        {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
-        <button
-          onClick={handleAddPost}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          投稿を追加
-        </button>
+
+        <div className="flex gap-4">
+          {editingPostId ? (
+            <>
+              {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
+              <button
+                onClick={handleUpdatePost}
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+              >
+                更新
+              </button>
+              {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
+              <button
+                onClick={resetForm}
+                className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
+              >
+                キャンセル
+              </button>
+            </>
+          ) : (
+            // biome-ignore lint/a11y/useButtonType: <explanation> 
+            <button
+              onClick={handleAddPost}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              投稿を追加
+            </button>
+          )}
+        </div>
       </div>
 
       {/* 投稿一覧 */}
@@ -111,6 +162,13 @@ const Admin = () => {
                   >
                     記事を確認 →
                   </a>
+                  {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
+                  <button
+                    onClick={() => startEdit(post)}
+                    className="text-yellow-600 hover:underline"
+                  >
+                    編集
+                  </button>
                   {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
                   <button
                     onClick={() => handleDelete(post.id)}
