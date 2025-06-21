@@ -15,8 +15,9 @@ const Admin = () => {
   const [category, setCategory] = useState('tech')
   const [posts, setPosts] = useState<Post[]>([])
   const [editingPostId, setEditingPostId] = useState<number | null>(null)
+  const [error, setError] = useState('') 
 
-  // localStorage から投稿を読み込む
+  // localStorageから投稿を読み込む
   useEffect(() => {
     const saved = localStorage.getItem('myblog-posts')
     if (saved) {
@@ -26,7 +27,11 @@ const Admin = () => {
 
   // 投稿を追加
   const handleAddPost = () => {
-    if (!title.trim() || !content.trim()) return
+    if (!title.trim() || !content.trim()) {
+      setError('タイトルと本文は必須です。')
+      return
+    }
+    setError('')
 
     const newPost: Post = {
       id: Date.now(),
@@ -44,7 +49,11 @@ const Admin = () => {
 
   // 投稿を更新
   const handleUpdatePost = () => {
-    if (!editingPostId) return
+    if (!title.trim() || !content.trim()) {
+      setError('タイトルと本文は必須です。')
+      return
+    }
+    setError('')
 
     const updatedPosts = posts.map((post) =>
       post.id === editingPostId
@@ -63,6 +72,7 @@ const Admin = () => {
     setTitle(post.title)
     setContent(post.content)
     setCategory(post.category)
+    setError('')
   }
 
   // 投稿を削除
@@ -70,15 +80,16 @@ const Admin = () => {
     const updatedPosts = posts.filter((post) => post.id !== id)
     setPosts(updatedPosts)
     localStorage.setItem('myblog-posts', JSON.stringify(updatedPosts))
-    if (editingPostId === id) resetForm() // 編集中の投稿を削除した場合もリセット
+    if (editingPostId === id) resetForm()
   }
 
-  // 入力リセット
+  // フォームをリセット
   const resetForm = () => {
     setEditingPostId(null)
     setTitle('')
     setContent('')
     setCategory('tech')
+    setError('')
   }
 
   return (
@@ -109,6 +120,9 @@ const Admin = () => {
           <option value="other">Other</option>
         </select>
 
+        {/* エラー表示 */}
+        {error && <p className="text-red-600">{error}</p>}
+
         <div className="flex gap-4">
           {editingPostId ? (
             <>
@@ -128,7 +142,7 @@ const Admin = () => {
               </button>
             </>
           ) : (
-            // biome-ignore lint/a11y/useButtonType: <explanation> 
+            // biome-ignore lint/a11y/useButtonType: <explanation>
             <button
               onClick={handleAddPost}
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
