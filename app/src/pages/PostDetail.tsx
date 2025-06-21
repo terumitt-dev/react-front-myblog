@@ -1,15 +1,29 @@
 // app/src/pages/PostDetail.tsx
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { posts } from '@/data/posts'
 import CommentForm from '@/components/organisms/CommentForm'
+
+type Post = {
+  id: number
+  title: string
+  content: string
+  category: string
+}
 
 const PostDetail = () => {
   const { id } = useParams<{ id: string }>()
-  const post = posts.find((p) => p.id === Number(id))
-
+  const [post, setPost] = useState<Post | null>(null)
   const [comments, setComments] = useState<{ user: string; content: string }[]>([])
   const [isWriting, setIsWriting] = useState(false)
+
+  useEffect(() => {
+    const saved = localStorage.getItem('myblog-posts')
+    if (saved) {
+      const posts: Post[] = JSON.parse(saved)
+      const target = posts.find((p) => p.id === Number(id))
+      setPost(target || null)
+    }
+  }, [id])
 
   if (!post) {
     return <div>記事が見つかりませんでした。</div>
@@ -25,7 +39,7 @@ const PostDetail = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-bold">{post.title}</h1>
         <p className="text-gray-700">{post.content}</p>

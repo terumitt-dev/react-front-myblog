@@ -1,25 +1,29 @@
 // app/src/pages/Top.tsx
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import CategoryButtons from '@/components/organisms/CategoryButtons'
 
+type Post = {
+  id: number
+  title: string
+  category: string
+  content?: string
+}
+
 const Top = () => {
-  const latestArticles = [
-    {
-      id: 1,
-      title: '趣味で始めたギターの話',
-      category: 'hobby',
-    },
-    {
-      id: 2,
-      title: 'Reactの最適化まとめ',
-      category: 'tech',
-    },
-    {
-      id: 3,
-      title: '雑記：最近の気づきメモ',
-      category: 'other',
-    },
-  ]
+  const [posts, setPosts] = useState<Post[]>([])
+
+  useEffect(() => {
+    const saved = localStorage.getItem('myblog-posts')
+    if (saved) {
+      setPosts(JSON.parse(saved))
+    }
+  }, [])
+
+  // 最新記事3件だけ抽出（投稿が多い場合を想定）
+  const latestArticles = posts
+    .slice(-3)
+    .reverse() // 新しい順に並べ替え
 
   return (
     <div>
@@ -29,15 +33,19 @@ const Top = () => {
       <CategoryButtons />
 
       <h2>最新記事</h2>
-      <ul style={{ paddingLeft: '1rem' }}>
-        {latestArticles.map((article) => (
-          <li key={article.id}>
-            <Link to={`/posts/${article.id}`}>
-              {article.title}
-            </Link>
-          </li>
-        ))}
-      </ul>
+      {latestArticles.length === 0 ? (
+        <p>まだ投稿がありません。</p>
+      ) : (
+        <ul style={{ paddingLeft: '1rem' }}>
+          {latestArticles.map((article) => (
+            <li key={article.id}>
+              <Link to={`/posts/${article.id}`}>
+                {article.title}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }
