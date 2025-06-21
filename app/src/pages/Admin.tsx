@@ -6,6 +6,7 @@ type Post = {
   title: string
   content: string
   category: string
+  createdAt: string
 }
 
 const Admin = () => {
@@ -22,15 +23,16 @@ const Admin = () => {
     }
   }, [])
 
-  // 投稿を追加して localStorage に保存
+  // 投稿追加 → localStorage に保存
   const handleAddPost = () => {
     if (!title.trim() || !content.trim()) return
 
     const newPost: Post = {
-      id: Date.now(), // IDはユニークな値に（投稿削除も考慮）
+      id: Date.now(),
       title,
       content,
       category,
+      createdAt: new Date().toISOString(),
     }
 
     const updatedPosts = [...posts, newPost]
@@ -43,7 +45,8 @@ const Admin = () => {
     setCategory('tech')
   }
 
-    const handleDelete = (id: number) => {
+  // 投稿削除処理
+  const handleDelete = (id: number) => {
     const updatedPosts = posts.filter((post) => post.id !== id)
     setPosts(updatedPosts)
     localStorage.setItem('myblog-posts', JSON.stringify(updatedPosts))
@@ -85,7 +88,7 @@ const Admin = () => {
         </button>
       </div>
 
-      {/* 投稿一覧表示 */}
+      {/* 投稿一覧 */}
       <div>
         <h2 className="text-xl font-semibold mt-6">現在の投稿一覧</h2>
         {posts.length === 0 ? (
@@ -93,27 +96,30 @@ const Admin = () => {
         ) : (
           <ul className="space-y-2 mt-2">
             {posts.map((post) => (
-            <li key={post.id} className="border p-3 rounded space-y-1">
-              <div>
-                <strong>{post.title}</strong>（{post.category}）
-              </div>
-              <div className="text-gray-700">{post.content}</div>
-              <div className="flex gap-4 mt-2">
-                <a
-                  href={`/posts/${post.id}`}
-                  className="text-blue-600 hover:underline"
-                >
-                  記事を確認 →
-                </a>
-                {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
-                <button
-                  onClick={() => handleDelete(post.id)}
-                  className="text-red-600 hover:underline"
-                >
-                  削除
-                </button>
-              </div>
-            </li>
+              <li key={post.id} className="border p-3 rounded space-y-1">
+                <div>
+                  <strong>{post.title}</strong>（{post.category}）
+                </div>
+                <div className="text-sm text-gray-500">
+                  投稿日: {new Date(post.createdAt).toLocaleString()}
+                </div>
+                <div className="text-gray-700">{post.content}</div>
+                <div className="flex gap-4 mt-2">
+                  <a
+                    href={`/posts/${post.id}`}
+                    className="text-blue-600 hover:underline"
+                  >
+                    記事を確認 →
+                  </a>
+                  {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
+                  <button
+                    onClick={() => handleDelete(post.id)}
+                    className="text-red-600 hover:underline"
+                  >
+                    削除
+                  </button>
+                </div>
+              </li>
             ))}
           </ul>
         )}
