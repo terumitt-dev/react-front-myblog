@@ -1,5 +1,7 @@
 // app/src/pages/Admin.tsx
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '@/context/AuthContext'
 
 type Post = {
   id: number
@@ -10,14 +12,15 @@ type Post = {
 }
 
 const Admin = () => {
+  const navigate = useNavigate()
+  const { logout } = useAuth()
+
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [category, setCategory] = useState('tech')
   const [posts, setPosts] = useState<Post[]>([])
-  const [editingPostId, setEditingPostId] = useState<number | null>(null)
-  const [error, setError] = useState('') 
 
-  // localStorageから投稿を読み込む
+  // 投稿を localStorage から読み込み
   useEffect(() => {
     const saved = localStorage.getItem('myblog-posts')
     if (saved) {
@@ -25,13 +28,9 @@ const Admin = () => {
     }
   }, [])
 
-  // 投稿を追加
+  // 投稿を追加して localStorage に保存
   const handleAddPost = () => {
-    if (!title.trim() || !content.trim()) {
-      setError('タイトルと本文は必須です。')
-      return
-    }
-    setError('')
+    if (!title.trim() || !content.trim()) return
 
     const newPost: Post = {
       id: Date.now(),
@@ -44,57 +43,37 @@ const Admin = () => {
     const updatedPosts = [...posts, newPost]
     setPosts(updatedPosts)
     localStorage.setItem('myblog-posts', JSON.stringify(updatedPosts))
-    resetForm()
-  }
 
-  // 投稿を更新
-  const handleUpdatePost = () => {
-    if (!title.trim() || !content.trim()) {
-      setError('タイトルと本文は必須です。')
-      return
-    }
-    setError('')
-
-    const updatedPosts = posts.map((post) =>
-      post.id === editingPostId
-        ? { ...post, title, content, category }
-        : post
-    )
-
-    setPosts(updatedPosts)
-    localStorage.setItem('myblog-posts', JSON.stringify(updatedPosts))
-    resetForm()
-  }
-
-  // 編集開始
-  const startEdit = (post: Post) => {
-    setEditingPostId(post.id)
-    setTitle(post.title)
-    setContent(post.content)
-    setCategory(post.category)
-    setError('')
+    setTitle('')
+    setContent('')
+    setCategory('tech')
   }
 
   // 投稿を削除
   const handleDelete = (id: number) => {
-    const updatedPosts = posts.filter((post) => post.id !== id)
-    setPosts(updatedPosts)
-    localStorage.setItem('myblog-posts', JSON.stringify(updatedPosts))
-    if (editingPostId === id) resetForm()
+    const updated = posts.filter((post) => post.id !== id)
+    setPosts(updated)
+    localStorage.setItem('myblog-posts', JSON.stringify(updated))
   }
 
-  // フォームをリセット
-  const resetForm = () => {
-    setEditingPostId(null)
-    setTitle('')
-    setContent('')
-    setCategory('tech')
-    setError('')
+  // ログアウト処理
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
   }
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">投稿管理（Admin）</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">投稿管理（Admin）</h1>
+        {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
+        <button
+          onClick={handleLogout}
+          className="text-sm text-red-500 underline"
+        >
+          ログアウト
+        </button>
+      </div>
 
       {/* 投稿フォーム */}
       <div className="space-y-4">
@@ -119,41 +98,16 @@ const Admin = () => {
           <option value="hobby">Hobby</option>
           <option value="other">Other</option>
         </select>
-
-        {/* エラー表示 */}
-        {error && <p className="text-red-600">{error}</p>}
-
-        <div className="flex gap-4">
-          {editingPostId ? (
-            <>
-              {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
-              <button
-                onClick={handleUpdatePost}
-                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-              >
-                更新
-              </button>
-              {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
-              <button
-                onClick={resetForm}
-                className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
-              >
-                キャンセル
-              </button>
-            </>
-          ) : (
-            // biome-ignore lint/a11y/useButtonType: <explanation>
-            <button
-              onClick={handleAddPost}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            >
-              投稿を追加
-            </button>
-          )}
-        </div>
+        {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
+        <button
+          onClick={handleAddPost}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        >
+          投稿を追加
+        </button>
       </div>
 
-      {/* 投稿一覧 */}
+      {/* 投稿一覧表示 */}
       <div>
         <h2 className="text-xl font-semibold mt-6">現在の投稿一覧</h2>
         {posts.length === 0 ? (
@@ -164,9 +118,9 @@ const Admin = () => {
               <li key={post.id} className="border p-3 rounded space-y-1">
                 <div>
                   <strong>{post.title}</strong>（{post.category}）
-                </div>
-                <div className="text-sm text-gray-500">
-                  投稿日: {new Date(post.createdAt).toLocaleString()}
+                  <div className="text-xs text-gray-500">
+                    投稿日: {new Date(post.createdAt).toLocaleString()}
+                  </div>
                 </div>
                 <div className="text-gray-700">{post.content}</div>
                 <div className="flex gap-4 mt-2">
@@ -176,13 +130,6 @@ const Admin = () => {
                   >
                     記事を確認 →
                   </a>
-                  {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
-                  <button
-                    onClick={() => startEdit(post)}
-                    className="text-yellow-600 hover:underline"
-                  >
-                    編集
-                  </button>
                   {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
                   <button
                     onClick={() => handleDelete(post.id)}
