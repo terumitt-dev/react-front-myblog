@@ -19,8 +19,10 @@ const Admin = () => {
   const [content, setContent] = useState('')
   const [category, setCategory] = useState('tech')
   const [posts, setPosts] = useState<Post[]>([])
+  const [editingPostId, setEditingPostId] = useState<number | null>(null)
+  const [error, setError] = useState('')
 
-  // 投稿を localStorage から読み込み
+  // 投稿データ読み込み
   useEffect(() => {
     const saved = localStorage.getItem('myblog-posts')
     if (saved) {
@@ -28,35 +30,61 @@ const Admin = () => {
     }
   }, [])
 
-  // 投稿を追加して localStorage に保存
-  const handleAddPost = () => {
-    if (!title.trim() || !content.trim()) return
-
-    const newPost: Post = {
-      id: Date.now(),
-      title,
-      content,
-      category,
-      createdAt: new Date().toISOString(),
-    }
-
-    const updatedPosts = [...posts, newPost]
+  const saveToLocalStorage = (updatedPosts: Post[]) => {
     setPosts(updatedPosts)
     localStorage.setItem('myblog-posts', JSON.stringify(updatedPosts))
+  }
 
+  const resetForm = () => {
     setTitle('')
     setContent('')
     setCategory('tech')
+    setEditingPostId(null)
+    setError('')
   }
 
-  // 投稿を削除
+  const handleSubmit = () => {
+    if (!title.trim() || !content.trim()) {
+      setError('タイトルと本文は必須です。')
+      return
+    }
+
+    if (editingPostId !== null) {
+      const updated = posts.map((p) =>
+        p.id === editingPostId ? { ...p, title, content, category } : p
+      )
+      saveToLocalStorage(updated)
+    } else {
+      const newPost: Post = {
+        id: Date.now(),
+        title,
+        content,
+        category,
+        createdAt: new Date().toISOString(),
+      }
+      saveToLocalStorage([...posts, newPost])
+    }
+
+    resetForm()
+  }
+
   const handleDelete = (id: number) => {
-    const updated = posts.filter((post) => post.id !== id)
-    setPosts(updated)
-    localStorage.setItem('myblog-posts', JSON.stringify(updated))
+    const updated = posts.filter((p) => p.id !== id)
+    saveToLocalStorage(updated)
   }
 
-  // ログアウト処理
+  const handleEdit = (post: Post) => {
+    setTitle(post.title)
+    setContent(post.content)
+    setCategory(post.category)
+    setEditingPostId(post.id)
+    setError('')
+  }
+
+  const handleCancelEdit = () => {
+    resetForm()
+  }
+
   const handleLogout = () => {
     logout()
     navigate('/login')
@@ -77,6 +105,8 @@ const Admin = () => {
 
       {/* 投稿フォーム */}
       <div className="space-y-4">
+        {error && <p className="text-red-500">{error}</p>}
+
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -98,16 +128,29 @@ const Admin = () => {
           <option value="hobby">Hobby</option>
           <option value="other">Other</option>
         </select>
-        {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
-        <button
-          onClick={handleAddPost}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          投稿を追加
-        </button>
+
+        <div className="flex gap-4">
+          {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
+          <button
+            onClick={handleSubmit}
+            className={`px-4 py-2 rounded text-white ${editingPostId !== null ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+          >
+            {editingPostId !== null ? '更新する' : '投稿を追加'}
+          </button>
+
+          {editingPostId !== null && (
+            // biome-ignore lint/a11y/useButtonType: <explanation>
+            <button
+              onClick={handleCancelEdit}
+              className="px-4 py-2 text-gray-700 border border-gray-400 rounded hover:bg-gray-100"
+            >
+              キャンセル
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* 投稿一覧表示 */}
+      {/* 投稿一覧 */}
       <div>
         <h2 className="text-xl font-semibold mt-6">現在の投稿一覧</h2>
         {posts.length === 0 ? (
@@ -130,6 +173,13 @@ const Admin = () => {
                   >
                     記事を確認 →
                   </a>
+                  {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
+                  <button
+                    onClick={() => handleEdit(post)}
+                    className="text-green-600 hover:underline"
+                  >
+                    編集
+                  </button>
                   {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
                   <button
                     onClick={() => handleDelete(post.id)}
