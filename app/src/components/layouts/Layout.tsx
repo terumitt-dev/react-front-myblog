@@ -1,9 +1,13 @@
 // app/src/components/layouts/Layout.tsx
 import type { ReactNode } from 'react'
 
-const Layout = ({ children }: { children: ReactNode }) => {
+type Props = {
+  children: ReactNode
+}
+
+const Layout = ({ children }: Props) => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#4161EC] to-[#BC7AF2] text-gray-900">
+    <div className="min-h-screen bg-gradient-to-b from-[#4161EC] to-[#BC7AF2] text-gray-800">
       {children}
     </div>
   )

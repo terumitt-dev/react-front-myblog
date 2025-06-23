@@ -1,4 +1,5 @@
 // pages/CommentPage.tsx
+import Layout from '@/components/layouts/Layout'
 import CommentForm from '@/components/organisms/CommentForm';
 
 const CommentPage = () => {
@@ -13,9 +14,11 @@ const CommentPage = () => {
   };
 
   return (
-    <div className="max-w-xl mx-auto mt-10">
-      <CommentForm onSubmit={handleCommentSubmit} onCancel={handleCancel} />
-    </div>
+    <Layout>
+      <div className="max-w-xl mx-auto mt-10">
+        <CommentForm onSubmit={handleCommentSubmit} onCancel={handleCancel} />
+      </div>
+    </Layout>
   );
 };
 

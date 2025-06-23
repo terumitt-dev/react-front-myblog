@@ -1,4 +1,5 @@
 // app/src/pages/Admin.tsx
+import Layout from '@/components/layouts/Layout'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
@@ -91,109 +92,111 @@ const Admin = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">投稿管理（Admin）</h1>
-        {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
-        <button
-          onClick={handleLogout}
-          className="text-sm text-red-500 underline"
-        >
-          ログアウト
-        </button>
-      </div>
-
-      {/* 投稿フォーム */}
-      <div className="space-y-4">
-        {error && <p className="text-red-500">{error}</p>}
-
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="タイトル"
-          className="border p-2 w-full"
-        />
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="本文"
-          className="border p-2 w-full"
-        />
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="border p-2"
-        >
-          <option value="tech">Tech</option>
-          <option value="hobby">Hobby</option>
-          <option value="other">Other</option>
-        </select>
-
-        <div className="flex gap-4">
+    <Layout>
+      <div className="p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold">投稿管理（Admin）</h1>
           {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
           <button
-            onClick={handleSubmit}
-            className={`px-4 py-2 rounded text-white ${editingPostId !== null ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+            onClick={handleLogout}
+            className="text-sm text-red-500 underline"
           >
-            {editingPostId !== null ? '更新する' : '投稿を追加'}
+            ログアウト
           </button>
+        </div>
 
-          {editingPostId !== null && (
-            // biome-ignore lint/a11y/useButtonType: <explanation>
+        {/* 投稿フォーム */}
+        <div className="space-y-4">
+          {error && <p className="text-red-500">{error}</p>}
+
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="タイトル"
+            className="border p-2 w-full"
+          />
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="本文"
+            className="border p-2 w-full"
+          />
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="border p-2"
+          >
+            <option value="tech">Tech</option>
+            <option value="hobby">Hobby</option>
+            <option value="other">Other</option>
+          </select>
+
+          <div className="flex gap-4">
+            {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
             <button
-              onClick={handleCancelEdit}
-              className="px-4 py-2 text-gray-700 border border-gray-400 rounded hover:bg-gray-100"
+              onClick={handleSubmit}
+              className={`px-4 py-2 rounded text-white ${editingPostId !== null ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}
             >
-              キャンセル
+              {editingPostId !== null ? '更新する' : '投稿を追加'}
             </button>
+
+            {editingPostId !== null && (
+              // biome-ignore lint/a11y/useButtonType: <explanation>
+              <button
+                onClick={handleCancelEdit}
+                className="px-4 py-2 text-gray-700 border border-gray-400 rounded hover:bg-gray-100"
+              >
+                キャンセル
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* 投稿一覧 */}
+        <div>
+          <h2 className="text-xl font-semibold mt-6">現在の投稿一覧</h2>
+          {posts.length === 0 ? (
+            <p>まだ投稿がありません。</p>
+          ) : (
+            <ul className="space-y-2 mt-2">
+              {posts.map((post) => (
+                <li key={post.id} className="border p-3 rounded space-y-1">
+                  <div>
+                    <strong>{post.title}</strong>（{post.category}）
+                    <div className="text-xs text-gray-500">
+                      投稿日: {new Date(post.createdAt).toLocaleString()}
+                    </div>
+                  </div>
+                  <div className="text-gray-700">{post.content}</div>
+                  <div className="flex gap-4 mt-2">
+                    <a
+                      href={`/posts/${post.id}`}
+                      className="text-blue-600 hover:underline"
+                    >
+                      記事を確認 →
+                    </a>
+                    {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
+                    <button
+                      onClick={() => handleEdit(post)}
+                      className="text-green-600 hover:underline"
+                    >
+                      編集
+                    </button>
+                    {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
+                    <button
+                      onClick={() => handleDelete(post.id)}
+                      className="text-red-600 hover:underline"
+                    >
+                      削除
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       </div>
-
-      {/* 投稿一覧 */}
-      <div>
-        <h2 className="text-xl font-semibold mt-6">現在の投稿一覧</h2>
-        {posts.length === 0 ? (
-          <p>まだ投稿がありません。</p>
-        ) : (
-          <ul className="space-y-2 mt-2">
-            {posts.map((post) => (
-              <li key={post.id} className="border p-3 rounded space-y-1">
-                <div>
-                  <strong>{post.title}</strong>（{post.category}）
-                  <div className="text-xs text-gray-500">
-                    投稿日: {new Date(post.createdAt).toLocaleString()}
-                  </div>
-                </div>
-                <div className="text-gray-700">{post.content}</div>
-                <div className="flex gap-4 mt-2">
-                  <a
-                    href={`/posts/${post.id}`}
-                    className="text-blue-600 hover:underline"
-                  >
-                    記事を確認 →
-                  </a>
-                  {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
-                  <button
-                    onClick={() => handleEdit(post)}
-                    className="text-green-600 hover:underline"
-                  >
-                    編集
-                  </button>
-                  {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
-                  <button
-                    onClick={() => handleDelete(post.id)}
-                    className="text-red-600 hover:underline"
-                  >
-                    削除
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </div>
+    </Layout> 
   )
 }
 
