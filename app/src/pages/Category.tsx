@@ -24,19 +24,32 @@ const Category = () => {
 
   const getCategoryLabel = (key: string) => {
     switch (key) {
-      case 'tech':
-        return '技術';
       case 'hobby':
-        return '趣味';
+        return 'しゅみ'
+      case 'tech':
+        return 'テック'
       case 'other':
-        return 'その他';
+        return 'その他'
       default:
-        return key;
+        return key
+    }
+  }
+
+  const getCategoryBgColor = (key: string) => {
+    switch (key) {
+      case 'hobby':
+        return 'bg-[#E1C6F9]'
+      case 'tech':
+        return 'bg-[#AFEBFF]'
+      case 'other':
+        return 'bg-[#CCF5B1]'
+      default:
+        return 'bg-white'
     }
   }
 
   return (
-    <div className="p-6 space-y-4">
+    <div className={`min-h-screen p-6 space-y-4 ${getCategoryBgColor(category || '')}`}>
       <h1 className="text-2xl font-bold">
         {getCategoryLabel(category || '')} カテゴリの記事
       </h1>
@@ -46,7 +59,7 @@ const Category = () => {
       ) : (
         <ul className="space-y-4">
           {posts.map((post) => (
-            <li key={post.id} className="p-4 border rounded shadow">
+            <li key={post.id} className="p-4 border rounded shadow bg-white">
               <h2 className="text-xl font-semibold">{post.title}</h2>
               <p className="text-gray-700">{post.content.slice(0, 100)}...</p>
               <a

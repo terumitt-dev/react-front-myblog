@@ -7,5 +7,10 @@ module.exports = {
   theme: {
     extend: {},
   },
+  safelist: [
+    'bg-[#E1C6F9]',
+    'bg-[#AFEBFF]',
+    'bg-[#CCF5B1]',
+  ],
   plugins: [],
 }

@@ -6,7 +6,7 @@ const Other = () => {
   const otherPosts = posts.filter((post) => post.category === 'Other')
 
   return (
-    <div>
+    <div className="min-h-screen bg-[#CCF5B1] p-8">
       <h1>その他 カテゴリーの記事</h1>
       <ul>
         {otherPosts.map((article) => (

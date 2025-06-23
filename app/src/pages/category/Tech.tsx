@@ -6,8 +6,8 @@ const Tech = () => {
   const techPosts = posts.filter((post) => post.category === 'tech')
 
   return (
-    <div>
-      <h1>しゅみ カテゴリーの記事</h1>
+    <div className="min-h-screen bg-[#AFEBFF] p-8">
+      <h1>テック カテゴリーの記事</h1>
       <ul>
         {techPosts.map((article) => (
           <li key={article.id}>
