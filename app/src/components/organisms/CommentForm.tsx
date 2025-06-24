@@ -23,7 +23,8 @@ const CommentForm = ({ onSubmit, onCancel }: Props) => {
   };
 
   return (
-    <div className="flex flex-col gap-3 p-4 border rounded shadow-md">
+    // <div className="flex flex-col gap-3 p-4 border rounded shadow-md">
+    <div className="flex flex-col gap-3 p-4 border rounded shadow-md bg-white">
       <Input
         value={userName}
         onChange={(e) => setUserName(e.target.value)}
@@ -35,8 +36,8 @@ const CommentForm = ({ onSubmit, onCancel }: Props) => {
         placeholder="コメントを入力"
       />
       <div className="flex gap-2 justify-end">
-        <CancelButton onCancel={onCancel} />
         <SubmitCommentButton onSubmit={handleSubmit} />
+        <CancelButton onCancel={onCancel} />
       </div>
     </div>
   );
