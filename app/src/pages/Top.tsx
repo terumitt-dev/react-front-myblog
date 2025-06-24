@@ -30,7 +30,7 @@ const Top = () => {
 
   return (
     <Layout>
-        <div className="max-w-3xl mx-auto px-4 py-6 space-y-8">
+        <div className="max-w-3xl mx-auto px-4 space-y-8">
          {/* ヒーロー画像 */}
          <div className="w-full overflow-hidden rounded-xl shadow-lg">
           <img
