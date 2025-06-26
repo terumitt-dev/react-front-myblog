@@ -2,24 +2,28 @@ name: Bot Approve PR
 
 on:
   issue_comment:
-    types: [created]        # 新しいコメントが付いたとき
+    types: [created]
 
-# ↓ Approve には “pull-requests: write” 権限が必須
 permissions:
-  pull-requests: write
+  pull-requests: write  # これが非常に重要！
 
 jobs:
   auto-approve:
     if: |
       github.event.issue.pull_request &&
-      contains(github.event.comment.body, '/bot-approve')
+      github.event.comment.body == '/bot-approve'
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-gh@v2
-      - name: Approve this PR
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gh
+
+      - name: Approve PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_URL:  ${{ github.event.issue.pull_request.html_url }}
-        run: gh pr review "$PR_URL" --approve
+        run: |
+          PR_URL=$(gh pr view ${{ github.event.issue.pull_request.html_url }} --json url -q .url)
+          echo "Approving PR: $PR_URL"
+          gh pr review "$PR_URL" --approve
