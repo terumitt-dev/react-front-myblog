@@ -5,25 +5,33 @@ on:
     types: [created]
 
 permissions:
-  pull-requests: write  # これが非常に重要！
+  pull-requests: write
 
 jobs:
   auto-approve:
+    # 1) 対象コメントが PR 上に付いたものか？
+    # 2) コメント本文が '/bot-approve' と完全一致か？
     if: |
       github.event.issue.pull_request &&
       github.event.comment.body == '/bot-approve'
     runs-on: ubuntu-latest
 
     steps:
+      #--------------------------------------------
+      # 1. GitHub CLI をインストール
+      #--------------------------------------------
       - name: Install GitHub CLI
         run: |
-          sudo apt-get update
+          sudo apt-get update -y
           sudo apt-get install -y gh
 
-      - name: Approve PR
+      #--------------------------------------------
+      # 2. Bot(PAT) で Approve を実行
+      #--------------------------------------------
+      - name: Approve this PR as Bot
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.BOT_PAT }}  # ★ Organization Secret
+          PR_URL:  ${{ github.event.issue.pull_request.html_url }}
         run: |
-          PR_URL=$(gh pr view ${{ github.event.issue.pull_request.html_url }} --json url -q .url)
           echo "Approving PR: $PR_URL"
           gh pr review "$PR_URL" --approve
