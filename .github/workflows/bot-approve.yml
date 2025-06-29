@@ -25,7 +25,7 @@ jobs:
       # 2) Bot の PAT を GH_TOKEN として渡し、Approve 実行
       - name: Approve this PR as Bot
         env:
-          GH_TOKEN: ${{ secrets.BOT_PR }}   # ★ Organization Secret の PAT
+          GH_TOKEN: ${{ secrets.CLASSIC_BOT_PAT }}
         run: |
           PR_URL=${{ github.event.issue.pull_request.html_url }}
           echo "Approving PR: $PR_URL"
