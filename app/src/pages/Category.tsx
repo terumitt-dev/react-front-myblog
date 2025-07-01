@@ -1,6 +1,7 @@
 // app/src/pages/Category.tsx
 import { useParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
+import BackToTopButton from '@/components/molecules/BackToTopButton'
 
 type Post = {
   id: number
@@ -49,7 +50,7 @@ const Category = () => {
   }
 
   return (
-    <div className={`min-h-screen p-6 space-y-4 ${getCategoryBgColor(category || '')}`}>
+    <div className={`min-h-screen p-6 space-y-6 ${getCategoryBgColor(category || '')}`}>
       <h1 className="text-2xl font-bold">
         {getCategoryLabel(category || '')} カテゴリの記事
       </h1>
@@ -72,6 +73,9 @@ const Category = () => {
           ))}
         </ul>
       )}
+      <div className="flex justify-center pt-6">
+        <BackToTopButton />
+      </div>
     </div>
   )
 }

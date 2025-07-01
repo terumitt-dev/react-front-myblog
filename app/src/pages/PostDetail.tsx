@@ -63,6 +63,7 @@ const PostDetail = () => {
             ) : (
               <ul className="space-y-3">
                 {comments.map((c, i) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
                   <li key={i} className="bg-gray-50 p-3 rounded shadow-sm">
                     <strong>{c.user}</strong>：{c.content}
                   </li>
