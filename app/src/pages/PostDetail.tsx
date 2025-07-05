@@ -69,19 +69,19 @@ const PostDetail = () => {
 
   return (
     <Layout>
-      <div className="bg-[#D9D9D9] max-w-5xl mx-auto p-8 rounded-xl">
+      <div className="bg-[#D9D9D9] max-w-5xl w-full mx-auto px-4 sm:px-6 py-8 rounded-xl overflow-hidden">
         {/* 2カラム */}
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           {/* ===== 記事エリア ===== */}
           <article className="w-full bg-white rounded-xl shadow p-6 md:col-span-2 space-y-6">
             <header>
-              <h1 className="text-3xl font-bold mb-3">{post.title}</h1>
+              <h1 className="text-3xl font-bold mb-3 break-words">{post.title}</h1>
               <span className="inline-block text-sm font-semibold px-3 py-1 rounded bg-gray-200">
                 {post.category}
               </span>
               <hr className="mt-4" />
             </header>
-            <div className="leading-relaxed whitespace-pre-line">{post.content}</div>
+            <div className="leading-relaxed whitespace-pre-line break-words">{post.content}</div>
           </article>
 
           {/* ===== コメント一覧 ===== */}

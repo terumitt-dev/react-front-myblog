@@ -13,12 +13,11 @@ type Post = {
 const Top = () => {
   const [posts, setPosts] = useState<Post[]>([])
 
+  /* 投稿データ読み込み */
   useEffect(() => {
     const saved = localStorage.getItem('myblog-posts')
     if (saved) {
-      const parsed = JSON.parse(saved)
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-      const normalized = parsed.map((p: any) => ({
+      const normalized = JSON.parse(saved).map((p: any) => ({
         ...p,
         id: Number(p.id),
       }))
@@ -30,9 +29,9 @@ const Top = () => {
 
   return (
     <Layout>
-        <div className="max-w-3xl mx-auto px-4 space-y-8">
-         {/* ヒーロー画像 */}
-         <div className="w-full overflow-hidden rounded-xl shadow-lg">
+      <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 space-y-8">
+        {/* ヒーロー画像 */}
+        <div className="w-full overflow-hidden rounded-xl shadow-lg">
           <img
             src="/top-image.jpg"
             alt="トップ画像"
@@ -47,21 +46,25 @@ const Top = () => {
 
         {/* 最新記事（グレー背景ボックス） */}
         <section className="space-y-4">
-          {/* グレーの内枠 */}
-          <div className="bg-[#D9D9D9] rounded-xl p-6">
-            <h2 className="text-xl font-semibold text-black text-center mb-4">最新記事</h2>
+          <div className="bg-[#D9D9D9] rounded-xl p-4 sm:p-6 overflow-hidden">
+            <h2 className="text-xl font-semibold text-center mb-4">
+              最新記事
+            </h2>
+
             {latestArticles.length === 0 ? (
               <p className="text-center">まだ投稿がありません。</p>
             ) : (
-              <div className="grid gap-6 md:grid-cols-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full">
                 {latestArticles.map((article) => (
                   <div
                     key={article.id}
-                    className="bg-white rounded-xl shadow p-4 flex flex-col justify-between"
+                    className="bg-white rounded-xl shadow p-4 flex flex-col justify-between w-full"
                   >
                     <div>
-                      <h3 className="font-bold">{article.title}</h3>
-                      <p className="text-sm text-gray-600 mt-1">
+                      <h3 className="font-bold break-words">
+                        {article.title}
+                      </h3>
+                      <p className="text-sm text-gray-600 mt-1 break-words">
                         カテゴリー: {article.category}
                       </p>
                     </div>

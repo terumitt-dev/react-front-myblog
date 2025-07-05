@@ -51,10 +51,10 @@ const Category = () => {
           {posts.map((post) => (
             <div
               key={post.id}
-              className="bg-white p-4 rounded-xl shadow hover:shadow-md transition"
+              className="bg-white p-4 rounded-xl shadow hover:shadow-md transition w-full"
             >
-              <h2 className="text-xl font-semibold">{post.title}</h2>
-              <p className="text-gray-700 mt-2">
+              <h2 className="text-xl font-semibold break-words">{post.title}</h2>
+              <p className="text-gray-700 mt-2 break-words">
                 {post.content.slice(0, 100)}...
               </p>
               <Link
