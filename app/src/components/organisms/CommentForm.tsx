@@ -23,8 +23,8 @@ const CommentForm = ({ onSubmit, onCancel }: Props) => {
   };
 
   return (
-    // <div className="flex flex-col gap-3 p-4 border rounded shadow-md">
-    <div className="flex flex-col gap-3 p-4 border rounded shadow-md bg-white">
+    // <div className="flex flex-col gap-3 p-4 border rounded shadow-md bg-white">
+    <div className="flex flex-col gap-3 p-4 rounded">
       <Input
         value={userName}
         onChange={(e) => setUserName(e.target.value)}

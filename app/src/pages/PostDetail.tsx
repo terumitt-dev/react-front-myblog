@@ -133,7 +133,7 @@ const PostDetail = () => {
 
         {/* ===== コメントフォーム ===== */}
         {isWriting && (
-          <div className="mt-6 bg-white p-6 rounded-xl shadow">
+          <div className="mt-3 bg-white p-3 rounded-xl shadow">
             <CommentForm
               onSubmit={handleCommentSubmit}
               onCancel={() => setIsWriting(false)}
