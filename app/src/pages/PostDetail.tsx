@@ -1,7 +1,7 @@
 // app/src/pages/PostDetail.tsx
 import Layout from '@/components/layouts/Layout'
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import CommentForm from '@/components/organisms/CommentForm'
 import BackToTopButton from '@/components/molecules/BackToTopButton'
 
@@ -12,36 +12,67 @@ type Post = {
   category: string
 }
 
+type Comment = {
+  id: number
+  user: string
+  content: string
+}
+
 const PostDetail = () => {
   const { id } = useParams<{ id: string }>()
+  const postId = Number(id)
+
   const [post, setPost] = useState<Post | null>(null)
-  const [comments, setComments] = useState<{ user: string; content: string }[]>([])
+  const [comments, setComments] = useState<Comment[]>([])
   const [isWriting, setIsWriting] = useState(false)
 
-  /* 投稿取得 */
+  /* ★ 展開中コメント ID を保持する state */
+  const [openCommentIds, setOpenCommentIds] = useState<number[]>([])
+
+  /* 投稿とコメントを読み込む */
   useEffect(() => {
-    const saved = localStorage.getItem('myblog-posts')
-    if (saved) {
-      const posts: Post[] = JSON.parse(saved)
-      setPost(posts.find((p) => p.id === Number(id)) ?? null)
+    const savedPosts = localStorage.getItem('myblog-posts')
+    if (savedPosts) {
+      const posts: Post[] = JSON.parse(savedPosts)
+      setPost(posts.find((p) => p.id === postId) ?? null)
     }
-  }, [id])
+
+    const storedComments = localStorage.getItem(`myblog-comments-${postId}`)
+    if (storedComments) {
+      setComments(JSON.parse(storedComments))
+    }
+  }, [postId])
 
   /* コメント送信 */
   const handleCommentSubmit = (user: string, content: string) => {
-    setComments([...comments, { user, content }])
+    const newComment: Comment = {
+      id: Date.now(),
+      user,
+      content,
+    }
+    const updated = [...comments, newComment]
+    setComments(updated)
+    localStorage.setItem(`myblog-comments-${postId}`, JSON.stringify(updated))
     setIsWriting(false)
+  }
+
+  /* ★ コメントの開閉トグル */
+  const toggleComment = (commentId: number) => {
+    setOpenCommentIds((prev) =>
+      prev.includes(commentId)
+        ? prev.filter((id) => id !== commentId)
+        : [...prev, commentId],
+    )
   }
 
   if (!post) return <div className="p-6">記事が見つかりませんでした。</div>
 
   return (
     <Layout>
-      {/* グレー背景大枠 */}
       <div className="bg-[#D9D9D9] max-w-5xl mx-auto p-8 rounded-xl">
-        {/* 2カラム：左=記事, 右=コメント一覧 */}
+        {/* 2カラム */}
         <div className="grid gap-8 md:grid-cols-3">
-          {/* 記事カード */}
+          {/* ===== 記事エリア ===== */}
           <article className="bg-white rounded-xl shadow p-6 md:col-span-2 space-y-6">
             <header>
               <h1 className="text-3xl font-bold mb-3">{post.title}</h1>
@@ -50,11 +81,10 @@ const PostDetail = () => {
               </span>
               <hr className="mt-4" />
             </header>
-
             <div className="leading-relaxed whitespace-pre-line">{post.content}</div>
           </article>
 
-          {/* コメント一覧カード */}
+          {/* ===== コメント一覧 ===== */}
           <section className="bg-white rounded-xl shadow p-6 space-y-4">
             <h2 className="text-xl font-semibold">コメント一覧</h2>
 
@@ -62,18 +92,32 @@ const PostDetail = () => {
               <p className="text-gray-600">コメントはまだありません。</p>
             ) : (
               <ul className="space-y-3">
-                {comments.map((c, i) => (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-                  <li key={i} className="bg-gray-50 p-3 rounded shadow-sm">
-                    <strong>{c.user}</strong>：{c.content}
-                  </li>
-                ))}
+                {comments.map((c) => {
+                  const isOpen = openCommentIds.includes(c.id)
+                  return (
+                    // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
+                    <li
+                      key={c.id}
+                      onClick={() => toggleComment(c.id)}
+                      className="cursor-pointer bg-gray-50 p-4 rounded shadow-sm hover:bg-gray-100 transition text-sm break-words"
+                    >
+                      <p className="font-semibold">{c.user}</p>
+                      <p className="text-gray-700 mt-1">
+                        {isOpen
+                          ? c.content
+                          : c.content.length > 30
+                          ? `${c.content.slice(0, 30)}...`
+                          : c.content}
+                      </p>
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </section>
         </div>
 
-        {/* 下部ボタン（枠の外） */}
+        {/* ===== ボタン列 ===== */}
         <div className="flex flex-col sm:flex-row gap-4 mt-8">
           {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
           <button
@@ -87,7 +131,7 @@ const PostDetail = () => {
           </div>
         </div>
 
-        {/* コメントフォーム */}
+        {/* ===== コメントフォーム ===== */}
         {isWriting && (
           <div className="mt-6 bg-white p-6 rounded-xl shadow">
             <CommentForm
