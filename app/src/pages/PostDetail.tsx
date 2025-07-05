@@ -71,9 +71,9 @@ const PostDetail = () => {
     <Layout>
       <div className="bg-[#D9D9D9] max-w-5xl mx-auto p-8 rounded-xl">
         {/* 2カラム */}
-        <div className="grid gap-8 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           {/* ===== 記事エリア ===== */}
-          <article className="bg-white rounded-xl shadow p-6 md:col-span-2 space-y-6">
+          <article className="w-full bg-white rounded-xl shadow p-6 md:col-span-2 space-y-6">
             <header>
               <h1 className="text-3xl font-bold mb-3">{post.title}</h1>
               <span className="inline-block text-sm font-semibold px-3 py-1 rounded bg-gray-200">
@@ -85,7 +85,7 @@ const PostDetail = () => {
           </article>
 
           {/* ===== コメント一覧 ===== */}
-          <section className="bg-white rounded-xl shadow p-6 space-y-4">
+          <section className="w-full bg-white rounded-xl shadow p-6 space-y-4">
             <h2 className="text-xl font-semibold">コメント一覧</h2>
 
             {comments.length === 0 ? (
