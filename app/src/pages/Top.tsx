@@ -17,6 +17,7 @@ const Top = () => {
   useEffect(() => {
     const saved = localStorage.getItem('myblog-posts')
     if (saved) {
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       const normalized = JSON.parse(saved).map((p: any) => ({
         ...p,
         id: Number(p.id),
