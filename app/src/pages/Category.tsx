@@ -207,7 +207,7 @@ const Category = () => {
           </div>
         )}
 
-        <div className="flex justify-center pt-6 mt-10">
+        <div className="flex justify-center pt-6">
           <BackToTopButton />
         </div>
       </div>
