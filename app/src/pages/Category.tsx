@@ -5,52 +5,75 @@ import BackToTopButton from '@/components/molecules/BackToTopButton'
 import './Category.css'
 
 type Post = { id: number; title: string; content: string; category: string }
+type Spider = { id: number; top: string; left: string; rotate: number }
+type Bubble = { id: number; top: string; left: string }
+
+const MAX_BUBBLES = 20
+const BUBBLE_INTERVAL = 500
 
 const Category = () => {
   const { category } = useParams<{ category: string }>()
   const [posts, setPosts] = useState<Post[]>([])
 
-  const labelMap = { hobby: 'しゅみ', tech: 'テック', other: 'その他' } as const
-  const bgMap = {
-    hobby: 'bg-[#E1C6F9]',
-    tech: 'bg-[#AFEBFF]',
-    other: 'bg-[#CCF5B1]',
-  } as const
+  /* ─────────  蜘蛛状態  ───────── */
+  const [spiders, setSpiders] = useState<Spider[]>([])
+  const [spiderVisible, setSpiderVisible] = useState(true)
 
-  // 🕷️ 蜘蛛状態管理
-  const [spiders, setSpiders] = useState<
-    { id: number; top: string; left: string; rotate: number }[]
-  >([])
-  const [visible, setVisible] = useState(true)
+  /* ─────────  泡状態  ───────── */
+  const [bubbles, setBubbles] = useState<Bubble[]>([])
 
+  /* 投稿・装飾初期化 */
   useEffect(() => {
-    // 投稿読み込み
+    // 投稿
     const saved = localStorage.getItem('myblog-posts')
     if (saved && category) {
       const all: Post[] = JSON.parse(saved)
       setPosts(all.filter((p) => p.category === category))
     }
 
-    // 蜘蛛初期化
+    // 蜘蛛（趣味）
     if (category === 'hobby') {
-      const newSpiders = [...Array(12)].map((_, i) => ({
+      const newSpiders: Spider[] = [...Array(12)].map((_, i) => ({
         id: i,
         top: `${Math.random() * 90}%`,
         left: `${Math.random() * 90}%`,
         rotate: Math.floor(Math.random() * 360),
       }))
       setSpiders(newSpiders)
-      setVisible(true)
+      setSpiderVisible(true)
     } else {
       setSpiders([])
     }
+
+    // 泡（Tech）初期クリア
+    if (category !== 'tech') {
+      setBubbles([])
+    }
   }, [category])
 
-  // 🕷️ 蜘蛛レイヤー
-  const renderSpiderLayer = () => {
-    if (category !== 'hobby' || !visible) return null
+  /* 泡を定期生成（Techのみ） */
+  useEffect(() => {
+    if (category !== 'tech') return
 
-    return (
+    const id = setInterval(() => {
+      setBubbles((prev) => {
+        if (prev.length >= MAX_BUBBLES) return prev
+
+        const newBubble: Bubble = {
+          id: Date.now() + Math.random(),
+          top: `${Math.random() * 90}%`,
+          left: `${Math.random() * 90}%`,
+        }
+        return [...prev, newBubble]
+      })
+    }, BUBBLE_INTERVAL)
+
+    return () => clearInterval(id)
+  }, [category])
+
+  /* 🕷 蜘蛛レイヤー */
+  const renderSpiderLayer = () =>
+    category === 'hobby' && spiderVisible && (
       <div className="absolute inset-0 z-0 pointer-events-none">
         {spiders.map((s) => (
           // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
@@ -69,17 +92,45 @@ const Category = () => {
             }
             onClick={() => {
               // biome-ignore lint/complexity/noForEach: <explanation>
-              spiders.forEach((spider) => {
-                const el = document.getElementById(`spider-${spider.id}`)
-                if (el) el.classList.add('spider-disappear')
+              spiders.forEach((sp) => {
+                document
+                  .getElementById(`spider-${sp.id}`)
+                  ?.classList.add('spider-disappear')
               })
-              setTimeout(() => setVisible(false), 600)
+              setTimeout(() => setSpiderVisible(false), 600)
             }}
           />
         ))}
       </div>
     )
-  }
+
+  /* 🫧 泡レイヤー */
+  const renderBubbleLayer = () =>
+    category === 'tech' && (
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        {bubbles.map((b) => (
+          <img
+            key={b.id}
+            id={`bubble-${b.id}`}
+            src="/patterns/bubbles.svg"
+            alt=""
+            className="bubble"
+            style={{ top: b.top, left: b.left }}
+            onAnimationEnd={() => {
+              setBubbles((prev) => prev.filter((x) => x.id !== b.id))
+            }}
+          />
+        ))}
+      </div>
+    )
+
+  /* ======  画面  ====== */
+  const labelMap = { hobby: 'しゅみ', tech: 'テック', other: 'その他' } as const
+  const bgMap = {
+    hobby: 'bg-[#E1C6F9]',
+    tech: 'bg-[#AFEBFF]',
+    other: 'bg-[#CCF5B1]',
+  } as const
 
   return (
     <section
@@ -87,8 +138,11 @@ const Category = () => {
         bgMap[category as keyof typeof bgMap] ?? 'bg-white'
       }`}
     >
+      {/* 背景レイヤー */}
       {renderSpiderLayer()}
+      {renderBubbleLayer()}
 
+      {/* コンテンツ */}
       <div className="relative z-10">
         <h1 className="text-2xl font-bold">
           {labelMap[category as keyof typeof labelMap] ?? category} カテゴリの記事
@@ -103,9 +157,7 @@ const Category = () => {
                 key={post.id}
                 className="bg-white p-4 rounded-xl shadow hover:shadow-md transition w-full"
               >
-                <h2 className="text-xl font-semibold break-words">
-                  {post.title}
-                </h2>
+                <h2 className="text-xl font-semibold break-words">{post.title}</h2>
                 <p className="text-gray-700 mt-2 break-words">
                   {post.content.slice(0, 100)}...
                 </p>
@@ -120,7 +172,6 @@ const Category = () => {
           </div>
         )}
 
-        {/* 🆙 修正ポイント */}
         <div className="flex justify-center pt-6 mt-10">
           <BackToTopButton />
         </div>
