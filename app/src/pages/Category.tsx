@@ -1,4 +1,5 @@
 // app/src/pages/Category.tsx
+// app/src/pages/Category.tsx
 import { useParams, Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import BackToTopButton from '@/components/molecules/BackToTopButton'
@@ -7,6 +8,7 @@ import './Category.css'
 type Post = { id: number; title: string; content: string; category: string }
 type Spider = { id: number; top: string; left: string; rotate: number }
 type Bubble = { id: number; top: string; left: string }
+type Snail = { id: number; top: string; left: string }
 
 const MAX_BUBBLES = 20
 const BUBBLE_INTERVAL = 500
@@ -15,23 +17,20 @@ const Category = () => {
   const { category } = useParams<{ category: string }>()
   const [posts, setPosts] = useState<Post[]>([])
 
-  /* ─────────  蜘蛛状態  ───────── */
   const [spiders, setSpiders] = useState<Spider[]>([])
   const [spiderVisible, setSpiderVisible] = useState(true)
 
-  /* ─────────  泡状態  ───────── */
   const [bubbles, setBubbles] = useState<Bubble[]>([])
+  const [snails, setSnails] = useState<Snail[]>([])
 
   /* 投稿・装飾初期化 */
   useEffect(() => {
-    // 投稿
     const saved = localStorage.getItem('myblog-posts')
     if (saved && category) {
       const all: Post[] = JSON.parse(saved)
       setPosts(all.filter((p) => p.category === category))
     }
 
-    // 蜘蛛（趣味）
     if (category === 'hobby') {
       const newSpiders: Spider[] = [...Array(12)].map((_, i) => ({
         id: i,
@@ -45,20 +44,18 @@ const Category = () => {
       setSpiders([])
     }
 
-    // 泡（Tech）初期クリア
     if (category !== 'tech') {
       setBubbles([])
     }
   }, [category])
 
-  /* 泡を定期生成（Techのみ） */
+  /* 泡の定期生成（tech） */
   useEffect(() => {
     if (category !== 'tech') return
 
     const id = setInterval(() => {
       setBubbles((prev) => {
         if (prev.length >= MAX_BUBBLES) return prev
-
         const newBubble: Bubble = {
           id: Date.now() + Math.random(),
           top: `${Math.random() * 90}%`,
@@ -71,7 +68,21 @@ const Category = () => {
     return () => clearInterval(id)
   }, [category])
 
-  /* 🕷 蜘蛛レイヤー */
+  /* カタツムリ生成（other） */
+  useEffect(() => {
+    if (category === 'other') {
+      const newSnails: Snail[] = [...Array(8)].map((_, i) => ({
+        id: i,
+        top: `${Math.random() * 80}%`,
+        left: `${Math.random() * 80}%`,
+      }))
+      setSnails(newSnails)
+    } else {
+      setSnails([])
+    }
+  }, [category])
+
+  /* 蜘蛛レイヤー */
   const renderSpiderLayer = () =>
     category === 'hobby' && spiderVisible && (
       <div className="absolute inset-0 z-0 pointer-events-none">
@@ -104,7 +115,7 @@ const Category = () => {
       </div>
     )
 
-  /* 🫧 泡レイヤー */
+  /* 泡レイヤー */
   const renderBubbleLayer = () =>
     category === 'tech' && (
       <div className="absolute inset-0 z-0 pointer-events-none">
@@ -124,7 +135,30 @@ const Category = () => {
       </div>
     )
 
-  /* ======  画面  ====== */
+  /* カタツムリレイヤー */
+  const renderSnailLayer = () =>
+    category === 'other' && (
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        {snails.map((s) => (
+          // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
+          <img
+            key={s.id}
+            id={`snail-${s.id}`}
+            src="/patterns/snail.svg"
+            alt=""
+            className="snail pointer-events-auto"
+            style={{ top: s.top, left: s.left }}
+            onMouseEnter={(e) => {
+              e.currentTarget.classList.add('snail-move')
+            }}
+            onClick={() => {
+              setSnails((prev) => prev.filter((x) => x.id !== s.id))
+            }}
+          />
+        ))}
+      </div>
+    )
+
   const labelMap = { hobby: 'しゅみ', tech: 'テック', other: 'その他' } as const
   const bgMap = {
     hobby: 'bg-[#E1C6F9]',
@@ -141,6 +175,7 @@ const Category = () => {
       {/* 背景レイヤー */}
       {renderSpiderLayer()}
       {renderBubbleLayer()}
+      {renderSnailLayer()}
 
       {/* コンテンツ */}
       <div className="relative z-10">
