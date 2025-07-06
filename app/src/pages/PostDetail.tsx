@@ -26,25 +26,25 @@ const PostDetail = () => {
   const [comments, setComments] = useState<Comment[]>([])
   const [isWriting, setIsWriting] = useState(false)
 
-  /* ★ 展開中コメント ID を保持する state */
   const [openCommentIds, setOpenCommentIds] = useState<number[]>([])
 
   /* 投稿とコメントを読み込む */
   useEffect(() => {
     const savedPosts = localStorage.getItem('myblog-posts')
     if (savedPosts) {
-      const posts: Post[] = JSON.parse(savedPosts)
+      const posts: Post[] = JSON.parse(savedPosts) as Post[]
       setPost(posts.find((p) => p.id === postId) ?? null)
     }
 
     const storedComments = localStorage.getItem(`myblog-comments-${postId}`)
     if (storedComments) {
-      setComments(JSON.parse(storedComments))
+      setComments(JSON.parse(storedComments) as Comment[])
     }
   }, [postId])
 
   /* コメント送信 */
   const handleCommentSubmit = (user: string, content: string) => {
+    if (!user.trim() || !content.trim()) return
     const newComment: Comment = {
       id: Date.now(),
       user,
@@ -56,12 +56,12 @@ const PostDetail = () => {
     setIsWriting(false)
   }
 
-  /* ★ コメントの開閉トグル */
+  /* コメントの開閉トグル */
   const toggleComment = (commentId: number) => {
     setOpenCommentIds((prev) =>
       prev.includes(commentId)
         ? prev.filter((id) => id !== commentId)
-        : [...prev, commentId],
+        : [...prev, commentId]
     )
   }
 
@@ -91,14 +91,17 @@ const PostDetail = () => {
             {comments.length === 0 ? (
               <p className="text-gray-600">コメントはまだありません。</p>
             ) : (
-              <ul className="space-y-3">
+              <div className="space-y-3">
                 {comments.map((c) => {
                   const isOpen = openCommentIds.includes(c.id)
                   return (
-                    // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
-                    <li
+                    <div
                       key={c.id}
+                      // biome-ignore lint/a11y/useSemanticElements: <explanation>
+                      role="button"
+                      tabIndex={0}
                       onClick={() => toggleComment(c.id)}
+                      onKeyDown={(e) => e.key === 'Enter' && toggleComment(c.id)}
                       className="cursor-pointer bg-gray-50 p-4 rounded shadow-sm hover:bg-gray-100 transition text-sm break-words"
                     >
                       <p className="font-semibold">{c.user}</p>
@@ -106,13 +109,13 @@ const PostDetail = () => {
                         {isOpen
                           ? c.content
                           : c.content.length > 30
-                          ? `${c.content.slice(0, 30)}...`
-                          : c.content}
+                            ? `${c.content.slice(0, 30)}...`
+                            : c.content}
                       </p>
-                    </li>
+                    </div>
                   )
                 })}
-              </ul>
+              </div>
             )}
           </section>
         </div>
