@@ -17,8 +17,7 @@ const Top = () => {
   useEffect(() => {
     const saved = localStorage.getItem('myblog-posts')
     if (saved) {
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-      const normalized = JSON.parse(saved).map((p: any) => ({
+      const normalized = (JSON.parse(saved) as Post[]).map((p) => ({
         ...p,
         id: Number(p.id),
       }))
@@ -30,12 +29,12 @@ const Top = () => {
 
   return (
     <Layout>
-      <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 space-y-8">
+      <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 space-y-8">
         {/* ヒーロー画像 */}
-        <div className="w-full overflow-hidden rounded-xl shadow-lg">
+        <div className="w-full overflow-hidden rounded-xl">
           <img
-            src="/top-image.jpg"
-            alt="トップ画像"
+            src="/top.svg"
+            alt="このブログのイメージを表すトップ画像"
             className="w-full h-auto object-cover"
           />
         </div>
@@ -53,7 +52,7 @@ const Top = () => {
             </h2>
 
             {latestArticles.length === 0 ? (
-              <p className="text-center">まだ投稿がありません。</p>
+              <p className="text-center text-gray-500">まだ投稿がありません。</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full">
                 {latestArticles.map((article) => (
