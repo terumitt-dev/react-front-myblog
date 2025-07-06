@@ -1,0 +1,19 @@
+/*app/src/pages/Category.css*/
+.spider {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  opacity: 0.7;
+  transform: rotate(var(--rotate));
+  transition: transform 0.3s ease;
+}
+
+.spider:hover {
+  transform: translateY(-20px) rotate(var(--rotate));
+}
+
+.spider-disappear {
+  transform: scale(0) rotate(var(--rotate)) translateY(-40px);
+  opacity: 0;
+  transition: transform 0.6s ease, opacity 0.6s ease;
+}

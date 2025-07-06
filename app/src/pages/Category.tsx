@@ -2,6 +2,7 @@
 import { useParams, Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import BackToTopButton from '@/components/molecules/BackToTopButton'
+import './Category.css'
 
 type Post = { id: number; title: string; content: string; category: string }
 
@@ -9,58 +10,70 @@ const Category = () => {
   const { category } = useParams<{ category: string }>()
   const [posts, setPosts] = useState<Post[]>([])
 
-  /* 投稿読み込み */
+  const labelMap = { hobby: 'しゅみ', tech: 'テック', other: 'その他' } as const
+  const bgMap = {
+    hobby: 'bg-[#E1C6F9]',
+    tech: 'bg-[#AFEBFF]',
+    other: 'bg-[#CCF5B1]',
+  } as const
+
+  // 🕷️ 蜘蛛状態管理
+  const [spiders, setSpiders] = useState<
+    { id: number; top: string; left: string; rotate: number }[]
+  >([])
+  const [visible, setVisible] = useState(true)
+
   useEffect(() => {
+    // 投稿読み込み
     const saved = localStorage.getItem('myblog-posts')
     if (saved && category) {
       const all: Post[] = JSON.parse(saved)
       setPosts(all.filter((p) => p.category === category))
     }
+
+    // 蜘蛛初期化
+    if (category === 'hobby') {
+      const newSpiders = [...Array(12)].map((_, i) => ({
+        id: i,
+        top: `${Math.random() * 90}%`,
+        left: `${Math.random() * 90}%`,
+        rotate: Math.floor(Math.random() * 360),
+      }))
+      setSpiders(newSpiders)
+      setVisible(true)
+    } else {
+      setSpiders([])
+    }
   }, [category])
 
-  /* ラベル・背景色 */
-  const labelMap = { hobby: 'しゅみ', tech: 'テック', other: 'その他' } as const
-  const bgMap   = { hobby: 'bg-[#E1C6F9]', tech: 'bg-[#AFEBFF]', other: 'bg-[#CCF5B1]' } as const
-
-  /* === パターン設定（画像・数・クラス） === */
-  const patternConfig: Record<
-    string,
-    { src: string; count: number; className: string }
-  > = {
-    hobby: {
-      src: '/patterns/spider.svg',
-      count: 12,
-      className: 'w-10 h-10 animate-spider-move',
-    },
-    tech: {
-      src: '/patterns/bubbles.svg',
-      count: 18,
-      className: 'w-8 h-8 animate-bubble-pop',
-    },
-    other: {
-      src: '/patterns/snail.svg',
-      count: 8,
-      className: 'w-12 h-12 animate-snail-crawl',
-    },
-  }
-
-  /* 背景レイヤーを生成 */
-  const renderPatternLayer = () => {
-    const conf = patternConfig[category ?? '']
-    if (!conf) return null
+  // 🕷️ 蜘蛛レイヤー
+  const renderSpiderLayer = () => {
+    if (category !== 'hobby' || !visible) return null
 
     return (
       <div className="absolute inset-0 z-0 pointer-events-none">
-        {[...Array(conf.count)].map((_, i) => (
+        {spiders.map((s) => (
+          // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
           <img
-            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-            key={i}
-            src={conf.src}
+            key={s.id}
+            id={`spider-${s.id}`}
+            src="/patterns/spider.svg"
             alt=""
-            className={`absolute opacity-70 ${conf.className}`}
-            style={{
-              top: `${Math.random() * 90}%`,
-              left: `${Math.random() * 90}%`,
+            className="spider pointer-events-auto"
+            style={
+              {
+                top: s.top,
+                left: s.left,
+                '--rotate': `${s.rotate}deg`,
+              } as React.CSSProperties
+            }
+            onClick={() => {
+              // biome-ignore lint/complexity/noForEach: <explanation>
+              spiders.forEach((spider) => {
+                const el = document.getElementById(`spider-${spider.id}`)
+                if (el) el.classList.add('spider-disappear')
+              })
+              setTimeout(() => setVisible(false), 600)
             }}
           />
         ))}
@@ -70,14 +83,12 @@ const Category = () => {
 
   return (
     <section
-      className={`relative group min-h-screen p-6 space-y-6 overflow-hidden ${
+      className={`relative min-h-screen p-6 space-y-6 overflow-hidden ${
         bgMap[category as keyof typeof bgMap] ?? 'bg-white'
       }`}
     >
-      {/* === 2層目：模様レイヤー === */}
-      {renderPatternLayer()}
+      {renderSpiderLayer()}
 
-      {/* === 3層目：コンテンツ === */}
       <div className="relative z-10">
         <h1 className="text-2xl font-bold">
           {labelMap[category as keyof typeof labelMap] ?? category} カテゴリの記事
@@ -109,7 +120,8 @@ const Category = () => {
           </div>
         )}
 
-        <div className="flex justify-center pt-6">
+        {/* 🆙 修正ポイント */}
+        <div className="flex justify-center pt-6 mt-10">
           <BackToTopButton />
         </div>
       </div>
