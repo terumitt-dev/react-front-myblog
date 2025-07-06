@@ -23,8 +23,8 @@ const Admin = () => {
   const [posts, setPosts] = useState<Post[]>([])
   const [editingPostId, setEditingPostId] = useState<number | null>(null)
   const [error, setError] = useState('')
+  const [openPostIds, setOpenPostIds] = useState<number[]>([])
 
-  // 投稿データ読み込み
   useEffect(() => {
     const saved = localStorage.getItem('myblog-posts')
     if (saved) {
@@ -92,14 +92,18 @@ const Admin = () => {
     navigate('/login')
   }
 
+  const togglePost = (id: number) => {
+    setOpenPostIds((prev) =>
+      prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id]
+    )
+  }
+
   return (
     <Layout>
       <div className="p-6 space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">投稿管理（Admin）</h1>
-          <div>
-            <LogoutButton onClick={handleLogout} />
-          </div>
+          <LogoutButton onClick={handleLogout} />
         </div>
 
         {/* 投稿フォーム */}
@@ -130,8 +134,8 @@ const Admin = () => {
             </select>
 
             <div className="flex gap-4">
-              {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
               <button
+                type="button"
                 onClick={handleSubmit}
                 className={`px-4 py-2 rounded text-white ${editingPostId !== null ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}
               >
@@ -139,10 +143,10 @@ const Admin = () => {
               </button>
 
               {editingPostId !== null && (
-                // biome-ignore lint/a11y/useButtonType: <explanation>
                 <button
-                onClick={handleCancelEdit}
-                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition"
+                  type="button"
+                  onClick={handleCancelEdit}
+                  className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition"
                 >
                   キャンセル
                 </button>
@@ -153,49 +157,70 @@ const Admin = () => {
 
         {/* 投稿一覧 */}
         <div className="bg-gray-200 rounded-xl p-6">
-          <h2 className="text-xl font-semibold">現在の投稿一覧</h2>
+          <h2 className="text-xl font-semibold mb-4">現在の投稿一覧</h2>
           {posts.length === 0 ? (
             <p>まだ投稿がありません。</p>
           ) : (
-            <ul className="space-y-2 mt-2">
-              {posts.map((post) => (
-                <li key={post.id} className="border p-3 rounded space-y-1 bg-white">
-                  <div>
-                    <strong>{post.title}</strong>（{post.category}）
-                    <div className="text-xs text-gray-500">
-                      投稿日: {new Date(post.createdAt).toLocaleString()}
+            <div className="space-y-4">
+              {posts.map((post) => {
+                const isOpen = openPostIds.includes(post.id)
+                return (
+                  <div key={post.id}>
+                    <button
+                      type="button"
+                      onClick={() => togglePost(post.id)}
+                      className="w-full text-left bg-white rounded-xl p-4 shadow hover:bg-gray-100 transition"
+                    >
+                      <div className="space-y-1">
+                        <strong className="block break-words text-lg">{post.title}</strong>
+                        <span className="text-sm text-gray-600">カテゴリ: {post.category}</span>
+                        <div className="text-xs text-gray-500">
+                          投稿日: {new Date(post.createdAt).toLocaleString()}
+                        </div>
+                        <div className="text-gray-700 break-words whitespace-pre-line mt-2">
+                          {isOpen
+                            ? post.content
+                            : post.content.length > 100
+                              ? `${post.content.slice(0, 100)}...`
+                              : post.content}
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
+                    <div
+                      className="flex gap-4 mt-2 px-3"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <a
+                        href={`/posts/${post.id}`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        記事を確認 →
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => handleEdit(post)}
+                        className="text-green-600 hover:underline"
+                      >
+                        編集
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(post.id)}
+                        className="text-red-600 hover:underline"
+                      >
+                        削除
+                      </button>
                     </div>
                   </div>
-                  <div className="text-gray-700">{post.content}</div>
-                  <div className="flex gap-4 mt-2">
-                    <a
-                      href={`/posts/${post.id}`}
-                      className="text-blue-600 hover:underline"
-                    >
-                      記事を確認 →
-                    </a>
-                    {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
-                    <button
-                      onClick={() => handleEdit(post)}
-                      className="text-green-600 hover:underline"
-                    >
-                      編集
-                    </button>
-                    {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
-                    <button
-                      onClick={() => handleDelete(post.id)}
-                      className="text-red-600 hover:underline"
-                    >
-                      削除
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                )
+              })}
+            </div>
           )}
         </div>
       </div>
-    </Layout> 
+    </Layout>
   )
 }
 
