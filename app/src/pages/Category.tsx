@@ -1,5 +1,4 @@
 // app/src/pages/Category.tsx
-// app/src/pages/Category.tsx
 import { useParams, Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import BackToTopButton from '@/components/molecules/BackToTopButton'
