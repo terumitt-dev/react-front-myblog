@@ -18,11 +18,12 @@ const Category = () => {
 
   const [spiders, setSpiders] = useState<Spider[]>([])
   const [spiderVisible, setSpiderVisible] = useState(true)
+  const [disappearingIds, setDisappearingIds] = useState<number[]>([])
 
   const [bubbles, setBubbles] = useState<Bubble[]>([])
   const [snails, setSnails] = useState<Snail[]>([])
 
-  /* 投稿・装飾初期化 */
+  // 投稿とエフェクト初期化
   useEffect(() => {
     const saved = localStorage.getItem('myblog-posts')
     if (saved && category) {
@@ -46,9 +47,28 @@ const Category = () => {
     if (category !== 'tech') {
       setBubbles([])
     }
+
+    if (category === 'other') {
+      const newSnails: Snail[] = [...Array(8)].map((_, i) => ({
+        id: i,
+        top: `${Math.random() * 80}%`,
+        left: `${Math.random() * 80}%`,
+      }))
+      setSnails(newSnails)
+    } else {
+      setSnails([])
+    }
   }, [category])
 
-  /* 泡の定期生成（tech） */
+  const handleSpiderClick = () => {
+    setDisappearingIds(spiders.map((sp) => sp.id))
+    setTimeout(() => {
+      setSpiderVisible(false)
+      setDisappearingIds([])
+    }, 600)
+  }
+
+  // 泡の自動生成（techカテゴリ）
   useEffect(() => {
     if (category !== 'tech') return
 
@@ -67,21 +87,7 @@ const Category = () => {
     return () => clearInterval(id)
   }, [category])
 
-  /* カタツムリ生成（other） */
-  useEffect(() => {
-    if (category === 'other') {
-      const newSnails: Snail[] = [...Array(8)].map((_, i) => ({
-        id: i,
-        top: `${Math.random() * 80}%`,
-        left: `${Math.random() * 80}%`,
-      }))
-      setSnails(newSnails)
-    } else {
-      setSnails([])
-    }
-  }, [category])
-
-  /* 蜘蛛レイヤー */
+  // 蜘蛛レイヤー
   const renderSpiderLayer = () =>
     category === 'hobby' && spiderVisible && (
       <div className="absolute inset-0 z-0 pointer-events-none">
@@ -89,10 +95,11 @@ const Category = () => {
           // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
           <img
             key={s.id}
-            id={`spider-${s.id}`}
             src="/patterns/spider.svg"
             alt=""
-            className="spider pointer-events-auto"
+            className={`spider pointer-events-auto ${
+              disappearingIds.includes(s.id) ? 'spider-disappear' : ''
+            }`}
             style={
               {
                 top: s.top,
@@ -100,28 +107,19 @@ const Category = () => {
                 '--rotate': `${s.rotate}deg`,
               } as React.CSSProperties
             }
-            onClick={() => {
-              // biome-ignore lint/complexity/noForEach: <explanation>
-              spiders.forEach((sp) => {
-                document
-                  .getElementById(`spider-${sp.id}`)
-                  ?.classList.add('spider-disappear')
-              })
-              setTimeout(() => setSpiderVisible(false), 600)
-            }}
+            onClick={handleSpiderClick}
           />
         ))}
       </div>
     )
 
-  /* 泡レイヤー */
+  // 泡レイヤー
   const renderBubbleLayer = () =>
     category === 'tech' && (
       <div className="absolute inset-0 z-0 pointer-events-none">
         {bubbles.map((b) => (
           <img
             key={b.id}
-            id={`bubble-${b.id}`}
             src="/patterns/bubbles.svg"
             alt=""
             className="bubble"
@@ -134,7 +132,7 @@ const Category = () => {
       </div>
     )
 
-  /* カタツムリレイヤー */
+  // カタツムリレイヤー
   const renderSnailLayer = () =>
     category === 'other' && (
       <div className="absolute inset-0 z-0 pointer-events-none">
@@ -142,7 +140,6 @@ const Category = () => {
           // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
           <img
             key={s.id}
-            id={`snail-${s.id}`}
             src="/patterns/snail.svg"
             alt=""
             className="snail pointer-events-auto"
