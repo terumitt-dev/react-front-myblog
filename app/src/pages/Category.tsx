@@ -96,7 +96,7 @@ const Category = () => {
           <img
             key={s.id}
             src="/patterns/spider.svg"
-            alt=""
+            alt="Spider"
             className={`spider pointer-events-auto ${
               disappearingIds.includes(s.id) ? 'spider-disappear' : ''
             }`}
@@ -138,6 +138,7 @@ const Category = () => {
       <div className="absolute inset-0 z-0 pointer-events-none">
         {snails.map((s) => (
           // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
+          // biome-ignore lint/a11y/noStaticElementInteractions: <explanation>
           <img
             key={s.id}
             src="/patterns/snail.svg"
