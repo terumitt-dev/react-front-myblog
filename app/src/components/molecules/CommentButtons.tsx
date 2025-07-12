@@ -9,8 +9,8 @@ type Props = {
 const CommentButtons = ({ onSubmit, onCancel }: Props) => {
   return (
     <div className="flex gap-2 justify-end">
-      <Button label="コメントを確定する" onClick={onSubmit} variant="primary" />
-      <Button label="コメントしない" onClick={onCancel} variant="secondary" />
+      <Button label="コメントを確定する" onClick={onSubmit} variant="primary" className="flex-1"/>
+      <Button label="コメントしない" onClick={onCancel} variant="secondary"/>
     </div>
   )
 }
