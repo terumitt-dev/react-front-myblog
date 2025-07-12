@@ -4,7 +4,7 @@ type Props = {
   label: string;
   onClick?: () => void;
   variant?: 'primary' | 'secondary';
-  type?: 'button' | 'submit' | 'reset'; // ← 明示可能
+  type?: 'button' | 'submit' | 'reset' | 'danger'; // ← 明示可能
 };
 
 const Button = ({ label, onClick, variant = 'primary', type = 'button' }: Props) => {
@@ -12,6 +12,7 @@ const Button = ({ label, onClick, variant = 'primary', type = 'button' }: Props)
   const variants = {
     primary: 'bg-blue-600 hover:bg-blue-700',
     secondary: 'bg-gray-500 hover:bg-gray-600',
+    danger: 'bg-red-600 hover:bg-red-700',
   };
 
   return (
