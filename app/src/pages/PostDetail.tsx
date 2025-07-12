@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import CommentForm from '@/components/organisms/CommentForm'
 import BackToTopButton from '@/components/molecules/BackToTopButton'
+import CommentStartButton from '@/components/molecules/CommentStartButton'
 
 type Post = {
   id: number
@@ -25,20 +26,19 @@ const PostDetail = () => {
   const [post, setPost] = useState<Post | null>(null)
   const [comments, setComments] = useState<Comment[]>([])
   const [isWriting, setIsWriting] = useState(false)
-
   const [openCommentIds, setOpenCommentIds] = useState<number[]>([])
 
   /* 投稿とコメントを読み込む */
   useEffect(() => {
     const savedPosts = localStorage.getItem('myblog-posts')
     if (savedPosts) {
-      const posts: Post[] = JSON.parse(savedPosts) as Post[]
+      const posts: Post[] = JSON.parse(savedPosts)
       setPost(posts.find((p) => p.id === postId) ?? null)
     }
 
     const storedComments = localStorage.getItem(`myblog-comments-${postId}`)
     if (storedComments) {
-      setComments(JSON.parse(storedComments) as Comment[])
+      setComments(JSON.parse(storedComments))
     }
   }, [postId])
 
@@ -95,9 +95,9 @@ const PostDetail = () => {
                 {comments.map((c) => {
                   const isOpen = openCommentIds.includes(c.id)
                   return (
+                    // biome-ignore lint/a11y/useSemanticElements: <explanation>
                     <div
                       key={c.id}
-                      // biome-ignore lint/a11y/useSemanticElements: <explanation>
                       role="button"
                       tabIndex={0}
                       onClick={() => toggleComment(c.id)}
@@ -122,13 +122,7 @@ const PostDetail = () => {
 
         {/* ===== ボタン列 ===== */}
         <div className="flex flex-col sm:flex-row gap-4 mt-8">
-          {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
-          <button
-            onClick={() => setIsWriting(true)}
-            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-          >
-            コメントする
-          </button>
+          <CommentStartButton onClick={() => setIsWriting(true)} />
           <div className="flex-1 flex justify-center">
             <BackToTopButton />
           </div>
