@@ -4,6 +4,7 @@ import Button from '@/components/atoms/Button'
 type Props = {
   onSubmit: () => void
   onCancel: () => void
+  className?: string
 }
 
 const CommentButtons = ({ onSubmit, onCancel }: Props) => {
