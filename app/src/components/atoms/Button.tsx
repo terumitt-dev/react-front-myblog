@@ -1,4 +1,4 @@
-// app/src/components/atoms/Button.tsx
+// src/components/atoms/Button.tsx
 type Props = {
   label: string;
   onClick?: () => void;
@@ -14,7 +14,7 @@ const Button = ({
   type = 'button',
   className = '',
 }: Props) => {
-  const base = 'px-4 py-2 rounded text-white transition';
+  const base = 'block w-auto px-4 py-2 rounded text-white transition';
   const variants = {
     primary: 'bg-blue-600 hover:bg-blue-700',
     secondary: 'bg-gray-500 hover:bg-gray-600',

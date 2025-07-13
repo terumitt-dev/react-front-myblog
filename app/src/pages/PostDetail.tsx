@@ -121,14 +121,12 @@ const PostDetail = () => {
         </div>
 
         {/* ===== ボタン列 ===== */}
-{/*        <div className="flex flex-col sm:flex-row gap-4 mt-8">
-          <CommentStartButton onClick={() => setIsWriting(true)} />
-          <BackToTopButton />
-        </div>*/}
-
         <div className="flex flex-col sm:flex-row gap-4 mt-8">
-          <CommentStartButton onClick={() => setIsWriting(true)} />
-          <BackToTopButton className="flex-1 flex justify-center" />
+          <CommentStartButton
+            onClick={() => setIsWriting(true)}
+            className="w-full sm:basis-[60%]"
+          />
+          <BackToTopButton className="w-full sm:basis-[40%]" />
         </div>
 
         {/* ===== コメントフォーム ===== */}
