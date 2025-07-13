@@ -1,6 +1,7 @@
 // app/src/context/AuthContext.tsx
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useState } from 'react'
 
+// 型定義
 type AuthContextType = {
   isLoggedIn: boolean
   login: (email: string, password: string) => boolean
@@ -10,16 +11,16 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-
-  useEffect(() => {
-    const stored = localStorage.getItem('myblog-auth')
-    setIsLoggedIn(stored === 'true')
-  }, [])
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    localStorage.getItem('myblog-auth') === 'true'
+  )
 
   const login = (email: string, password: string) => {
-    // ← Deviseに置き換える想定
-    if (email === 'admin@example.com' && password === 'password') {
+    // 開発用仮認証（本番ではDevise APIと通信）
+    const devEmail = import.meta.env.VITE_DEV_ADMIN_EMAIL
+    const devPassword = import.meta.env.VITE_DEV_ADMIN_PASSWORD
+
+    if (email === devEmail && password === devPassword) {
       setIsLoggedIn(true)
       localStorage.setItem('myblog-auth', 'true')
       return true
