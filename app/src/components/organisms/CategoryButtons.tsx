@@ -24,8 +24,8 @@ const CategoryButtons = ({ fullWidth = false }: Props) => {
   return (
     <div className={wrapperClass}>
       {/* しゅみ */}
-      {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
       <button
+        type="button"
         onClick={() => navigate('/category/hobby')}
         className={`${btnBase} ${grow} bg-[#E1C6F9]`}
       >
@@ -33,8 +33,8 @@ const CategoryButtons = ({ fullWidth = false }: Props) => {
       </button>
 
       {/* テック */}
-      {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
       <button
+        type="button"
         onClick={() => navigate('/category/tech')}
         className={`${btnBase} ${grow} bg-[#AFEBFF]`}
       >
@@ -42,8 +42,8 @@ const CategoryButtons = ({ fullWidth = false }: Props) => {
       </button>
 
       {/* その他 */}
-      {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
       <button
+        type="button"
         onClick={() => navigate('/category/other')}
         className={`${btnBase} ${grow} bg-[#CCF5B1]`}
       >
