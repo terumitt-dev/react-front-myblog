@@ -24,12 +24,17 @@ const Category = () => {
   const [snails, setSnails] = useState<Snail[]>([])
 
   // 投稿とエフェクト初期化
-  useEffect(() => {
-    const saved = localStorage.getItem('myblog-posts')
-    if (saved && category) {
-      const all: Post[] = JSON.parse(saved)
-      setPosts(all.filter((p) => p.category === category))
-    }
+    useEffect(() => {
+      const saved = localStorage.getItem('myblog-posts')
+      if (saved) {
+        try {
+          const all: Post[] = JSON.parse(saved)
+          setPosts(all.filter((p) => p.category === category))
+        } catch (e) {
+          console.error('JSON parse error:', e)
+          localStorage.removeItem('myblog-posts')
+        }
+      }
 
     if (category === 'hobby') {
       const newSpiders: Spider[] = [...Array(12)].map((_, i) => ({
