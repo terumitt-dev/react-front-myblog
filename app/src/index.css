@@ -3,9 +3,9 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 任意のグローバルスタイルを追記 */
+/* グローバルスタイル */
 body {
-  @apply bg-gray-50 text-gray-900;
+  @apply m-0 bg-gray-50 text-gray-900;
 }
 
 a {
