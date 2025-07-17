@@ -1,7 +1,20 @@
+// import { defineConfig } from 'vite';
+// import react from '@vitejs/plugin-react';
+// // biome-ignore lint/style/useNodejsImportProtocol: <explanation>
+// import path from 'path'; // ← 追加！
+
+// export default defineConfig({
+//   plugins: [react()],
+//   resolve: {
+//     alias: {
+//       '@': path.resolve(__dirname, './src'),
+//     },
+//   },
+// });
+
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-// biome-ignore lint/style/useNodejsImportProtocol: <explanation>
-import path from 'path'; // ← 追加！
+import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
@@ -9,5 +22,9 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+  },
+  server: {
+    host: '0.0.0.0',
+    port: 5173,
   },
 });
