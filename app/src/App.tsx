@@ -1,4 +1,4 @@
-// app/src/router/App.tsx
+// app/src/App.tsx
 import { BrowserRouter } from 'react-router-dom'
 import Router from '@/router/Router'
 import { AuthProvider } from '@/context/AuthContext'
