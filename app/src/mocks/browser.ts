@@ -2,5 +2,5 @@
 import { setupWorker } from 'msw'
 import { handlers } from './handlers'
 
-// ブラウザ用にMSWをセットアップ
+// MSWのService Workerをセットアップ
 export const worker = setupWorker(...handlers)
