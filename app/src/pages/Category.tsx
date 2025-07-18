@@ -1,6 +1,6 @@
 // app/src/pages/Category.tsx
 import { useParams, Link } from 'react-router-dom'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import BackToTopButton from '@/components/molecules/BackToTopButton'
 import './Category.css'
 
@@ -65,31 +65,13 @@ const Category = () => {
     }
   }, [category])
 
-  const timerRef = useRef<NodeJS.Timeout | null>(null)
-
-  // const handleSpiderClick = () => {
-  //   setDisappearingIds(spiders.map((sp) => sp.id))
-  //   setTimeout(() => {
-  //     setSpiderVisible(false)
-  //     setDisappearingIds([])
-  //   }, 600)
-  // }
-
   const handleSpiderClick = () => {
-  setDisappearingIds(spiders.map((sp) => sp.id))
-  timerRef.current = setTimeout(() => {
-    setSpiderVisible(false)
-    setDisappearingIds([])
-  }, 600)
-}
-
-useEffect(() => {
-  return () => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current)
-    }
+    setDisappearingIds(spiders.map((sp) => sp.id))
+    setTimeout(() => {
+      setSpiderVisible(false)
+      setDisappearingIds([])
+    }, 600)
   }
-}, [])
 
   // 泡の自動生成（techカテゴリ）
   useEffect(() => {
