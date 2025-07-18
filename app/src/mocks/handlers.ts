@@ -1,17 +1,12 @@
 // app/src/mocks/handlers.ts
-import { rest } from 'msw'
+/** biome-ignore-all lint/correctness/noUnusedFunctionParameters: <explanation> */
+import { rest } from 'msw' // ✅ 修正！
 
 export const handlers = [
-  rest.post('/api/login', async (req, res, ctx) => {
-    const { email, password } = await req.json()
-
-    if (email === 'admin@example.com' && password === 'password') {
-      return res(
-        ctx.status(200),
-        ctx.json({ user: { name: 'admin', token: 'mock-token' } })
-      )
-    } else {
-      return res(ctx.status(401), ctx.json({ error: 'Invalid credentials' }))
-    }
-  })
+  rest.get('/api/posts', (req, res, ctx) => {
+    return res(
+      ctx.status(200),
+      ctx.json([{ id: 1, title: 'Mock Post', body: 'This is a mock' }])
+    )
+  }),
 ]

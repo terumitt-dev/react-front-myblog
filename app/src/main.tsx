@@ -4,23 +4,24 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
 
-const prepare = async () => {
+async function prepare() {
   if (import.meta.env.DEV) {
     const { worker } = await import('./mocks/browser')
+    console.log('🟡 MSW importing...')
     await worker.start()
-  }
-
-  const root = document.getElementById('root')
-  if (root) {
-    ReactDOM.createRoot(root).render(
-      <React.StrictMode>
-        <App />
-      </React.StrictMode>
-    )
+    console.log('🟢 MSW started')
   }
 }
 
-prepare()
+prepare().then(() => {
+  // biome-ignore lint/style/noNonNullAssertion: <explanation>
+  const root = ReactDOM.createRoot(document.getElementById('root')!)
+  root.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  )
+})
 
 // // app/src/main.tsx
 // import React from 'react'
