@@ -20,6 +20,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const devEmail = import.meta.env.VITE_DEV_ADMIN_EMAIL
     const devPassword = import.meta.env.VITE_DEV_ADMIN_PASSWORD
 
+    if (!devEmail || !devPassword) {
+      console.error('環境変数 VITE_DEV_ADMIN_EMAIL または VITE_DEV_ADMIN_PASSWORD が未定義です')
+      alert('ログイン設定が不完全です。管理者に連絡してください。')
+      return false
+    }
+
     if (email === devEmail && password === devPassword) {
       setIsLoggedIn(true)
       localStorage.setItem('myblog-auth', 'true')

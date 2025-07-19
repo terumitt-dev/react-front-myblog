@@ -1,12 +1,18 @@
 // app/src/main.tsx
-import './index.css';
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App.tsx';
+/** biome-ignore-all lint/style/noNonNullAssertion: <explanation> */
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App'
+import './index.css'
+import { ThemeProvider } from './context/ThemeContext'
+import { AuthProvider } from './context/AuthContext'
 
-// biome-ignore lint/style/noNonNullAssertion: <explanation>
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <AuthProvider>
+      <ThemeProvider>
+        <App />
+      </ThemeProvider>
+    </AuthProvider>
   </React.StrictMode>
-);
+)
