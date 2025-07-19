@@ -94,29 +94,6 @@ const Category = () => {
   }, [category])
 
   // 蜘蛛レイヤー
-  // const renderSpiderLayer = () =>
-  //   category === 'hobby' && spiderVisible && (
-  //     <div className="absolute inset-0 z-0 pointer-events-none">
-  //       {spiders.map((s) => (
-  //         <img
-  //           key={s.id}
-  //           src="/patterns/spider.svg"
-  //           alt="Spider"
-  //           className="spider cursor-pointer"
-  //           // biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: <explanation>
-  //           role="button"
-  //           tabIndex={0}
-  //           onClick={() => handleClick(s.id)}
-  //           onKeyDown={(e) => {
-  //             if (e.key === 'Enter' || e.key === ' ') {
-  //               handleClick(s.id)
-  //             }
-  //           }}
-  //         />
-  //       ))}
-  //     </div>
-  //   )
-
     const handleClick = (id: number) => {
       setDisappearingIds((prev) => [...prev, id])
       setTimeout(() => {
@@ -132,6 +109,7 @@ const Category = () => {
               key={s.id}
               src="/patterns/spider.svg"
               alt="Spider"
+              // biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: <explanation>
               role="button"
               tabIndex={0}
               onClick={() => handleClick(s.id)}
