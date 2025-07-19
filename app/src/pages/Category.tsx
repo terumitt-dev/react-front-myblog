@@ -94,28 +94,65 @@ const Category = () => {
   }, [category])
 
   // 蜘蛛レイヤー
-  const renderSpiderLayer = () =>
-    category === 'hobby' && spiderVisible && (
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        {spiders.map((s) => (
-          <img
-            key={s.id}
-            src="/patterns/spider.svg"
-            alt="Spider"
-            className="spider cursor-pointer"
-            // biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: <explanation>
-            role="button"
-            tabIndex={0}
-            onClick={() => handleClick(s.id)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                handleClick(s.id)
-              }
-            }}
-          />
-        ))}
-      </div>
-    )
+  // const renderSpiderLayer = () =>
+  //   category === 'hobby' && spiderVisible && (
+  //     <div className="absolute inset-0 z-0 pointer-events-none">
+  //       {spiders.map((s) => (
+  //         <img
+  //           key={s.id}
+  //           src="/patterns/spider.svg"
+  //           alt="Spider"
+  //           className="spider cursor-pointer"
+  //           // biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: <explanation>
+  //           role="button"
+  //           tabIndex={0}
+  //           onClick={() => handleClick(s.id)}
+  //           onKeyDown={(e) => {
+  //             if (e.key === 'Enter' || e.key === ' ') {
+  //               handleClick(s.id)
+  //             }
+  //           }}
+  //         />
+  //       ))}
+  //     </div>
+  //   )
+
+    const handleClick = (id: number) => {
+      setDisappearingIds((prev) => [...prev, id])
+      setTimeout(() => {
+        setSpiders((prev) => prev.filter((sp) => sp.id !== id))
+      }, 600)
+    }
+
+    const renderSpiderLayer = () =>
+      category === 'hobby' && spiderVisible && (
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          {spiders.map((s) => (
+            <img
+              key={s.id}
+              src="/patterns/spider.svg"
+              alt="Spider"
+              role="button"
+              tabIndex={0}
+              onClick={() => handleClick(s.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  handleClick(s.id)
+                }
+              }}
+              className={`spider pointer-events-auto ${
+                disappearingIds.includes(s.id) ? 'spider-disappear' : ''
+              }`}
+              style={{
+                top: s.top,
+                left: s.left,
+                position: 'absolute',
+                '--rotate': `${s.rotate}deg`,
+              } as React.CSSProperties}
+            />
+          ))}
+        </div>
+      )
 
   // 泡レイヤー
   const renderBubbleLayer = () =>
