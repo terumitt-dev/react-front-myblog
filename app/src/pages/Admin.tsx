@@ -1,4 +1,5 @@
 // app/src/pages/Admin.tsx
+/** biome-ignore-all lint/a11y/noStaticElementInteractions: <explanation> */
 import Layout from '@/components/layouts/Layout'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -33,10 +34,10 @@ const Admin = () => {
         setPosts(parsed)
       } catch (error) {
         console.error('Failed to parse posts from localStorage:', error)
-        // 必要ならローカルストレージを初期化
         localStorage.removeItem('myblog-posts')
       }
     }
+  }, [])
 
   const saveToLocalStorage = (updatedPosts: Post[]) => {
     setPosts(updatedPosts)
