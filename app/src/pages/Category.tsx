@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import BackToTopButton from '@/components/molecules/BackToTopButton'
 import './Category.css'
+import Header from '@/components/organisms/Header'
 
 type Post = { id: number; title: string; content: string; category: string }
 type Spider = { id: number; top: string; left: string; rotate: number }
@@ -174,6 +175,7 @@ const Category = () => {
         bgMap[category as keyof typeof bgMap] ?? 'bg-white'
       }`}
     >
+    <Header />
       {/* 背景レイヤー */}
       {renderSpiderLayer()}
       {renderBubbleLayer()}
