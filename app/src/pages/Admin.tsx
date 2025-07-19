@@ -28,9 +28,15 @@ const Admin = () => {
   useEffect(() => {
     const saved = localStorage.getItem('myblog-posts')
     if (saved) {
-      setPosts(JSON.parse(saved))
+      try {
+        const parsed = JSON.parse(saved)
+        setPosts(parsed)
+      } catch (error) {
+        console.error('Failed to parse posts from localStorage:', error)
+        // 必要ならローカルストレージを初期化
+        localStorage.removeItem('myblog-posts')
+      }
     }
-  }, [])
 
   const saveToLocalStorage = (updatedPosts: Post[]) => {
     setPosts(updatedPosts)

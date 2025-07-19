@@ -98,22 +98,20 @@ const Category = () => {
     category === 'hobby' && spiderVisible && (
       <div className="absolute inset-0 z-0 pointer-events-none">
         {spiders.map((s) => (
-          // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
           <img
             key={s.id}
             src="/patterns/spider.svg"
             alt="Spider"
-            className={`spider pointer-events-auto ${
-              disappearingIds.includes(s.id) ? 'spider-disappear' : ''
-            }`}
-            style={
-              {
-                top: s.top,
-                left: s.left,
-                '--rotate': `${s.rotate}deg`,
-              } as React.CSSProperties
-            }
-            onClick={handleSpiderClick}
+            className="spider cursor-pointer"
+            // biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: <explanation>
+            role="button"
+            tabIndex={0}
+            onClick={() => handleClick(s.id)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                handleClick(s.id)
+              }
+            }}
           />
         ))}
       </div>
