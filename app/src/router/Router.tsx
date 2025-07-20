@@ -1,4 +1,5 @@
 // src/router/Router.tsx
+import React, { useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Top from '@/pages/Top'
 import Category from '@/pages/Category'
@@ -6,6 +7,32 @@ import PostDetail from '@/pages/PostDetail'
 import Admin from '@/pages/Admin'
 import Login from '@/pages/Login'
 import { useAuth } from '@/context/AuthContext'
+import { ResettableErrorBoundary } from '@/components/utils/ResettableErrorBoundary'
+
+function AdminPageWrapper() {
+  const [resetKey, setResetKey] = useState(0)
+
+  return (
+    <ResettableErrorBoundary
+      key={resetKey}
+      fallback={({ error, resetErrorBoundary }) => (
+        <div>
+          <p>エラー: {error.message}</p>
+          {/** biome-ignore lint/a11y/useButtonType: <explanation> */}
+          <button onClick={() => {
+            localStorage.removeItem('myblog-posts')
+            setResetKey(prev => prev + 1)
+            resetErrorBoundary()
+          }}>
+            やり直す
+          </button>
+        </div>
+      )}
+    >
+      <Admin />
+    </ResettableErrorBoundary>
+  )
+}
 
 const Router = () => {
   const { isLoggedIn } = useAuth()
@@ -18,7 +45,7 @@ const Router = () => {
       <Route path="/login" element={<Login />} />
       <Route
         path="/admin"
-        element={isLoggedIn ? <Admin /> : <Navigate to="/login" />}
+        element={isLoggedIn ? <AdminPageWrapper /> : <Navigate to="/login" />}
       />
     </Routes>
   )

@@ -1,7 +1,6 @@
 // app/src/context/AuthContext.tsx
 import { createContext, useContext, useState } from 'react'
 
-// 型定義
 type AuthContextType = {
   isLoggedIn: boolean
   login: (email: string, password: string) => boolean
@@ -16,11 +15,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   )
 
   const login = (email: string, password: string) => {
-    // 開発用仮認証（本番ではDevise APIと通信）
     const devEmail = import.meta.env.VITE_DEV_ADMIN_EMAIL
     const devPassword = import.meta.env.VITE_DEV_ADMIN_PASSWORD
 
     if (!devEmail || !devPassword) {
+      console.error('環境変数が不足しています')
       throw new Error('VITE_DEV_ADMIN_EMAIL または VITE_DEV_ADMIN_PASSWORD が未定義です')
     }
 
@@ -29,6 +28,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       localStorage.setItem('myblog-auth', 'true')
       return true
     }
+
     return false
   }
 

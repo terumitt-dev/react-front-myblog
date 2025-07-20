@@ -1,5 +1,4 @@
 // app/src/components/utils/ErrorBoundary.tsx
-// biome-ignore lint/style/useImportType: <explanation>
 import { Component, ReactNode } from "react"
 
 interface Props {
@@ -15,6 +14,8 @@ export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props)
     this.state = { hasError: false }
+
+    this.resetError = this.resetError.bind(this)
   }
 
   static getDerivedStateFromError() {
@@ -22,17 +23,30 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: unknown, info: unknown) {
-    console.error("ErrorBoundary caught an error:", error, info)
-    // エラーを Sentry などに送信したい場合はここに記述
+    console.error("ErrorBoundary caught an error:", error)
+    console.error("Error info:", info)
+  }
+
+  resetError() {
+    this.setState({ hasError: false })
   }
 
   render() {
     if (this.state.hasError) {
-      return this.props.fallback ?? (
-        <div style={{ padding: "2rem", color: "red" }}>
-          <h2>予期せぬエラーが発生しました。</h2>
-          <p>ページを再読み込みするか、しばらくしてからお試しください。</p>
-        </div>
+      return (
+        this.props.fallback ?? (
+          <div style={{ padding: "2rem", color: "red" }}>
+            <h2>予期せぬエラーが発生しました。</h2>
+            <p>ページを再読み込みするか、しばらくしてからお試しください。</p>
+            {/** biome-ignore lint/a11y/useButtonType: <explanation> */}
+            <button
+              style={{ marginTop: "1rem", padding: "0.5rem 1rem" }}
+              onClick={this.resetError}
+            >
+              やり直す
+            </button>
+          </div>
+        )
       )
     }
 
