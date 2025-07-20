@@ -199,12 +199,12 @@ const Admin = () => {
                       className="flex gap-4 mt-2 px-3"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <a
-                        href={`/posts/${post.id}`}
+                      <Link
+                        to={`/posts/${post.id}`}
                         className="text-blue-600 hover:underline"
                       >
                         記事を確認 →
-                      </a>
+                      </Link>
                       <button
                         type="button"
                         onClick={() => handleEdit(post)}

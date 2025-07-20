@@ -156,12 +156,13 @@ const Category = () => {
     category === 'other' && (
       <div className="absolute inset-0 z-0 pointer-events-none">
         {snails.map((s) => (
-          // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
-          // biome-ignore lint/a11y/noStaticElementInteractions: <explanation>
           <img
             key={s.id}
             src="/patterns/snail.svg"
-            alt=""
+            // biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: <explanation>
+            role="button"
+            tabIndex={0}
+            aria-label="カタツムリを削除"
             className="snail pointer-events-auto"
             style={{ top: s.top, left: s.left }}
             onMouseEnter={(e) => {
@@ -169,6 +170,12 @@ const Category = () => {
             }}
             onClick={() => {
               setSnails((prev) => prev.filter((x) => x.id !== s.id))
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                setSnails((prev) => prev.filter((x) => x.id !== s.id))
+              }
             }}
           />
         ))}

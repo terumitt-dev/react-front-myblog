@@ -22,8 +22,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     if (!devEmail || !devPassword) {
       console.error('環境変数 VITE_DEV_ADMIN_EMAIL または VITE_DEV_ADMIN_PASSWORD が未定義です')
-      alert('ログイン設定が不完全です。管理者に連絡してください。')
-      return false
+      document.body.innerHTML = '<h1>環境設定エラー: ログイン情報が不足しています</h1>'
+      throw new Error('必須環境変数が未定義')
     }
 
     if (email === devEmail && password === devPassword) {
