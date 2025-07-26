@@ -38,7 +38,13 @@ const PostDetail = () => {
 
     const storedComments = localStorage.getItem(`myblog-comments-${postId}`);
     if (storedComments) {
-      setComments(JSON.parse(storedComments));
+      try {
+        setComments(JSON.parse(storedComments));
+      } catch (e) {
+        console.error("Failed to parse comments from localStorage:", e);
+        localStorage.removeItem(`myblog-comments-${postId}`);
+        setComments([]);
+      }
     }
   }, [postId]);
 
