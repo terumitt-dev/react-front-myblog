@@ -95,7 +95,11 @@ const Category = () => {
 
   // カタツムリ削除のハンドラ
   const handleSnailClick = (id: number) => {
-    setSnails((prev) => prev.filter((snail) => snail.id !== id));
+    setDisappearingIds((prev) => [...prev, id]);
+    setTimeout(() => {
+      setSnails((prev) => prev.filter((snail) => snail.id !== id));
+      setDisappearingIds((prev) => prev.filter((x) => x !== id));
+    }, 600);
   };
 
   const renderSpiderLayer = () =>
@@ -161,7 +165,7 @@ const Category = () => {
             key={s.id}
             type="button"
             aria-label="カタツムリを削除"
-            className={`snail pointer-events-auto ${disappearingIds.includes(s.id) ? "snail-move" : ""}`}
+            className={`snail pointer-events-auto ${disappearingIds.includes(s.id) ? "snail-move" : ""} ${s.isMoved ? "snail-move" : ""}`}
             style={{
               top: s.top,
               left: s.left,
@@ -174,9 +178,6 @@ const Category = () => {
             onClick={() => handleSnailClick(s.id)}
             onMouseEnter={(e) => {
               e.currentTarget.classList.add("snail-move");
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.classList.remove("snail-move");
             }}
           >
             <img
