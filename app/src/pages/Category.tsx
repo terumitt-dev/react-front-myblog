@@ -85,7 +85,7 @@ const Category = () => {
     return () => clearInterval(id);
   }, [category]);
 
-  // 蜘蛛レイヤー
+  // 蜘蛛削除ハンドラ
   const handleClick = (id: number) => {
     setDisappearingIds((prev) => [...prev, id]);
     setTimeout(() => {
@@ -93,36 +93,42 @@ const Category = () => {
     }, 600);
   };
 
+  // カタツムリ削除のハンドラ
+  const handleSnailClick = (id: number) => {
+    setSnails((prev) => prev.filter((snail) => snail.id !== id));
+  };
+
   const renderSpiderLayer = () =>
     category === "hobby" &&
     spiderVisible && (
       <div className="absolute inset-0 z-0 pointer-events-none">
         {spiders.map((s) => (
-          <img
+          <button
             key={s.id}
-            src="/patterns/spider.svg"
-            alt="Spider"
-            // biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: <explanation>
-            role="button"
-            tabIndex={0}
+            type="button"
             onClick={() => handleClick(s.id)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                handleClick(s.id);
-              }
-            }}
-            className={`spider pointer-events-auto ${
-              disappearingIds.includes(s.id) ? "spider-disappear" : ""
-            }`}
+            aria-label="クモを消す"
+            className={`spider pointer-events-auto ${disappearingIds.includes(s.id) ? "spider-disappear" : ""}`}
             style={
               {
                 top: s.top,
                 left: s.left,
                 position: "absolute",
                 "--rotate": `${s.rotate}deg`,
+                background: "none",
+                border: "none",
+                padding: 0,
+                cursor: "pointer",
               } as React.CSSProperties
             }
-          />
+          >
+            <img
+              src="/patterns/spider.svg"
+              alt=""
+              draggable={false}
+              style={{ pointerEvents: "none" }}
+            />
+          </button>
         ))}
       </div>
     );
@@ -151,28 +157,35 @@ const Category = () => {
     category === "other" && (
       <div className="absolute inset-0 z-0 pointer-events-none">
         {snails.map((s) => (
-          <img
+          <button
             key={s.id}
-            src="/patterns/snail.svg"
-            // biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: <explanation>
-            role="button"
-            tabIndex={0}
+            type="button"
             aria-label="カタツムリを削除"
-            className="snail pointer-events-auto"
-            style={{ top: s.top, left: s.left }}
+            className={`snail pointer-events-auto ${disappearingIds.includes(s.id) ? "snail-move" : ""}`}
+            style={{
+              top: s.top,
+              left: s.left,
+              position: "absolute",
+              background: "none",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
+            }}
+            onClick={() => handleSnailClick(s.id)}
             onMouseEnter={(e) => {
               e.currentTarget.classList.add("snail-move");
             }}
-            onClick={() => {
-              setSnails((prev) => prev.filter((x) => x.id !== s.id));
+            onMouseLeave={(e) => {
+              e.currentTarget.classList.remove("snail-move");
             }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                setSnails((prev) => prev.filter((x) => x.id !== s.id));
-              }
-            }}
-          />
+          >
+            <img
+              src="/patterns/snail.svg"
+              alt=""
+              draggable={false}
+              style={{ pointerEvents: "none" }}
+            />
+          </button>
         ))}
       </div>
     );
