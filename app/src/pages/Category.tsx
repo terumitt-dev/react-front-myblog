@@ -1,6 +1,6 @@
 // app/src/pages/Category.tsx
 import { useParams, Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import BackToHomeButton from "@/components/molecules/BackToHomeButton";
 import "./Category.css";
 import Header from "@/components/organisms/Header";
@@ -10,8 +10,8 @@ type Spider = { id: number; top: string; left: string; rotate: number };
 type Bubble = { id: number; top: string; left: string };
 type Snail = { id: number; top: string; left: string; isMoved?: boolean };
 
-const MAX_BUBBLES = 20;
-const BUBBLE_INTERVAL = 500;
+const MAX_BUBBLES = 10;
+const BUBBLE_INTERVAL = 1000;
 
 const Category = () => {
   const { category } = useParams<{ category: string }>();
@@ -70,12 +70,14 @@ const Category = () => {
   // 泡の自動生成（techカテゴリ）
   useEffect(() => {
     if (category !== "tech") return;
-
+    // バブル生成の間隔調整
     const id = setInterval(() => {
       setBubbles((prev) => {
+        // すでに最大数ならスキップ
         if (prev.length >= MAX_BUBBLES) return prev;
+        // 一度に追加するのは1つだけに
         const newBubble: Bubble = {
-          id: Date.now() + Math.random(),
+          id: Date.now(),
           top: `${Math.random() * 90}%`,
           left: `${Math.random() * 90}%`,
         };
@@ -86,24 +88,25 @@ const Category = () => {
     return () => clearInterval(id);
   }, [category]);
 
-  // 蜘蛛削除ハンドラ
-  const handleClick = (id: number) => {
+  // クモ削除ハンドラ
+  const handleClick = useCallback((id: number) => {
     setDisappearingIds((prev) => [...prev, id]);
     setTimeout(() => {
       setSpiders((prev) => prev.filter((sp) => sp.id !== id));
       setDisappearingIds((prev) => prev.filter((x) => x !== id));
     }, 600);
-  };
+  }, []);
 
-  // カタツムリ削除のハンドラ
-  const handleSnailClick = (id: number) => {
+  // カタツムリ削除ハンドラ
+  const handleSnailClick = useCallback((id: number) => {
     setDisappearingIds((prev) => [...prev, id]);
     setTimeout(() => {
       setSnails((prev) => prev.filter((snail) => snail.id !== id));
       setDisappearingIds((prev) => prev.filter((x) => x !== id));
     }, 600);
-  };
+  }, []);
 
+  // 蜘蛛レイヤー
   const renderSpiderLayer = () =>
     category === "hobby" &&
     spiderVisible && (
