@@ -1,68 +1,69 @@
 // app/src/pages/Admin.tsx
 /** biome-ignore-all lint/a11y/noStaticElementInteractions: <explanation> */
-import Layout from '@/components/layouts/Layout'
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '@/context/AuthContext'
-import LogoutButton from '@/components/molecules/LogoutButton'
+import Layout from "@/components/layouts/Layout";
+import { useEffect, useState } from "react";
+// import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import LogoutButton from "@/components/molecules/LogoutButton";
 
 type Post = {
-  id: number
-  title: string
-  content: string
-  category: string
-  createdAt: string
-}
+  id: number;
+  title: string;
+  content: string;
+  category: string;
+  createdAt: string;
+};
 
 const Admin = () => {
-  const navigate = useNavigate()
-  const { logout } = useAuth()
+  const navigate = useNavigate();
+  const { logout } = useAuth();
 
-  const [title, setTitle] = useState('')
-  const [content, setContent] = useState('')
-  const [category, setCategory] = useState('tech')
-  const [posts, setPosts] = useState<Post[]>([])
-  const [editingPostId, setEditingPostId] = useState<number | null>(null)
-  const [error, setError] = useState('')
-  const [openPostIds, setOpenPostIds] = useState<number[]>([])
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [category, setCategory] = useState("tech");
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [editingPostId, setEditingPostId] = useState<number | null>(null);
+  const [error, setError] = useState("");
+  const [openPostIds, setOpenPostIds] = useState<number[]>([]);
 
   useEffect(() => {
-    const saved = localStorage.getItem('myblog-posts')
+    const saved = localStorage.getItem("myblog-posts");
     if (saved) {
       try {
-        const parsed = JSON.parse(saved)
-        setPosts(parsed)
+        const parsed = JSON.parse(saved);
+        setPosts(parsed);
       } catch (error) {
-        console.error('Failed to parse posts from localStorage:', error)
-        localStorage.removeItem('myblog-posts')
+        console.error("Failed to parse posts from localStorage:", error);
+        localStorage.removeItem("myblog-posts");
       }
     }
-  }, [])
+  }, []);
 
   const saveToLocalStorage = (updatedPosts: Post[]) => {
-    setPosts(updatedPosts)
-    localStorage.setItem('myblog-posts', JSON.stringify(updatedPosts))
-  }
+    setPosts(updatedPosts);
+    localStorage.setItem("myblog-posts", JSON.stringify(updatedPosts));
+  };
 
   const resetForm = () => {
-    setTitle('')
-    setContent('')
-    setCategory('tech')
-    setEditingPostId(null)
-    setError('')
-  }
+    setTitle("");
+    setContent("");
+    setCategory("tech");
+    setEditingPostId(null);
+    setError("");
+  };
 
   const handleSubmit = () => {
     if (!title.trim() || !content.trim()) {
-      setError('タイトルと本文は必須です。')
-      return
+      setError("タイトルと本文は必須です。");
+      return;
     }
 
     if (editingPostId !== null) {
       const updated = posts.map((p) =>
-        p.id === editingPostId ? { ...p, title, content, category } : p
-      )
-      saveToLocalStorage(updated)
+        p.id === editingPostId ? { ...p, title, content, category } : p,
+      );
+      saveToLocalStorage(updated);
     } else {
       const newPost: Post = {
         id: Date.now(),
@@ -70,40 +71,40 @@ const Admin = () => {
         content,
         category,
         createdAt: new Date().toISOString(),
-      }
-      saveToLocalStorage([...posts, newPost])
+      };
+      saveToLocalStorage([...posts, newPost]);
     }
 
-    resetForm()
-  }
+    resetForm();
+  };
 
   const handleDelete = (id: number) => {
-    const updated = posts.filter((p) => p.id !== id)
-    saveToLocalStorage(updated)
-  }
+    const updated = posts.filter((p) => p.id !== id);
+    saveToLocalStorage(updated);
+  };
 
   const handleEdit = (post: Post) => {
-    setTitle(post.title)
-    setContent(post.content)
-    setCategory(post.category)
-    setEditingPostId(post.id)
-    setError('')
-  }
+    setTitle(post.title);
+    setContent(post.content);
+    setCategory(post.category);
+    setEditingPostId(post.id);
+    setError("");
+  };
 
   const handleCancelEdit = () => {
-    resetForm()
-  }
+    resetForm();
+  };
 
   const handleLogout = () => {
-    logout()
-    navigate('/login')
-  }
+    logout();
+    navigate("/login");
+  };
 
   const togglePost = (id: number) => {
     setOpenPostIds((prev) =>
-      prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id]
-    )
-  }
+      prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id],
+    );
+  };
 
   return (
     <Layout>
@@ -144,9 +145,9 @@ const Admin = () => {
               <button
                 type="button"
                 onClick={handleSubmit}
-                className={`px-4 py-2 rounded text-white ${editingPostId !== null ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                className={`px-4 py-2 rounded text-white ${editingPostId !== null ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"}`}
               >
-                {editingPostId !== null ? '更新する' : '投稿を追加'}
+                {editingPostId !== null ? "更新する" : "投稿を追加"}
               </button>
 
               {editingPostId !== null && (
@@ -170,7 +171,7 @@ const Admin = () => {
           ) : (
             <div className="space-y-4">
               {posts.map((post) => {
-                const isOpen = openPostIds.includes(post.id)
+                const isOpen = openPostIds.includes(post.id);
                 return (
                   <div key={post.id}>
                     <button
@@ -179,8 +180,12 @@ const Admin = () => {
                       className="w-full text-left bg-white rounded-xl p-4 shadow hover:bg-gray-100 transition"
                     >
                       <div className="space-y-1">
-                        <strong className="block break-words text-lg">{post.title}</strong>
-                        <span className="text-sm text-gray-600">カテゴリ: {post.category}</span>
+                        <strong className="block break-words text-lg">
+                          {post.title}
+                        </strong>
+                        <span className="text-sm text-gray-600">
+                          カテゴリ: {post.category}
+                        </span>
                         <div className="text-xs text-gray-500">
                           投稿日: {new Date(post.createdAt).toLocaleString()}
                         </div>
@@ -221,14 +226,14 @@ const Admin = () => {
                       </button>
                     </div>
                   </div>
-                )
+                );
               })}
             </div>
           )}
         </div>
       </div>
     </Layout>
-  )
-}
+  );
+};
 
-export default Admin
+export default Admin;
