@@ -91,6 +91,7 @@ const Category = () => {
     setDisappearingIds((prev) => [...prev, id]);
     setTimeout(() => {
       setSpiders((prev) => prev.filter((sp) => sp.id !== id));
+      setDisappearingIds((prev) => prev.filter((x) => x !== id));
     }, 600);
   };
 
