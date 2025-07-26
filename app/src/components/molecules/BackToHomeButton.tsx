@@ -1,17 +1,17 @@
-// src/components/molecules/BackToTopButton.tsx
-import { useNavigate } from 'react-router-dom'
-import Button from '@/components/atoms/Button'
+// src/components/molecules/BackToHomeButton.tsx
+import { useNavigate } from "react-router-dom";
+import Button from "@/components/atoms/Button";
 
 type Props = {
-  className?: string
-}
+  className?: string;
+};
 
-const BackToTopButton = ({ className }: Props) => {
-  const navigate = useNavigate()
+const BackToHomeButton = ({ className }: Props) => {
+  const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate('/')
-  }
+    navigate("/");
+  };
 
   return (
     <Button
@@ -20,7 +20,7 @@ const BackToTopButton = ({ className }: Props) => {
       variant="secondary"
       className={className}
     />
-  )
-}
+  );
+};
 
-export default BackToTopButton
+export default BackToHomeButton;
