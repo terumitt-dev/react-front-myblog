@@ -1,6 +1,6 @@
 // app/src/pages/Category.tsx
 import { useParams, Link } from "react-router-dom";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import BackToHomeButton from "@/components/molecules/BackToHomeButton";
 import "./Category.css";
 import Header from "@/components/organisms/Header";
@@ -28,6 +28,8 @@ const Category = () => {
 
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
   const [snails, setSnails] = useState<Snail[]>([]);
+
+  const timerIdsRef = useRef<number[]>([]);
 
   // 投稿とエフェクト初期化
   useEffect(() => {
@@ -93,22 +95,44 @@ const Category = () => {
     return () => clearInterval(id);
   }, [category]);
 
+  // コンポーネントのアンマウント時にすべてのタイマーをクリア
+  useEffect(() => {
+    return () => {
+      timerIdsRef.current.forEach((id) => clearTimeout(id));
+      timerIdsRef.current = [];
+    };
+  }, []);
+
   // クモ削除ハンドラ
   const handleClick = useCallback((id: number) => {
     setSpiderDisappearingIds((prev) => [...prev, id]);
-    setTimeout(() => {
+
+    const timerId = setTimeout(() => {
       setSpiders((prev) => prev.filter((sp) => sp.id !== id));
       setSpiderDisappearingIds((prev) => prev.filter((x) => x !== id));
+      // タイマー完了後にリストから削除
+      timerIdsRef.current = timerIdsRef.current.filter(
+        (tid) => tid !== timerId,
+      );
     }, 600);
+    // タイマーIDをrefに追加
+    timerIdsRef.current.push(timerId);
   }, []);
 
   // カタツムリ削除ハンドラ
   const handleSnailClick = useCallback((id: number) => {
     setSnailDisappearingIds((prev) => [...prev, id]);
-    setTimeout(() => {
+
+    const timerId = setTimeout(() => {
       setSnails((prev) => prev.filter((snail) => snail.id !== id));
       setSnailDisappearingIds((prev) => prev.filter((x) => x !== id));
+      // タイマー完了後にリストから削除
+      timerIdsRef.current = timerIdsRef.current.filter(
+        (tid) => tid !== timerId,
+      );
     }, 600);
+    // タイマーIDをrefに追加
+    timerIdsRef.current.push(timerId);
   }, []);
 
   // 蜘蛛レイヤー
