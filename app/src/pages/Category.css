@@ -1,50 +1,66 @@
 /*app/src/pages/Category.css*/
 /* ==================== 蜘蛛 ==================== */
 .spider {
-  position: absolute;
-  width: 40px;
-  height: 40px;
-  opacity: 0.7;
-  transform: rotate(var(--rotate));
-  transition: transform 0.3s ease;
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    opacity: 0.7;
+    transform: rotate(var(--rotate));
+    transition: transform 0.3s ease;
 }
 
 .spider:hover {
-  transform: translateY(-20px) rotate(var(--rotate));
+    transform: translateY(-20px) rotate(var(--rotate));
 }
 
 .spider-disappear {
-  transform: scale(0) rotate(var(--rotate)) translateY(-40px);
-  opacity: 0;
-  transition: transform 0.6s ease, opacity 0.6s ease;
+    transform: scale(0) rotate(var(--rotate)) translateY(-40px);
+    opacity: 0;
+    transition:
+        transform 0.6s ease,
+        opacity 0.6s ease;
 }
 
 /* ==================== 泡 ==================== */
 .bubble {
-  position: absolute;
-  width: 40px;
-  height: 40px;
-  opacity: 0.7;
-  animation: grow-and-pop 3s ease-out forwards;
-  pointer-events: none;
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    opacity: 0.7;
+    animation: grow-and-pop 3s ease-out forwards;
+    pointer-events: none;
 }
 
 @keyframes grow-and-pop {
-  0%   { transform: scale(0.8); opacity: 0.8; }
-  80%  { transform: scale(1.8); opacity: 1; }
-  100% { transform: scale(0); opacity: 0; }
+    0% {
+        transform: scale(0.8);
+        opacity: 0.8;
+    }
+    80% {
+        transform: scale(1.8);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(0);
+        opacity: 0;
+    }
 }
 
 /* ==================== カタツムリ ==================== */
 .snail {
-  position: absolute;
-  width: 50px;
-  height: 50px;
-  opacity: 0.85;
-  transition: transform 5s linear;
-  transform: scaleX(1);
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    opacity: 0.85;
+    transition: transform 5s linear;
+    transform: scaleX(1);
 }
 
 .snail-move {
-  transform: translateX(-80px) scaleX(1);
+    transform: translateX(-80px) scaleX(1);
+    transition: transform 5s linear;
+}
+.snail-disappear {
+    opacity: 0;
+    transition: opacity 0.6s;
 }

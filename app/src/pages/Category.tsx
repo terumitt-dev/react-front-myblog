@@ -166,6 +166,7 @@ const Category = () => {
             type="button"
             aria-label="カタツムリを削除"
             className={`snail pointer-events-auto ${disappearingIds.includes(s.id) ? "snail-move" : ""} ${s.isMoved ? "snail-move" : ""}`}
+            className={`snail pointer-events-auto ${s.isMoved ? "snail-move" : ""} ${disappearingIds.includes(s.id) ? "snail-disappear" : ""}`}
             style={{
               top: s.top,
               left: s.left,
