@@ -27,14 +27,18 @@ export function ResettableErrorBoundary({
       key={key}
       fallback={
         typeof fallback === "function"
-          ? (props: FallbackProps) =>
-              fallback({
+          ? (props: FallbackProps) => {
+              // 重複呼び出しを避けるため、ラップした関数を作成
+              const combinedReset = () => {
+                handleReset();
+                props.resetErrorBoundary();
+              };
+
+              return fallback({
                 ...props,
-                resetErrorBoundary: () => {
-                  handleReset();
-                  props.resetErrorBoundary();
-                },
-              })
+                resetErrorBoundary: combinedReset,
+              });
+            }
           : fallback
       }
     >
