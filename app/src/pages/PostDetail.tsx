@@ -1,71 +1,71 @@
 // app/src/pages/PostDetail.tsx
-import Layout from '@/components/layouts/Layout'
-import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import CommentForm from '@/components/organisms/CommentForm'
-import BackToTopButton from '@/components/molecules/BackToTopButton'
-import CommentStartButton from '@/components/molecules/CommentStartButton'
+import Layout from "@/components/layouts/Layout";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import CommentForm from "@/components/organisms/CommentForm";
+import BackToHomeButton from "@/components/molecules/BackToHomeButton";
+import CommentStartButton from "@/components/molecules/CommentStartButton";
 
 type Post = {
-  id: number
-  title: string
-  content: string
-  category: string
-}
+  id: number;
+  title: string;
+  content: string;
+  category: string;
+};
 
 type Comment = {
-  id: number
-  user: string
-  content: string
-}
+  id: number;
+  user: string;
+  content: string;
+};
 
 const PostDetail = () => {
-  const { id } = useParams<{ id: string }>()
-  const postId = Number(id)
+  const { id } = useParams<{ id: string }>();
+  const postId = Number(id);
 
-  const [post, setPost] = useState<Post | null>(null)
-  const [comments, setComments] = useState<Comment[]>([])
-  const [isWriting, setIsWriting] = useState(false)
-  const [openCommentIds, setOpenCommentIds] = useState<number[]>([])
+  const [post, setPost] = useState<Post | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [isWriting, setIsWriting] = useState(false);
+  const [openCommentIds, setOpenCommentIds] = useState<number[]>([]);
 
   /* 投稿とコメントを読み込む */
   useEffect(() => {
-    const savedPosts = localStorage.getItem('myblog-posts')
+    const savedPosts = localStorage.getItem("myblog-posts");
     if (savedPosts) {
-      const posts: Post[] = JSON.parse(savedPosts)
-      setPost(posts.find((p) => p.id === postId) ?? null)
+      const posts: Post[] = JSON.parse(savedPosts);
+      setPost(posts.find((p) => p.id === postId) ?? null);
     }
 
-    const storedComments = localStorage.getItem(`myblog-comments-${postId}`)
+    const storedComments = localStorage.getItem(`myblog-comments-${postId}`);
     if (storedComments) {
-      setComments(JSON.parse(storedComments))
+      setComments(JSON.parse(storedComments));
     }
-  }, [postId])
+  }, [postId]);
 
   /* コメント送信 */
   const handleCommentSubmit = (user: string, content: string) => {
-    if (!user.trim() || !content.trim()) return
+    if (!user.trim() || !content.trim()) return;
     const newComment: Comment = {
       id: Date.now(),
       user,
       content,
-    }
-    const updated = [...comments, newComment]
-    setComments(updated)
-    localStorage.setItem(`myblog-comments-${postId}`, JSON.stringify(updated))
-    setIsWriting(false)
-  }
+    };
+    const updated = [...comments, newComment];
+    setComments(updated);
+    localStorage.setItem(`myblog-comments-${postId}`, JSON.stringify(updated));
+    setIsWriting(false);
+  };
 
   /* コメントの開閉トグル */
   const toggleComment = (commentId: number) => {
     setOpenCommentIds((prev) =>
       prev.includes(commentId)
         ? prev.filter((id) => id !== commentId)
-        : [...prev, commentId]
-    )
-  }
+        : [...prev, commentId],
+    );
+  };
 
-  if (!post) return <div className="p-6">記事が見つかりませんでした。</div>
+  if (!post) return <div className="p-6">記事が見つかりませんでした。</div>;
 
   return (
     <Layout>
@@ -75,13 +75,17 @@ const PostDetail = () => {
           {/* ===== 記事エリア ===== */}
           <article className="w-full bg-white rounded-xl shadow p-6 md:col-span-2 space-y-6">
             <header>
-              <h1 className="text-3xl font-bold mb-3 break-words">{post.title}</h1>
+              <h1 className="text-3xl font-bold mb-3 break-words">
+                {post.title}
+              </h1>
               <span className="inline-block text-sm font-semibold px-3 py-1 rounded bg-gray-200">
                 {post.category}
               </span>
               <hr className="mt-4" />
             </header>
-            <div className="leading-relaxed whitespace-pre-line break-words">{post.content}</div>
+            <div className="leading-relaxed whitespace-pre-line break-words">
+              {post.content}
+            </div>
           </article>
 
           {/* ===== コメント一覧 ===== */}
@@ -93,7 +97,7 @@ const PostDetail = () => {
             ) : (
               <div className="space-y-3">
                 {comments.map((c) => {
-                  const isOpen = openCommentIds.includes(c.id)
+                  const isOpen = openCommentIds.includes(c.id);
                   return (
                     // biome-ignore lint/a11y/useSemanticElements: <explanation>
                     <div
@@ -101,7 +105,9 @@ const PostDetail = () => {
                       role="button"
                       tabIndex={0}
                       onClick={() => toggleComment(c.id)}
-                      onKeyDown={(e) => e.key === 'Enter' && toggleComment(c.id)}
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && toggleComment(c.id)
+                      }
                       className="cursor-pointer bg-gray-50 p-4 rounded shadow-sm hover:bg-gray-100 transition text-sm break-words"
                     >
                       <p className="font-semibold">{c.user}</p>
@@ -113,7 +119,7 @@ const PostDetail = () => {
                             : c.content}
                       </p>
                     </div>
-                  )
+                  );
                 })}
               </div>
             )}
@@ -126,7 +132,7 @@ const PostDetail = () => {
             onClick={() => setIsWriting(true)}
             className="w-full sm:basis-[60%]"
           />
-          <BackToTopButton className="w-full sm:basis-[40%]" />
+          <BackToHomeButton className="w-full sm:basis-[40%]" />
         </div>
 
         {/* ===== コメントフォーム ===== */}
@@ -140,7 +146,7 @@ const PostDetail = () => {
         )}
       </div>
     </Layout>
-  )
-}
+  );
+};
 
-export default PostDetail
+export default PostDetail;

@@ -1,7 +1,7 @@
 // app/src/pages/Category.tsx
 import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import BackToTopButton from "@/components/molecules/BackToTopButton";
+import BackToHomeButton from "@/components/molecules/BackToHomeButton";
 import "./Category.css";
 import Header from "@/components/organisms/Header";
 
@@ -254,7 +254,7 @@ const Category = () => {
         )}
 
         <div className="w-full pt-6">
-          <BackToTopButton className="w-full" />
+          <BackToHomeButton className="w-full" />
         </div>
       </div>
     </section>
