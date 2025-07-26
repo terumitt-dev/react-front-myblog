@@ -120,12 +120,12 @@ const Category = () => {
                 top: s.top,
                 left: s.left,
                 position: "absolute",
-                "--rotate": `${s.rotate}deg`,
                 background: "none",
                 border: "none",
                 padding: 0,
                 cursor: "pointer",
-              } as React.CSSProperties
+                "--rotate": `${s.rotate}deg`,
+              } as React.CSSProperties & Record<string, string>
             }
           >
             <img
