@@ -176,8 +176,12 @@ const Category = () => {
               cursor: "pointer",
             }}
             onClick={() => handleSnailClick(s.id)}
-            onMouseEnter={(e) => {
-              e.currentTarget.classList.add("snail-move");
+            onMouseEnter={() => {
+              setSnails((prev) =>
+                prev.map((snail) =>
+                  snail.id === s.id ? { ...snail, isMoved: true } : snail,
+                ),
+              );
             }}
           >
             <img
