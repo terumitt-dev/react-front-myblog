@@ -19,7 +19,12 @@ const Category = () => {
 
   const [spiders, setSpiders] = useState<Spider[]>([]);
   const [spiderVisible, setSpiderVisible] = useState(true);
-  const [disappearingIds, setDisappearingIds] = useState<number[]>([]);
+  const [spiderDisappearingIds, setSpiderDisappearingIds] = useState<number[]>(
+    [],
+  );
+  const [snailDisappearingIds, setSnailDisappearingIds] = useState<number[]>(
+    [],
+  );
 
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
   const [snails, setSnails] = useState<Snail[]>([]);
@@ -90,19 +95,19 @@ const Category = () => {
 
   // クモ削除ハンドラ
   const handleClick = useCallback((id: number) => {
-    setDisappearingIds((prev) => [...prev, id]);
+    setSpiderDisappearingIds((prev) => [...prev, id]);
     setTimeout(() => {
       setSpiders((prev) => prev.filter((sp) => sp.id !== id));
-      setDisappearingIds((prev) => prev.filter((x) => x !== id));
+      setSpiderDisappearingIds((prev) => prev.filter((x) => x !== id));
     }, 600);
   }, []);
 
   // カタツムリ削除ハンドラ
   const handleSnailClick = useCallback((id: number) => {
-    setDisappearingIds((prev) => [...prev, id]);
+    setSnailDisappearingIds((prev) => [...prev, id]);
     setTimeout(() => {
       setSnails((prev) => prev.filter((snail) => snail.id !== id));
-      setDisappearingIds((prev) => prev.filter((x) => x !== id));
+      setSnailDisappearingIds((prev) => prev.filter((x) => x !== id));
     }, 600);
   }, []);
 
@@ -117,7 +122,7 @@ const Category = () => {
             type="button"
             onClick={() => handleClick(s.id)}
             aria-label="クモを消す"
-            className={`spider pointer-events-auto ${disappearingIds.includes(s.id) ? "spider-disappear" : ""}`}
+            className={`spider pointer-events-auto ${spiderDisappearingIds.includes(s.id) ? "spider-disappear" : ""}`}
             style={
               {
                 top: s.top,
@@ -170,7 +175,7 @@ const Category = () => {
             key={s.id}
             type="button"
             aria-label="カタツムリを削除"
-            className={`snail pointer-events-auto ${s.isMoved ? "snail-move" : ""} ${disappearingIds.includes(s.id) ? "snail-disappear" : ""}`}
+            className={`snail pointer-events-auto ${s.isMoved ? "snail-move" : ""} ${snailDisappearingIds.includes(s.id) ? "snail-disappear" : ""}`}
             style={{
               top: s.top,
               left: s.left,
