@@ -106,15 +106,11 @@ const PostDetail = () => {
                   const isOpen = openCommentIds.includes(c.id);
                   return (
                     // biome-ignore lint/a11y/useSemanticElements: <explanation>
-                    <div
+                    <button
                       key={c.id}
-                      role="button"
-                      tabIndex={0}
+                      type="button"
                       onClick={() => toggleComment(c.id)}
-                      onKeyDown={(e) =>
-                        e.key === "Enter" && toggleComment(c.id)
-                      }
-                      className="cursor-pointer bg-gray-50 p-4 rounded shadow-sm hover:bg-gray-100 transition text-sm break-words"
+                      className="cursor-pointer bg-gray-50 p-4 rounded shadow-sm hover:bg-gray-100 transition text-sm break-words w-full text-left"
                     >
                       <p className="font-semibold">{c.user}</p>
                       <p className="text-gray-700 mt-1">
@@ -124,7 +120,7 @@ const PostDetail = () => {
                             ? `${c.content.slice(0, 30)}...`
                             : c.content}
                       </p>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
