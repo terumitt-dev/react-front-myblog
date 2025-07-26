@@ -8,7 +8,7 @@ import Header from "@/components/organisms/Header";
 type Post = { id: number; title: string; content: string; category: string };
 type Spider = { id: number; top: string; left: string; rotate: number };
 type Bubble = { id: number; top: string; left: string };
-type Snail = { id: number; top: string; left: string };
+type Snail = { id: number; top: string; left: string; isMoved?: boolean };
 
 const MAX_BUBBLES = 20;
 const BUBBLE_INTERVAL = 500;
@@ -59,6 +59,7 @@ const Category = () => {
         id: i,
         top: `${Math.random() * 80}%`,
         left: `${Math.random() * 80}%`,
+        isMoved: false,
       }));
       setSnails(newSnails);
     } else {
