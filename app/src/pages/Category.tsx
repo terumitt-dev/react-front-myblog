@@ -1,140 +1,135 @@
 // app/src/pages/Category.tsx
-import { useParams, Link } from 'react-router-dom'
-import { useEffect, useState } from 'react'
-import BackToTopButton from '@/components/molecules/BackToTopButton'
-import './Category.css'
-import Header from '@/components/organisms/Header'
+import { useParams, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import BackToTopButton from "@/components/molecules/BackToTopButton";
+import "./Category.css";
+import Header from "@/components/organisms/Header";
 
-type Post = { id: number; title: string; content: string; category: string }
-type Spider = { id: number; top: string; left: string; rotate: number }
-type Bubble = { id: number; top: string; left: string }
-type Snail = { id: number; top: string; left: string }
+type Post = { id: number; title: string; content: string; category: string };
+type Spider = { id: number; top: string; left: string; rotate: number };
+type Bubble = { id: number; top: string; left: string };
+type Snail = { id: number; top: string; left: string };
 
-const MAX_BUBBLES = 20
-const BUBBLE_INTERVAL = 500
+const MAX_BUBBLES = 20;
+const BUBBLE_INTERVAL = 500;
 
 const Category = () => {
-  const { category } = useParams<{ category: string }>()
-  const [posts, setPosts] = useState<Post[]>([])
+  const { category } = useParams<{ category: string }>();
+  const [posts, setPosts] = useState<Post[]>([]);
 
-  const [spiders, setSpiders] = useState<Spider[]>([])
-  const [spiderVisible, setSpiderVisible] = useState(true)
-  const [disappearingIds, setDisappearingIds] = useState<number[]>([])
+  const [spiders, setSpiders] = useState<Spider[]>([]);
+  const [spiderVisible, setSpiderVisible] = useState(true);
+  const [disappearingIds, setDisappearingIds] = useState<number[]>([]);
 
-  const [bubbles, setBubbles] = useState<Bubble[]>([])
-  const [snails, setSnails] = useState<Snail[]>([])
+  const [bubbles, setBubbles] = useState<Bubble[]>([]);
+  const [snails, setSnails] = useState<Snail[]>([]);
 
   // 投稿とエフェクト初期化
-    useEffect(() => {
-      const saved = localStorage.getItem('myblog-posts')
-      if (saved) {
-        try {
-          const all: Post[] = JSON.parse(saved)
-          setPosts(all.filter((p) => p.category === category))
-        } catch (e) {
-          console.error('JSON parse error:', e)
-          localStorage.removeItem('myblog-posts')
-        }
+  useEffect(() => {
+    const saved = localStorage.getItem("myblog-posts");
+    if (saved) {
+      try {
+        const all: Post[] = JSON.parse(saved);
+        setPosts(all.filter((p) => p.category === category));
+      } catch (e) {
+        console.error("JSON parse error:", e);
+        localStorage.removeItem("myblog-posts");
       }
+    }
 
-    if (category === 'hobby') {
+    if (category === "hobby") {
       const newSpiders: Spider[] = [...Array(12)].map((_, i) => ({
         id: i,
         top: `${Math.random() * 90}%`,
         left: `${Math.random() * 90}%`,
         rotate: Math.floor(Math.random() * 360),
-      }))
-      setSpiders(newSpiders)
-      setSpiderVisible(true)
+      }));
+      setSpiders(newSpiders);
+      setSpiderVisible(true);
     } else {
-      setSpiders([])
+      setSpiders([]);
     }
 
-    if (category !== 'tech') {
-      setBubbles([])
+    if (category !== "tech") {
+      setBubbles([]);
     }
 
-    if (category === 'other') {
+    if (category === "other") {
       const newSnails: Snail[] = [...Array(8)].map((_, i) => ({
         id: i,
         top: `${Math.random() * 80}%`,
         left: `${Math.random() * 80}%`,
-      }))
-      setSnails(newSnails)
+      }));
+      setSnails(newSnails);
     } else {
-      setSnails([])
+      setSnails([]);
     }
-  }, [category])
-
-  const handleSpiderClick = () => {
-    setDisappearingIds(spiders.map((sp) => sp.id))
-    setTimeout(() => {
-      setSpiderVisible(false)
-      setDisappearingIds([])
-    }, 600)
-  }
+  }, [category]);
 
   // 泡の自動生成（techカテゴリ）
   useEffect(() => {
-    if (category !== 'tech') return
+    if (category !== "tech") return;
 
     const id = setInterval(() => {
       setBubbles((prev) => {
-        if (prev.length >= MAX_BUBBLES) return prev
+        if (prev.length >= MAX_BUBBLES) return prev;
         const newBubble: Bubble = {
           id: Date.now() + Math.random(),
           top: `${Math.random() * 90}%`,
           left: `${Math.random() * 90}%`,
-        }
-        return [...prev, newBubble]
-      })
-    }, BUBBLE_INTERVAL)
+        };
+        return [...prev, newBubble];
+      });
+    }, BUBBLE_INTERVAL);
 
-    return () => clearInterval(id)
-  }, [category])
+    return () => clearInterval(id);
+  }, [category]);
 
   // 蜘蛛レイヤー
-    const handleClick = (id: number) => {
-      setDisappearingIds((prev) => [...prev, id])
-      setTimeout(() => {
-        setSpiders((prev) => prev.filter((sp) => sp.id !== id))
-      }, 600)
-    }
+  const handleClick = (id: number) => {
+    setDisappearingIds((prev) => [...prev, id]);
+    setTimeout(() => {
+      setSpiders((prev) => prev.filter((sp) => sp.id !== id));
+    }, 600);
+  };
 
-    const renderSpiderLayer = () =>
-      category === 'hobby' && spiderVisible && (
-        <div className="absolute inset-0 z-0 pointer-events-none">
-          {spiders.map((s) => (
-            <img
-              key={s.id}
-              src="/patterns/spider.svg"
-              alt="Spider"
-              // biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: <explanation>
-              role="button"
-              tabIndex={0}
-              onClick={() => handleClick(s.id)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  handleClick(s.id)
-                }
-              }}
-              className={`spider pointer-events-auto ${
-                disappearingIds.includes(s.id) ? 'spider-disappear' : ''
-              }`}
-              style={{
+  const renderSpiderLayer = () =>
+    category === "hobby" &&
+    spiderVisible && (
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        {spiders.map((s) => (
+          <img
+            key={s.id}
+            src="/patterns/spider.svg"
+            alt="Spider"
+            // biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: <explanation>
+            role="button"
+            tabIndex={0}
+            onClick={() => handleClick(s.id)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                handleClick(s.id);
+              }
+            }}
+            className={`spider pointer-events-auto ${
+              disappearingIds.includes(s.id) ? "spider-disappear" : ""
+            }`}
+            style={
+              {
                 top: s.top,
                 left: s.left,
-                position: 'absolute',
-                '--rotate': `${s.rotate}deg`,
-              } as React.CSSProperties}
-            />
-          ))}
-        </div>
-      )
+                position: "absolute",
+                "--rotate": `${s.rotate}deg`,
+              } as React.CSSProperties
+            }
+          />
+        ))}
+      </div>
+    );
 
   // 泡レイヤー
   const renderBubbleLayer = () =>
-    category === 'tech' && (
+    category === "tech" && (
       <div className="absolute inset-0 z-0 pointer-events-none">
         {bubbles.map((b) => (
           <img
@@ -144,16 +139,16 @@ const Category = () => {
             className="bubble"
             style={{ top: b.top, left: b.left }}
             onAnimationEnd={() => {
-              setBubbles((prev) => prev.filter((x) => x.id !== b.id))
+              setBubbles((prev) => prev.filter((x) => x.id !== b.id));
             }}
           />
         ))}
       </div>
-    )
+    );
 
   // カタツムリレイヤー
   const renderSnailLayer = () =>
-    category === 'other' && (
+    category === "other" && (
       <div className="absolute inset-0 z-0 pointer-events-none">
         {snails.map((s) => (
           <img
@@ -166,36 +161,40 @@ const Category = () => {
             className="snail pointer-events-auto"
             style={{ top: s.top, left: s.left }}
             onMouseEnter={(e) => {
-              e.currentTarget.classList.add('snail-move')
+              e.currentTarget.classList.add("snail-move");
             }}
             onClick={() => {
-              setSnails((prev) => prev.filter((x) => x.id !== s.id))
+              setSnails((prev) => prev.filter((x) => x.id !== s.id));
             }}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                setSnails((prev) => prev.filter((x) => x.id !== s.id))
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setSnails((prev) => prev.filter((x) => x.id !== s.id));
               }
             }}
           />
         ))}
       </div>
-    )
+    );
 
-  const labelMap = { hobby: 'しゅみ', tech: 'テック', other: 'その他' } as const
+  const labelMap = {
+    hobby: "しゅみ",
+    tech: "テック",
+    other: "その他",
+  } as const;
   const bgMap = {
-    hobby: 'bg-[#E1C6F9]',
-    tech: 'bg-[#AFEBFF]',
-    other: 'bg-[#CCF5B1]',
-  } as const
+    hobby: "bg-[#E1C6F9]",
+    tech: "bg-[#AFEBFF]",
+    other: "bg-[#CCF5B1]",
+  } as const;
 
   return (
     <section
       className={`relative min-h-screen p-6 space-y-6 overflow-hidden ${
-        bgMap[category as keyof typeof bgMap] ?? 'bg-white'
+        bgMap[category as keyof typeof bgMap] ?? "bg-white"
       }`}
     >
-    <Header />
+      <Header />
       {/* 背景レイヤー */}
       {renderSpiderLayer()}
       {renderBubbleLayer()}
@@ -204,7 +203,8 @@ const Category = () => {
       {/* コンテンツ */}
       <div className="relative z-10">
         <h1 className="text-2xl font-bold">
-          {labelMap[category as keyof typeof labelMap] ?? category} カテゴリの記事
+          {labelMap[category as keyof typeof labelMap] ?? category}{" "}
+          カテゴリの記事
         </h1>
 
         {posts.length === 0 ? (
@@ -216,7 +216,9 @@ const Category = () => {
                 key={post.id}
                 className="bg-white p-4 rounded-xl shadow hover:shadow-md transition w-full"
               >
-                <h2 className="text-xl font-semibold break-words">{post.title}</h2>
+                <h2 className="text-xl font-semibold break-words">
+                  {post.title}
+                </h2>
                 <p className="text-gray-700 mt-2 break-words">
                   {post.content.slice(0, 100)}...
                 </p>
@@ -236,7 +238,7 @@ const Category = () => {
         </div>
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default Category
+export default Category;
