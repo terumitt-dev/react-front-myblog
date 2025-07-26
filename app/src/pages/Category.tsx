@@ -124,8 +124,8 @@ const Category = () => {
                 border: "none",
                 padding: 0,
                 cursor: "pointer",
-                "--rotate": `${s.rotate}deg`,
-              } as React.CSSProperties & Record<string, string>
+                ["--rotate"]: `${s.rotate}deg`,
+              } as React.CSSProperties
             }
           >
             <img
