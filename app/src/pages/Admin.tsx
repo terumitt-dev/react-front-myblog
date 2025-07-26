@@ -2,7 +2,6 @@
 /** biome-ignore-all lint/a11y/noStaticElementInteractions: <explanation> */
 import Layout from "@/components/layouts/Layout";
 import { useEffect, useState } from "react";
-// import { useNavigate } from 'react-router-dom'
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import LogoutButton from "@/components/molecules/LogoutButton";
