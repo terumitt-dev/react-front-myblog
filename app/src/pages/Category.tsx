@@ -1,9 +1,38 @@
 // app/src/pages/Category.tsx
+// app/src/pages/Category.tsx
 import { useParams, Link } from "react-router-dom";
 import { useEffect, useState, useCallback, useRef } from "react";
 import BackToHomeButton from "@/components/molecules/BackToHomeButton";
 import "./Category.css";
 import Header from "@/components/organisms/Header";
+
+// useIntervalカスタムフック
+const useInterval = (
+  callback: () => void,
+  delay: number | null,
+  deps: any[] = [],
+) => {
+  const savedCallback = useRef<() => void>();
+
+  // コールバック関数を記憶
+  useEffect(() => {
+    savedCallback.current = callback;
+  }, [callback]);
+
+  // インターバルのセットアップ
+  useEffect(() => {
+    if (delay === null) return;
+
+    const tick = () => {
+      if (savedCallback.current) savedCallback.current();
+    };
+
+    const id = setInterval(tick, delay);
+
+    // クリーンアップ関数
+    return () => clearInterval(id);
+  }, [delay, ...deps]);
+};
 
 type Post = { id: number; title: string; content: string; category: string };
 type Spider = { id: number; top: string; left: string; rotate: number };
@@ -84,11 +113,9 @@ const Category = () => {
     timerIdsRef.current = timerIdsRef.current.filter((id) => id !== timerId);
   }, []);
 
-  // 泡の自動生成（techカテゴリ）
-  useEffect(() => {
-    if (category !== "tech") return;
-
-    const id = setInterval(() => {
+  // useIntervalを使用
+  useInterval(
+    () => {
       setBubbles((prev) => {
         if (prev.length >= MAX_BUBBLES) return prev;
         const newBubble: Bubble = {
@@ -98,17 +125,10 @@ const Category = () => {
         };
         return [...prev, newBubble];
       });
-    }, BUBBLE_INTERVAL);
-
-    // インターバルIDを直接追加
-    intervalIdsRef.current.push(id);
-
-    return () => {
-      clearInterval(id);
-      // クリーンアップ時に直接削除
-      intervalIdsRef.current = intervalIdsRef.current.filter((i) => i !== id);
-    };
-  }, [category]);
+    },
+    category === "tech" ? BUBBLE_INTERVAL : null,
+    [category],
+  );
 
   // クリーンアップ用useEffect
   useEffect(() => {
