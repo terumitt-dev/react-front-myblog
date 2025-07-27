@@ -30,6 +30,7 @@ const Category = () => {
   const [snails, setSnails] = useState<Snail[]>([]);
 
   const timerIdsRef = useRef<number[]>([]);
+  const intervalIdsRef = useRef<number[]>([]);
 
   // 投稿とエフェクト初期化
   useEffect(() => {
@@ -77,6 +78,7 @@ const Category = () => {
   // 泡の自動生成（techカテゴリ）
   useEffect(() => {
     if (category !== "tech") return;
+
     // バブル生成の間隔調整
     const id = setInterval(() => {
       setBubbles((prev) => {
@@ -92,10 +94,17 @@ const Category = () => {
       });
     }, BUBBLE_INTERVAL);
 
-    return () => clearInterval(id);
+    // インターバルIDを直接登録
+    intervalIdsRef.current.push(id);
+
+    return () => {
+      clearInterval(id);
+      // クリーンアップ時に直接削除
+      intervalIdsRef.current = intervalIdsRef.current.filter((i) => i !== id);
+    };
   }, [category]);
 
-  // 明示的なタイマー追加・削除関数を作成
+  // タイマー管理関数
   const addTimer = useCallback((timerId: number) => {
     timerIdsRef.current.push(timerId);
   }, []);
@@ -104,12 +113,19 @@ const Category = () => {
     timerIdsRef.current = timerIdsRef.current.filter((id) => id !== timerId);
   }, []);
 
+  // インターバル管理関数
+  const addInterval = useCallback((intervalId: number) => {
+    intervalIdsRef.current.push(intervalId);
+  }, []);
+
   // クリーンアップ用useEffect
   useEffect(() => {
     return () => {
-      // コンポーネントアンマウント時に全タイマークリア
+      // すべてのタイマーをクリア
       timerIdsRef.current.forEach((id) => clearTimeout(id));
+      intervalIdsRef.current.forEach((id) => clearInterval(id));
       timerIdsRef.current = [];
+      intervalIdsRef.current = [];
     };
   }, []);
 
