@@ -59,6 +59,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <h2>予期せぬエラーが発生しました。</h2>
             <p>ページを再読み込みするか、しばらくしてからお試しください。</p>
             <button
+              type="button"
               style={{ marginTop: "1rem", padding: "0.5rem 1rem" }}
               onClick={this.resetError}
             >
