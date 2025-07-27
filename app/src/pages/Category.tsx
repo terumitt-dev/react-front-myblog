@@ -95,47 +95,57 @@ const Category = () => {
     return () => clearInterval(id);
   }, [category]);
 
-  // コンポーネントのアンマウント時にすべてのタイマーをクリア
+  // 明示的なタイマー追加・削除関数を作成
+  const addTimer = useCallback((timerId: number) => {
+    timerIdsRef.current.push(timerId);
+  }, []);
+
+  const removeTimer = useCallback((timerId: number) => {
+    timerIdsRef.current = timerIdsRef.current.filter((id) => id !== timerId);
+  }, []);
+
+  // クリーンアップ用useEffect
   useEffect(() => {
     return () => {
+      // コンポーネントアンマウント時に全タイマークリア
       timerIdsRef.current.forEach((id) => clearTimeout(id));
       timerIdsRef.current = [];
     };
   }, []);
 
   // クモ削除ハンドラ
-  const handleClick = useCallback((id: number) => {
-    setSpiderDisappearingIds((prev) => [...prev, id]);
+  const handleClick = useCallback(
+    (id: number) => {
+      setSpiderDisappearingIds((prev) => [...prev, id]);
 
-    const timerId = setTimeout(() => {
-      setSpiders((prev) => prev.filter((sp) => sp.id !== id));
-      setSpiderDisappearingIds((prev) => prev.filter((x) => x !== id));
-      // タイマー完了後にリストから削除
-      timerIdsRef.current = timerIdsRef.current.filter(
-        (tid) => tid !== timerId,
-      );
-    }, 600);
-    // タイマーIDをrefに追加
-    timerIdsRef.current.push(timerId);
-  }, []);
+      const timerId = setTimeout(() => {
+        setSpiders((prev) => prev.filter((sp) => sp.id !== id));
+        setSpiderDisappearingIds((prev) => prev.filter((x) => x !== id));
+        removeTimer(timerId);
+      }, 600);
+
+      addTimer(timerId);
+    },
+    [removeTimer, addTimer, setSpiders, setSpiderDisappearingIds],
+  );
 
   // カタツムリ削除ハンドラ
-  const handleSnailClick = useCallback((id: number) => {
-    setSnailDisappearingIds((prev) => [...prev, id]);
+  const handleSnailClick = useCallback(
+    (id: number) => {
+      setSnailDisappearingIds((prev) => [...prev, id]);
 
-    const timerId = setTimeout(() => {
-      setSnails((prev) => prev.filter((snail) => snail.id !== id));
-      setSnailDisappearingIds((prev) => prev.filter((x) => x !== id));
-      // タイマー完了後にリストから削除
-      timerIdsRef.current = timerIdsRef.current.filter(
-        (tid) => tid !== timerId,
-      );
-    }, 600);
-    // タイマーIDをrefに追加
-    timerIdsRef.current.push(timerId);
-  }, []);
+      const timerId = setTimeout(() => {
+        setSnails((prev) => prev.filter((snail) => snail.id !== id));
+        setSnailDisappearingIds((prev) => prev.filter((x) => x !== id));
+        removeTimer(timerId);
+      }, 600);
 
-  // 蜘蛛レイヤー
+      addTimer(timerId);
+    },
+    [removeTimer, addTimer, setSnails, setSnailDisappearingIds],
+  );
+
+  // クモレイヤー
   const renderSpiderLayer = () =>
     category === "hobby" &&
     spiderVisible && (
