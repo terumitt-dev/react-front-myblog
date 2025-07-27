@@ -1,5 +1,4 @@
 // app/src/pages/Category.tsx
-// app/src/pages/Category.tsx
 import { useParams, Link } from "react-router-dom";
 import { useEffect, useState, useCallback, useRef } from "react";
 import BackToHomeButton from "@/components/molecules/BackToHomeButton";
