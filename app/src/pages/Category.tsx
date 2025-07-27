@@ -12,6 +12,7 @@ const useInterval = (
   deps: any[] = [],
 ) => {
   const savedCallback = useRef<() => void>();
+  const idRef = useRef<number | null>(null);
 
   // コールバック関数を記憶
   useEffect(() => {
@@ -20,17 +21,31 @@ const useInterval = (
 
   // インターバルのセットアップ
   useEffect(() => {
-    if (delay === null) return;
+    if (delay === null) {
+      // delayがnullの場合、既存のインターバルをクリア
+      if (idRef.current !== null) {
+        clearInterval(idRef.current);
+        idRef.current = null;
+      }
+      return;
+    }
 
     const tick = () => {
       if (savedCallback.current) savedCallback.current();
     };
 
-    const id = setInterval(tick, delay);
+    idRef.current = setInterval(tick, delay);
 
     // クリーンアップ関数
-    return () => clearInterval(id);
+    return () => {
+      if (idRef.current !== null) {
+        clearInterval(idRef.current);
+        idRef.current = null;
+      }
+    };
   }, [delay, ...deps]);
+
+  return idRef.current;
 };
 
 type Post = { id: number; title: string; content: string; category: string };
@@ -113,7 +128,7 @@ const Category = () => {
   }, []);
 
   // useIntervalを使用
-  useInterval(
+  const intervalId = useInterval(
     () => {
       setBubbles((prev) => {
         if (prev.length >= MAX_BUBBLES) return prev;
@@ -128,6 +143,18 @@ const Category = () => {
     category === "tech" ? BUBBLE_INTERVAL : null,
     [category],
   );
+
+  // インターバルIDをintervalIdsRefに追加
+  useEffect(() => {
+    if (intervalId !== null) {
+      intervalIdsRef.current.push(intervalId);
+      return () => {
+        intervalIdsRef.current = intervalIdsRef.current.filter(
+          (id) => id !== intervalId,
+        );
+      };
+    }
+  }, [intervalId]);
 
   // クリーンアップ用useEffect
   useEffect(() => {
