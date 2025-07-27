@@ -1,5 +1,6 @@
 // app/src/components/utils/ResettableErrorBoundary.tsx
 import { useState } from "react";
+import React from "react";
 import { ErrorBoundary } from "./ErrorBoundary";
 
 type FallbackProps = {
