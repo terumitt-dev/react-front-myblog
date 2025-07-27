@@ -75,35 +75,6 @@ const Category = () => {
     }
   }, [category]);
 
-  // 泡の自動生成（techカテゴリ）
-  useEffect(() => {
-    if (category !== "tech") return;
-
-    // バブル生成の間隔調整
-    const id = setInterval(() => {
-      setBubbles((prev) => {
-        // すでに最大数ならスキップ
-        if (prev.length >= MAX_BUBBLES) return prev;
-        // 一度に追加するのは1つだけに
-        const newBubble: Bubble = {
-          id: Date.now(),
-          top: `${Math.random() * 90}%`,
-          left: `${Math.random() * 90}%`,
-        };
-        return [...prev, newBubble];
-      });
-    }, BUBBLE_INTERVAL);
-
-    // インターバルIDを直接登録
-    intervalIdsRef.current.push(id);
-
-    return () => {
-      clearInterval(id);
-      // クリーンアップ時に直接削除
-      intervalIdsRef.current = intervalIdsRef.current.filter((i) => i !== id);
-    };
-  }, [category]);
-
   // タイマー管理関数
   const addTimer = useCallback((timerId: number) => {
     timerIdsRef.current.push(timerId);
@@ -113,10 +84,31 @@ const Category = () => {
     timerIdsRef.current = timerIdsRef.current.filter((id) => id !== timerId);
   }, []);
 
-  // インターバル管理関数
-  const addInterval = useCallback((intervalId: number) => {
-    intervalIdsRef.current.push(intervalId);
-  }, []);
+  // 泡の自動生成（techカテゴリ）
+  useEffect(() => {
+    if (category !== "tech") return;
+
+    const id = setInterval(() => {
+      setBubbles((prev) => {
+        if (prev.length >= MAX_BUBBLES) return prev;
+        const newBubble: Bubble = {
+          id: Date.now(),
+          top: `${Math.random() * 90}%`,
+          left: `${Math.random() * 90}%`,
+        };
+        return [...prev, newBubble];
+      });
+    }, BUBBLE_INTERVAL);
+
+    // インターバルIDを直接追加
+    intervalIdsRef.current.push(id);
+
+    return () => {
+      clearInterval(id);
+      // クリーンアップ時に直接削除
+      intervalIdsRef.current = intervalIdsRef.current.filter((i) => i !== id);
+    };
+  }, [category]);
 
   // クリーンアップ用useEffect
   useEffect(() => {
