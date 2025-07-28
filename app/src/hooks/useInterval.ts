@@ -47,5 +47,5 @@ export function useInterval(
         idRef.current = null;
       }
     };
-  }, [delay, clearInterval, setInterval, ...deps]);
+  }, [delay, ...deps]);
 }
