@@ -106,19 +106,61 @@ export function useTimers() {
     timersInstance = createTimersManager();
   }
 
-  // コンポーネントのアンマウント時にクリーンアップを行う
-  useEffect(() => {
-    return () => {
-      // コンポーネントがアンマウントされる時、関連するタイマーをクリーンアップ
-      // アプリケーション全体のクリーンアップは行わない（シングルトンなため）
-    };
+  // コンポーネント固有のタイマーIDを保持する
+  const componentTimeoutIdsRef = useRef<number[]>([]);
+  const componentIntervalIdsRef = useRef<number[]>([]);
+
+  // オリジナルのメソッドをラップして、コンポーネント固有のIDを追跡
+  const wrappedSetTimeout = useCallback(
+    (callback: () => void, delay: number) => {
+      const id = timersInstance.setTimeout(callback, delay);
+      componentTimeoutIdsRef.current.push(id);
+      return id;
+    },
+    [],
+  );
+
+  const wrappedClearTimeout = useCallback((id: number) => {
+    timersInstance.clearTimeout(id);
+    componentTimeoutIdsRef.current = componentTimeoutIdsRef.current.filter(
+      (timeId) => timeId !== id,
+    );
   }, []);
 
-  // メソッドをuseCallback内でラップして安定したリファレンスを提供
-  const wrappedSetTimeout = useCallback(timersInstance.setTimeout, []);
-  const wrappedClearTimeout = useCallback(timersInstance.clearTimeout, []);
-  const wrappedSetInterval = useCallback(timersInstance.setInterval, []);
-  const wrappedClearInterval = useCallback(timersInstance.clearInterval, []);
+  const wrappedSetInterval = useCallback(
+    (callback: () => void, delay: number) => {
+      const id = timersInstance.setInterval(callback, delay);
+      componentIntervalIdsRef.current.push(id);
+      return id;
+    },
+    [],
+  );
+
+  const wrappedClearInterval = useCallback((id: number) => {
+    timersInstance.clearInterval(id);
+    componentIntervalIdsRef.current = componentIntervalIdsRef.current.filter(
+      (intId) => intId !== id,
+    );
+  }, []);
+
+  // コンポーネントのアンマウント時にコンポーネント固有のタイマーをクリーンアップ
+  useEffect(() => {
+    return () => {
+      // このコンポーネントが設定したタイムアウトをクリア
+      componentTimeoutIdsRef.current.forEach((id) => {
+        timersInstance.clearTimeout(id);
+      });
+
+      // このコンポーネントが設定したインターバルをクリア
+      componentIntervalIdsRef.current.forEach((id) => {
+        timersInstance.clearInterval(id);
+      });
+
+      // 参照を空にする
+      componentTimeoutIdsRef.current = [];
+      componentIntervalIdsRef.current = [];
+    };
+  }, []);
 
   return {
     setTimeout: wrappedSetTimeout,
