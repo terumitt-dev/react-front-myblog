@@ -1,52 +1,11 @@
 // app/src/pages/Category.tsx
 import { useParams, Link } from "react-router-dom";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import BackToHomeButton from "@/components/molecules/BackToHomeButton";
 import "./Category.css";
 import Header from "@/components/organisms/Header";
-
-// useIntervalカスタムフック
-const useInterval = (
-  callback: () => void,
-  delay: number | null,
-  deps: any[] = [],
-) => {
-  const savedCallback = useRef<() => void>();
-  const idRef = useRef<number | null>(null);
-
-  // コールバック関数を記憶
-  useEffect(() => {
-    savedCallback.current = callback;
-  }, [callback]);
-
-  // インターバルのセットアップ
-  useEffect(() => {
-    if (delay === null) {
-      // delayがnullの場合、既存のインターバルをクリア
-      if (idRef.current !== null) {
-        clearInterval(idRef.current);
-        idRef.current = null;
-      }
-      return;
-    }
-
-    const tick = () => {
-      if (savedCallback.current) savedCallback.current();
-    };
-
-    idRef.current = setInterval(tick, delay);
-
-    // クリーンアップ関数
-    return () => {
-      if (idRef.current !== null) {
-        clearInterval(idRef.current);
-        idRef.current = null;
-      }
-    };
-  }, [delay, ...deps]);
-
-  return idRef.current;
-};
+import { useInterval } from "@/hooks/useInterval";
+import { useTimers } from "@/hooks/useTimers";
 
 type Post = { id: number; title: string; content: string; category: string };
 type Spider = { id: number; top: string; left: string; rotate: number };
@@ -72,8 +31,8 @@ const Category = () => {
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
   const [snails, setSnails] = useState<Snail[]>([]);
 
-  const timerIdsRef = useRef<number[]>([]);
-  const intervalIdsRef = useRef<number[]>([]);
+  // タイマー管理フックを使用
+  const { setTimeout } = useTimers();
 
   // 投稿とエフェクト初期化
   useEffect(() => {
@@ -118,17 +77,8 @@ const Category = () => {
     }
   }, [category]);
 
-  // タイマー管理関数
-  const addTimer = useCallback((timerId: number) => {
-    timerIdsRef.current.push(timerId);
-  }, []);
-
-  const removeTimer = useCallback((timerId: number) => {
-    timerIdsRef.current = timerIdsRef.current.filter((id) => id !== timerId);
-  }, []);
-
   // useIntervalを使用
-  const intervalId = useInterval(
+  useInterval(
     () => {
       setBubbles((prev) => {
         if (prev.length >= MAX_BUBBLES) return prev;
@@ -144,43 +94,17 @@ const Category = () => {
     [category],
   );
 
-  // インターバルIDをintervalIdsRefに追加
-  useEffect(() => {
-    if (intervalId !== null) {
-      intervalIdsRef.current.push(intervalId);
-      return () => {
-        intervalIdsRef.current = intervalIdsRef.current.filter(
-          (id) => id !== intervalId,
-        );
-      };
-    }
-  }, [intervalId]);
-
-  // クリーンアップ用useEffect
-  useEffect(() => {
-    return () => {
-      // すべてのタイマーをクリア
-      timerIdsRef.current.forEach((id) => clearTimeout(id));
-      intervalIdsRef.current.forEach((id) => clearInterval(id));
-      timerIdsRef.current = [];
-      intervalIdsRef.current = [];
-    };
-  }, []);
-
   // クモ削除ハンドラ
   const handleClick = useCallback(
     (id: number) => {
       setSpiderDisappearingIds((prev) => [...prev, id]);
 
-      const timerId = setTimeout(() => {
+      setTimeout(() => {
         setSpiders((prev) => prev.filter((sp) => sp.id !== id));
         setSpiderDisappearingIds((prev) => prev.filter((x) => x !== id));
-        removeTimer(timerId);
       }, 600);
-
-      addTimer(timerId);
     },
-    [removeTimer, addTimer, setSpiders, setSpiderDisappearingIds],
+    [setTimeout, setSpiders, setSpiderDisappearingIds],
   );
 
   // カタツムリ削除ハンドラ
@@ -188,15 +112,12 @@ const Category = () => {
     (id: number) => {
       setSnailDisappearingIds((prev) => [...prev, id]);
 
-      const timerId = setTimeout(() => {
+      setTimeout(() => {
         setSnails((prev) => prev.filter((snail) => snail.id !== id));
         setSnailDisappearingIds((prev) => prev.filter((x) => x !== id));
-        removeTimer(timerId);
       }, 600);
-
-      addTimer(timerId);
     },
-    [removeTimer, addTimer, setSnails, setSnailDisappearingIds],
+    [setTimeout, setSnails, setSnailDisappearingIds],
   );
 
   // クモレイヤー
