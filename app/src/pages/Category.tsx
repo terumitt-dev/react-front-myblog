@@ -125,15 +125,20 @@ const Category = () => {
     category === "hobby" &&
     spiderVisible && (
       <div className="absolute inset-0 z-0 pointer-events-none">
-        {spiders.map((s) => (
-          <button
-            key={s.id}
-            type="button"
-            onClick={() => handleClick(s.id)}
-            aria-label="クモを消す"
-            className={`spider pointer-events-auto ${spiderDisappearingIds.includes(s.id) ? "spider-disappear" : ""}`}
-            style={
-              {
+        {spiders.map((s) => {
+          // 回転角度を8方向に丸める（0, 45, 90, 135, 180, 225, 270, 315）
+          const rotateClass = `rotate-${(Math.round(s.rotate / 45) * 45) % 360}`;
+
+          return (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => handleClick(s.id)}
+              aria-label="クモを消す"
+              className={`spider pointer-events-auto ${rotateClass} ${
+                spiderDisappearingIds.includes(s.id) ? "spider-disappear" : ""
+              }`}
+              style={{
                 top: s.top,
                 left: s.left,
                 position: "absolute",
@@ -141,18 +146,17 @@ const Category = () => {
                 border: "none",
                 padding: 0,
                 cursor: "pointer",
-                ["--rotate"]: `${s.rotate}deg`,
-              } as React.CSSProperties
-            }
-          >
-            <img
-              src="/patterns/spider.svg"
-              alt=""
-              draggable={false}
-              style={{ pointerEvents: "none" }}
-            />
-          </button>
-        ))}
+              }}
+            >
+              <img
+                src="/patterns/spider.svg"
+                alt=""
+                draggable={false}
+                style={{ pointerEvents: "none" }}
+              />
+            </button>
+          );
+        })}
       </div>
     );
 

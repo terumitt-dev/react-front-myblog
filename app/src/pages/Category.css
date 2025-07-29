@@ -1,4 +1,31 @@
 /*app/src/pages/Category.css*/
+
+/* 回転角度のプリセットクラス */
+.rotate-0 {
+    --rotate: 0deg;
+}
+.rotate-45 {
+    --rotate: 45deg;
+}
+.rotate-90 {
+    --rotate: 90deg;
+}
+.rotate-135 {
+    --rotate: 135deg;
+}
+.rotate-180 {
+    --rotate: 180deg;
+}
+.rotate-225 {
+    --rotate: 225deg;
+}
+.rotate-270 {
+    --rotate: 270deg;
+}
+.rotate-315 {
+    --rotate: 315deg;
+}
+
 /* ==================== 蜘蛛 ==================== */
 .spider {
     position: absolute;
