@@ -4,21 +4,46 @@ import { useRef, useEffect, useCallback } from "react";
 // シングルトンインスタンスを保持するためのグローバル変数
 let timersInstance: ReturnType<typeof createTimersManager> | null = null;
 
+// 定期的なクリーンアップの間隔（ミリ秒）
+const CLEANUP_INTERVAL = 60 * 60 * 1000; // 1時間
+
 /**
  * タイマー管理の実装を分離
  */
 function createTimersManager() {
-  // タイマーIDを保持するref
+  // タイマーIDを保持する配列
   const timeoutIds: number[] = [];
   const intervalIds: number[] = [];
 
+  // 最後のアクティビティタイムスタンプ
+  let lastActivity = Date.now();
+
+  // 使用中のタイマーの数
+  let activeTimersCount = 0;
+
+  // 定期的なクリーンアップタイマーのID
+  let cleanupTimerId: number | null = null;
+
+  // 定期的なクリーンアップを開始
+  const startPeriodicCleanup = () => {
+    if (cleanupTimerId === null) {
+      cleanupTimerId = window.setInterval(() => {
+        // 1時間以上アクティビティがなければクリーンアップ
+        const now = Date.now();
+        if (now - lastActivity > CLEANUP_INTERVAL && activeTimersCount === 0) {
+          cleanupAll();
+        }
+      }, CLEANUP_INTERVAL);
+    }
+  };
+
   /**
    * タイムアウトを設定し、IDを自動的に管理する
-   * @param callback 実行する関数
-   * @param delay 遅延時間（ミリ秒）
-   * @returns タイムアウトID
    */
   const setTimeout = (callback: () => void, delay: number) => {
+    lastActivity = Date.now();
+    activeTimersCount++;
+
     const id = window.setTimeout(() => {
       // 実行後、自動的にIDリストから削除
       callback();
@@ -26,45 +51,50 @@ function createTimersManager() {
       if (index !== -1) {
         timeoutIds.splice(index, 1);
       }
+      activeTimersCount--;
     }, delay);
 
     timeoutIds.push(id);
+    startPeriodicCleanup();
     return id;
   };
 
   /**
    * タイムアウトをクリアする
-   * @param id タイムアウトID
    */
   const clearTimeout = (id: number) => {
+    lastActivity = Date.now();
     window.clearTimeout(id);
     const index = timeoutIds.indexOf(id);
     if (index !== -1) {
       timeoutIds.splice(index, 1);
+      activeTimersCount--;
     }
   };
 
   /**
    * インターバルを設定し、IDを自動的に管理する
-   * @param callback 実行する関数
-   * @param delay 間隔（ミリ秒）
-   * @returns インターバルID
    */
   const setInterval = (callback: () => void, delay: number) => {
+    lastActivity = Date.now();
+    activeTimersCount++;
+
     const id = window.setInterval(callback, delay);
     intervalIds.push(id);
+    startPeriodicCleanup();
     return id;
   };
 
   /**
    * インターバルをクリアする
-   * @param id インターバルID
    */
   const clearInterval = (id: number) => {
+    lastActivity = Date.now();
     window.clearInterval(id);
     const index = intervalIds.indexOf(id);
     if (index !== -1) {
       intervalIds.splice(index, 1);
+      activeTimersCount--;
     }
   };
 
@@ -80,9 +110,17 @@ function createTimersManager() {
     intervalIds.slice().forEach((id) => {
       window.clearInterval(id);
     });
+
+    // クリーンアップタイマーもクリア
+    if (cleanupTimerId !== null) {
+      window.clearInterval(cleanupTimerId);
+      cleanupTimerId = null;
+    }
+
     // 配列を空にする
     timeoutIds.length = 0;
     intervalIds.length = 0;
+    activeTimersCount = 0;
   };
 
   return {
@@ -91,8 +129,6 @@ function createTimersManager() {
     setInterval,
     clearInterval,
     cleanupAll,
-    _getTimeoutIds: () => [...timeoutIds],
-    _getIntervalIds: () => [...intervalIds],
   };
 }
 
@@ -113,7 +149,7 @@ export function useTimers() {
   // オリジナルのメソッドをラップして、コンポーネント固有のIDを追跡
   const wrappedSetTimeout = useCallback(
     (callback: () => void, delay: number) => {
-      const id = timersInstance.setTimeout(callback, delay);
+      const id = timersInstance!.setTimeout(callback, delay);
       componentTimeoutIdsRef.current.push(id);
       return id;
     },
@@ -121,7 +157,7 @@ export function useTimers() {
   );
 
   const wrappedClearTimeout = useCallback((id: number) => {
-    timersInstance.clearTimeout(id);
+    timersInstance!.clearTimeout(id);
     componentTimeoutIdsRef.current = componentTimeoutIdsRef.current.filter(
       (timeId) => timeId !== id,
     );
@@ -129,7 +165,7 @@ export function useTimers() {
 
   const wrappedSetInterval = useCallback(
     (callback: () => void, delay: number) => {
-      const id = timersInstance.setInterval(callback, delay);
+      const id = timersInstance!.setInterval(callback, delay);
       componentIntervalIdsRef.current.push(id);
       return id;
     },
@@ -137,7 +173,7 @@ export function useTimers() {
   );
 
   const wrappedClearInterval = useCallback((id: number) => {
-    timersInstance.clearInterval(id);
+    timersInstance!.clearInterval(id);
     componentIntervalIdsRef.current = componentIntervalIdsRef.current.filter(
       (intId) => intId !== id,
     );
@@ -146,14 +182,13 @@ export function useTimers() {
   // コンポーネントのアンマウント時にコンポーネント固有のタイマーをクリーンアップ
   useEffect(() => {
     return () => {
-      // このコンポーネントが設定したタイムアウトをクリア
+      // このコンポーネントが設定したタイマーをクリア
       componentTimeoutIdsRef.current.forEach((id) => {
-        timersInstance.clearTimeout(id);
+        timersInstance!.clearTimeout(id);
       });
 
-      // このコンポーネントが設定したインターバルをクリア
       componentIntervalIdsRef.current.forEach((id) => {
-        timersInstance.clearInterval(id);
+        timersInstance!.clearInterval(id);
       });
 
       // 参照を空にする
