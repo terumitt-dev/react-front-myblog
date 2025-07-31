@@ -1,5 +1,5 @@
 // app/src/hooks/useInterval.ts
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useMemo } from "react";
 import { useTimers } from "./useTimers";
 
 /**
@@ -22,6 +22,9 @@ export function useInterval(
   useEffect(() => {
     savedCallback.current = callback;
   }, [callback]);
+
+  // 依存配列を安全にメモ化
+  const memoizedDeps = useMemo(() => deps, deps);
 
   // インターバルのセットアップ
   useEffect(() => {
@@ -47,5 +50,5 @@ export function useInterval(
         idRef.current = null;
       }
     };
-  }, [delay, ...deps]);
+  }, [delay, memoizedDeps, setInterval, clearInterval]);
 }
