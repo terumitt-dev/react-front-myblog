@@ -1,5 +1,4 @@
 // app/src/components/molecules/ThemeToggle.tsx
-/** biome-ignore-all lint/a11y/useButtonType: <explanation> */
 import { useTheme } from "../../context/ThemeContext";
 import { Sun, Moon } from "lucide-react";
 
@@ -11,8 +10,22 @@ const ThemeToggle = () => {
       type="button"
       onClick={toggleTheme}
       className="p-2 rounded-full border border-gray-300 dark:border-gray-600"
+      aria-label={
+        theme === "dark"
+          ? "ライトモードに切り替える"
+          : "ダークモードに切り替える"
+      }
+      title={
+        theme === "dark"
+          ? "ライトモードに切り替える"
+          : "ダークモードに切り替える"
+      }
     >
-      {theme === "dark" ? <Sun className="text-yellow-300" /> : <Moon />}
+      {theme === "dark" ? (
+        <Sun className="text-yellow-300" aria-hidden="true" />
+      ) : (
+        <Moon aria-hidden="true" />
+      )}
     </button>
   );
 };
