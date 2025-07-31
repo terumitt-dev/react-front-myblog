@@ -1,6 +1,6 @@
 // app/src/pages/Category.tsx
 import { useParams, Link } from "react-router-dom";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react"; // useRefを追加
 import BackToHomeButton from "@/components/molecules/BackToHomeButton";
 import "./Category.css";
 import Header from "@/components/organisms/Header";
@@ -9,11 +9,19 @@ import { useTimers } from "@/hooks/useTimers";
 
 type Post = { id: number; title: string; content: string; category: string };
 type Spider = { id: number; top: string; left: string; rotate: number };
-type Bubble = { id: number; top: string; left: string };
+type Bubble = { id: number; top: string; left: string; createdAt: number };
 type Snail = { id: number; top: string; left: string; isMoved?: boolean };
 
-const MAX_BUBBLES = 10;
-const BUBBLE_INTERVAL = 1000;
+const MAX_BUBBLES = 8; // 10から8に削減
+const MAX_SPIDERS = 8; // 12から8に削減
+const MAX_SNAILS = 6; // 8から6に削減
+const BUBBLE_INTERVAL = 2000; // 1000msから2000msに変更
+const BUBBLE_LIFETIME = 8000; // 8秒後に自動削除
+
+// アニメーション無効化フラグ
+const REDUCED_MOTION = window.matchMedia(
+  "(prefers-reduced-motion: reduce)",
+).matches;
 
 const Category = () => {
   const { category } = useParams<{ category: string }>();
@@ -34,6 +42,9 @@ const Category = () => {
   // タイマー管理フックを使用
   const { setTimeout } = useTimers();
 
+  // バブルID生成用のカウンター
+  const bubbleIdCounterRef = useRef(0);
+
   // 投稿とエフェクト初期化
   useEffect(() => {
     const saved = localStorage.getItem("myblog-posts");
@@ -48,11 +59,13 @@ const Category = () => {
     }
 
     if (category === "hobby") {
-      const newSpiders: Spider[] = [...Array(12)].map((_, i) => ({
+      // アニメーション無効化設定がある場合は要素数を削減
+      const spiderCount = REDUCED_MOTION ? 4 : MAX_SPIDERS;
+      const newSpiders: Spider[] = [...Array(spiderCount)].map((_, i) => ({
         id: i,
-        top: `${Math.random() * 90}%`,
-        left: `${Math.random() * 90}%`,
-        rotate: Math.floor(Math.random() * 360),
+        top: `${Math.random() * 80 + 10}%`, // 端を避ける
+        left: `${Math.random() * 80 + 10}%`,
+        rotate: Math.floor(Math.random() * 8) * 45, // 45度刻みで制限（8方向）
       }));
       setSpiders(newSpiders);
       setSpiderVisible(true);
@@ -65,10 +78,12 @@ const Category = () => {
     }
 
     if (category === "other") {
-      const newSnails: Snail[] = [...Array(8)].map((_, i) => ({
+      // アニメーション無効化設定がある場合は要素数を削減
+      const snailCount = REDUCED_MOTION ? 3 : MAX_SNAILS;
+      const newSnails: Snail[] = [...Array(snailCount)].map((_, i) => ({
         id: i,
-        top: `${Math.random() * 80}%`,
-        left: `${Math.random() * 80}%`,
+        top: `${Math.random() * 70 + 15}%`, // より端を避ける
+        left: `${Math.random() * 70 + 15}%`,
         isMoved: false,
       }));
       setSnails(newSnails);
@@ -80,17 +95,49 @@ const Category = () => {
   // useIntervalを使用
   useInterval(
     () => {
+      // アニメーション無効化設定がある場合は生成しない
+      if (REDUCED_MOTION) return;
+
       setBubbles((prev) => {
-        if (prev.length >= MAX_BUBBLES) return prev;
+        // 最大数に達している場合は古いものを削除してから新しいものを追加
+        if (prev.length >= MAX_BUBBLES) {
+          // 最も古いバブルを削除
+          const newBubbles = prev.slice(1);
+          const newBubble: Bubble = {
+            id: ++bubbleIdCounterRef.current,
+            top: `${Math.random() * 80 + 10}%`,
+            left: `${Math.random() * 80 + 10}%`,
+            createdAt: Date.now(),
+          };
+          return [...newBubbles, newBubble];
+        }
+
         const newBubble: Bubble = {
-          id: Date.now(),
-          top: `${Math.random() * 90}%`,
-          left: `${Math.random() * 90}%`,
+          id: ++bubbleIdCounterRef.current,
+          top: `${Math.random() * 80 + 10}%`,
+          left: `${Math.random() * 80 + 10}%`,
+          createdAt: Date.now(),
         };
         return [...prev, newBubble];
       });
     },
     category === "tech" ? BUBBLE_INTERVAL : null,
+    [category],
+  );
+
+  // バブルの自動削除（ライフサイクル管理）
+  useInterval(
+    () => {
+      if (REDUCED_MOTION) return;
+
+      setBubbles((prev) => {
+        const now = Date.now();
+        return prev.filter(
+          (bubble) => now - bubble.createdAt < BUBBLE_LIFETIME,
+        );
+      });
+    },
+    category === "tech" ? 3000 : null,
     [category],
   );
 
@@ -161,8 +208,10 @@ const Category = () => {
     );
 
   // 泡レイヤー
-  const renderBubbleLayer = () =>
-    category === "tech" && (
+  const renderBubbleLayer = useCallback(() => {
+    if (category !== "tech") return null;
+
+    return (
       <div className="absolute inset-0 z-0 pointer-events-none">
         {bubbles.map((b) => (
           <img
@@ -170,14 +219,21 @@ const Category = () => {
             src="/patterns/bubbles.svg"
             alt=""
             className="bubble"
-            style={{ top: b.top, left: b.left }}
+            style={{
+              top: b.top,
+              left: b.left,
+              // CSSアニメーション無効化対応
+              animationDuration: REDUCED_MOTION ? "0s" : undefined,
+            }}
             onAnimationEnd={() => {
+              // アニメーション終了時に削除
               setBubbles((prev) => prev.filter((x) => x.id !== b.id));
             }}
           />
         ))}
       </div>
     );
+  }, [category, bubbles]);
 
   // カタツムリレイヤー
   const renderSnailLayer = () =>

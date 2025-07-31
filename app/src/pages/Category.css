@@ -1,5 +1,36 @@
 /*app/src/pages/Category.css*/
 
+/* パフォーマンス最適化のためのベーススタイル */
+.bubble,
+.spider,
+.snail {
+    will-change: transform, opacity;
+    transform: translateZ(0); /* レイヤー化を強制してGPUアクセラレーション */
+    contain: layout style paint; /* レンダリング最適化 */
+}
+
+/* アニメーション無効化時の対応 */
+@media (prefers-reduced-motion: reduce) {
+    .bubble,
+    .spider,
+    .snail,
+    .spider-disappear,
+    .snail-disappear,
+    .snail-move {
+        animation: none !important;
+        transition: none !important;
+    }
+
+    /* 動きを減らす設定時は静的な表示に変更 */
+    .spider:hover {
+        transform: rotate(var(--rotate)) !important;
+    }
+
+    .snail-move {
+        transform: scaleX(1) !important;
+    }
+}
+
 /* 回転角度のプリセットクラス */
 .rotate-0 {
     --rotate: 0deg;
@@ -34,6 +65,8 @@
     opacity: 0.7;
     transform: rotate(var(--rotate));
     transition: transform 0.3s ease;
+    /* パフォーマンス最適化: より軽量なアニメーション */
+    backface-visibility: hidden;
 }
 
 .spider:hover {
@@ -46,6 +79,8 @@
     transition:
         transform 0.6s ease,
         opacity 0.6s ease;
+    /* アニメーション完了後にGPUメモリから解放 */
+    animation-fill-mode: forwards;
 }
 
 /* ==================== 泡 ==================== */
@@ -56,19 +91,23 @@
     opacity: 0.7;
     animation: grow-and-pop 3s ease-out forwards;
     pointer-events: none;
+    /* パフォーマンス最適化 */
+    backface-visibility: hidden;
+    /* アニメーション完了後にGPUメモリから解放 */
+    animation-fill-mode: forwards;
 }
 
 @keyframes grow-and-pop {
     0% {
-        transform: scale(0.8);
+        transform: scale(0.8) translateZ(0);
         opacity: 0.8;
     }
     80% {
-        transform: scale(1.8);
+        transform: scale(1.8) translateZ(0);
         opacity: 1;
     }
     100% {
-        transform: scale(0);
+        transform: scale(0) translateZ(0);
         opacity: 0;
     }
 }
@@ -81,13 +120,50 @@
     opacity: 0.85;
     transition: transform 5s linear;
     transform: scaleX(1);
+    /* パフォーマンス最適化 */
+    backface-visibility: hidden;
 }
 
 .snail-move {
     transform: translateX(-80px) scaleX(1);
     transition: transform 5s linear;
 }
+
 .snail-disappear {
     opacity: 0;
     transition: opacity 0.6s;
+    /* アニメーション完了後にGPUメモリから解放 */
+    animation-fill-mode: forwards;
+}
+
+/* ==================== 全体的なパフォーマンス最適化 ==================== */
+
+/* より高いパフォーマンスが必要な場合のオプション設定 */
+@media (max-width: 768px) {
+    /* モバイルデバイスでのパフォーマンス最適化 */
+    .bubble {
+        animation-duration: 2s; /* アニメーション時間を短縮 */
+    }
+
+    .spider,
+    .snail {
+        opacity: 0.6; /* 透明度を下げてレンダリング負荷軽減 */
+    }
+}
+
+/* 低スペックデバイス向けの最適化 */
+@media (pointer: coarse) and (max-width: 1024px) {
+    .spider:hover {
+        /* タッチデバイスではホバー効果を簡素化 */
+        transform: rotate(var(--rotate));
+    }
+}
+
+/* プリフェッチ最適化: アニメーション要素の事前準備 */
+.spider,
+.snail,
+.bubble {
+    /* レンダリングエンジンにヒントを提供 */
+    transform-origin: center center;
+    -webkit-transform-origin: center center;
 }
