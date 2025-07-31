@@ -1,6 +1,6 @@
 // app/src/pages/Category.tsx
 import { useParams, Link } from "react-router-dom";
-import { useEffect, useState, useCallback, useRef } from "react"; // useRefを追加
+import { useEffect, useState, useCallback, useRef } from "react";
 import BackToHomeButton from "@/components/molecules/BackToHomeButton";
 import "./Category.css";
 import Header from "@/components/organisms/Header";
@@ -12,16 +12,10 @@ type Spider = { id: number; top: string; left: string; rotate: number };
 type Bubble = { id: number; top: string; left: string; createdAt: number };
 type Snail = { id: number; top: string; left: string; isMoved?: boolean };
 
-const MAX_BUBBLES = 8; // 10から8に削減
-const MAX_SPIDERS = 8; // 12から8に削減
-const MAX_SNAILS = 6; // 8から6に削減
-const BUBBLE_INTERVAL = 2000; // 1000msから2000msに変更
-const BUBBLE_LIFETIME = 8000; // 8秒後に自動削除
-
-// アニメーション無効化フラグ
-const REDUCED_MOTION = window.matchMedia(
-  "(prefers-reduced-motion: reduce)",
-).matches;
+const MAX_BUBBLES = 8;
+const MAX_SPIDERS = 8;
+const MAX_SNAILS = 6;
+const BUBBLE_INTERVAL = 2000;
 
 const Category = () => {
   const { category } = useParams<{ category: string }>();
@@ -39,11 +33,33 @@ const Category = () => {
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
   const [snails, setSnails] = useState<Snail[]>([]);
 
+  // アニメーション設定の動的監視
+  const [reducedMotion, setReducedMotion] = useState(
+    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
+
   // タイマー管理フックを使用
   const { setTimeout } = useTimers();
 
   // バブルID生成用のカウンター
   const bubbleIdCounterRef = useRef(0);
+
+  // prefers-reduced-motionの変更を監視
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    const handleChange = (e: MediaQueryListEvent) => {
+      setReducedMotion(e.matches);
+    };
+
+    // イベントリスナーを追加
+    mediaQuery.addEventListener("change", handleChange);
+
+    // クリーンアップ
+    return () => {
+      mediaQuery.removeEventListener("change", handleChange);
+    };
+  }, []);
 
   // 投稿とエフェクト初期化
   useEffect(() => {
@@ -60,12 +76,12 @@ const Category = () => {
 
     if (category === "hobby") {
       // アニメーション無効化設定がある場合は要素数を削減
-      const spiderCount = REDUCED_MOTION ? 4 : MAX_SPIDERS;
+      const spiderCount = reducedMotion ? 4 : MAX_SPIDERS;
       const newSpiders: Spider[] = [...Array(spiderCount)].map((_, i) => ({
         id: i,
-        top: `${Math.random() * 80 + 10}%`, // 端を避ける
+        top: `${Math.random() * 80 + 10}%`,
         left: `${Math.random() * 80 + 10}%`,
-        rotate: Math.floor(Math.random() * 8) * 45, // 45度刻みで制限（8方向）
+        rotate: Math.floor(Math.random() * 8) * 45, // 45度刻みで制限
       }));
       setSpiders(newSpiders);
       setSpiderVisible(true);
@@ -79,10 +95,10 @@ const Category = () => {
 
     if (category === "other") {
       // アニメーション無効化設定がある場合は要素数を削減
-      const snailCount = REDUCED_MOTION ? 3 : MAX_SNAILS;
+      const snailCount = reducedMotion ? 3 : MAX_SNAILS;
       const newSnails: Snail[] = [...Array(snailCount)].map((_, i) => ({
         id: i,
-        top: `${Math.random() * 70 + 15}%`, // より端を避ける
+        top: `${Math.random() * 70 + 15}%`,
         left: `${Math.random() * 70 + 15}%`,
         isMoved: false,
       }));
@@ -90,13 +106,13 @@ const Category = () => {
     } else {
       setSnails([]);
     }
-  }, [category]);
+  }, [category, reducedMotion]);
 
-  // useIntervalを使用
+  // useIntervalを使用（バブル生成のみ）
   useInterval(
     () => {
       // アニメーション無効化設定がある場合は生成しない
-      if (REDUCED_MOTION) return;
+      if (reducedMotion) return;
 
       setBubbles((prev) => {
         // 最大数に達している場合は古いものを削除してから新しいものを追加
@@ -122,23 +138,7 @@ const Category = () => {
       });
     },
     category === "tech" ? BUBBLE_INTERVAL : null,
-    [category],
-  );
-
-  // バブルの自動削除（ライフサイクル管理）
-  useInterval(
-    () => {
-      if (REDUCED_MOTION) return;
-
-      setBubbles((prev) => {
-        const now = Date.now();
-        return prev.filter(
-          (bubble) => now - bubble.createdAt < BUBBLE_LIFETIME,
-        );
-      });
-    },
-    category === "tech" ? 3000 : null,
-    [category],
+    [category, reducedMotion],
   );
 
   // クモ削除ハンドラ
@@ -173,7 +173,7 @@ const Category = () => {
     spiderVisible && (
       <div className="absolute inset-0 z-0 pointer-events-none">
         {spiders.map((s) => {
-          // 回転角度を8方向に丸める（0, 45, 90, 135, 180, 225, 270, 315）
+          // 回転角度を8方向に丸める
           const rotateClass = `rotate-${(Math.round(s.rotate / 45) * 45) % 360}`;
 
           return (
@@ -207,7 +207,7 @@ const Category = () => {
       </div>
     );
 
-  // 泡レイヤー
+  // 泡レイヤー（削除ロジック統一版）
   const renderBubbleLayer = useCallback(() => {
     if (category !== "tech") return null;
 
@@ -223,17 +223,17 @@ const Category = () => {
               top: b.top,
               left: b.left,
               // CSSアニメーション無効化対応
-              animationDuration: REDUCED_MOTION ? "0s" : undefined,
+              animationDuration: reducedMotion ? "0s" : undefined,
             }}
             onAnimationEnd={() => {
-              // アニメーション終了時に削除
+              // アニメーション終了時に削除（唯一の削除ポイント）
               setBubbles((prev) => prev.filter((x) => x.id !== b.id));
             }}
           />
         ))}
       </div>
     );
-  }, [category, bubbles]);
+  }, [category, bubbles, reducedMotion]);
 
   // カタツムリレイヤー
   const renderSnailLayer = () =>
