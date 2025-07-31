@@ -62,8 +62,7 @@
 
     /* フォーカス表示の改善 */
     *:focus {
-        outline: 2px solid theme("colors.blue.500");
-        outline-offset: 2px;
+        @apply outline-2 outline-blue-500 outline-offset-2;
     }
 
     *:focus:not(:focus-visible) {
