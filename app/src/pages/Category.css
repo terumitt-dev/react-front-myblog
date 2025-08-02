@@ -5,8 +5,9 @@
 .spider,
 .snail {
     will-change: transform, opacity;
-    transform: translateZ(0); /* レイヤー化を強制してGPUアクセラレーション */
-    contain: layout style paint; /* レンダリング最適化 */
+    transform: translateZ(0);
+    contain: layout style paint;
+    backface-visibility: hidden;
 }
 
 /* アニメーション無効化時の対応 */
@@ -21,40 +22,47 @@
         transition: none !important;
     }
 
-    /* 動きを減らす設定時は静的な表示に変更 */
     .spider:hover {
-        transform: rotate(var(--rotate)) !important;
+        transform: translateY(-20px) translateZ(0) !important;
     }
 
     .snail-move {
-        transform: scaleX(1) !important;
+        transform: scaleX(1) translateZ(0) !important;
     }
 }
 
 /* 回転角度のプリセットクラス */
 .rotate-0 {
-    --rotate: 0deg;
+    transform: rotate(0deg) translateZ(0);
+    --rotation: 0deg;
 }
 .rotate-45 {
-    --rotate: 45deg;
+    transform: rotate(45deg) translateZ(0);
+    --rotation: 45deg;
 }
 .rotate-90 {
-    --rotate: 90deg;
+    transform: rotate(90deg) translateZ(0);
+    --rotation: 90deg;
 }
 .rotate-135 {
-    --rotate: 135deg;
+    transform: rotate(135deg) translateZ(0);
+    --rotation: 135deg;
 }
 .rotate-180 {
-    --rotate: 180deg;
+    transform: rotate(180deg) translateZ(0);
+    --rotation: 180deg;
 }
 .rotate-225 {
-    --rotate: 225deg;
+    transform: rotate(225deg) translateZ(0);
+    --rotation: 225deg;
 }
 .rotate-270 {
-    --rotate: 270deg;
+    transform: rotate(270deg) translateZ(0);
+    --rotation: 270deg;
 }
 .rotate-315 {
-    --rotate: 315deg;
+    transform: rotate(315deg) translateZ(0);
+    --rotation: 315deg;
 }
 
 /* ==================== 蜘蛛 ==================== */
@@ -63,23 +71,67 @@
     width: 40px;
     height: 40px;
     opacity: 0.7;
-    transform: rotate(var(--rotate));
     transition: transform 0.3s ease;
-    /* パフォーマンス最適化: より軽量なアニメーション */
-    backface-visibility: hidden;
+    cursor: pointer;
 }
 
-.spider:hover {
-    transform: translateY(-20px) rotate(var(--rotate));
+/* ホバー時の動作（各角度別に定義） */
+.spider.rotate-0:hover {
+    transform: translateY(-20px) rotate(0deg) translateZ(0);
+}
+.spider.rotate-45:hover {
+    transform: translateY(-20px) rotate(45deg) translateZ(0);
+}
+.spider.rotate-90:hover {
+    transform: translateY(-20px) rotate(90deg) translateZ(0);
+}
+.spider.rotate-135:hover {
+    transform: translateY(-20px) rotate(135deg) translateZ(0);
+}
+.spider.rotate-180:hover {
+    transform: translateY(-20px) rotate(180deg) translateZ(0);
+}
+.spider.rotate-225:hover {
+    transform: translateY(-20px) rotate(225deg) translateZ(0);
+}
+.spider.rotate-270:hover {
+    transform: translateY(-20px) rotate(270deg) translateZ(0);
+}
+.spider.rotate-315:hover {
+    transform: translateY(-20px) rotate(315deg) translateZ(0);
+}
+
+/* 消失時の動作（各角度別に定義） */
+.spider-disappear.rotate-0 {
+    transform: scale(0) rotate(0deg) translateY(-40px) translateZ(0);
+}
+.spider-disappear.rotate-45 {
+    transform: scale(0) rotate(45deg) translateY(-40px) translateZ(0);
+}
+.spider-disappear.rotate-90 {
+    transform: scale(0) rotate(90deg) translateY(-40px) translateZ(0);
+}
+.spider-disappear.rotate-135 {
+    transform: scale(0) rotate(135deg) translateY(-40px) translateZ(0);
+}
+.spider-disappear.rotate-180 {
+    transform: scale(0) rotate(180deg) translateY(-40px) translateZ(0);
+}
+.spider-disappear.rotate-225 {
+    transform: scale(0) rotate(225deg) translateY(-40px) translateZ(0);
+}
+.spider-disappear.rotate-270 {
+    transform: scale(0) rotate(270deg) translateY(-40px) translateZ(0);
+}
+.spider-disappear.rotate-315 {
+    transform: scale(0) rotate(315deg) translateY(-40px) translateZ(0);
 }
 
 .spider-disappear {
-    transform: scale(0) rotate(var(--rotate)) translateY(-40px);
     opacity: 0;
     transition:
         transform 0.6s ease,
         opacity 0.6s ease;
-    /* アニメーション完了後にGPUメモリから解放 */
     animation-fill-mode: forwards;
 }
 
@@ -91,9 +143,6 @@
     opacity: 0.7;
     animation: grow-and-pop 3s ease-out forwards;
     pointer-events: none;
-    /* パフォーマンス最適化 */
-    backface-visibility: hidden;
-    /* アニメーション完了後にGPUメモリから解放 */
     animation-fill-mode: forwards;
 }
 
@@ -118,52 +167,91 @@
     width: 50px;
     height: 50px;
     opacity: 0.85;
-    transition: transform 5s linear;
-    transform: scaleX(1);
-    /* パフォーマンス最適化 */
-    backface-visibility: hidden;
+    transition: transform 15s linear;
+    transform: scaleX(1) translateZ(0);
+    cursor: pointer;
 }
 
 .snail-move {
-    transform: translateX(-80px) scaleX(1);
-    transition: transform 5s linear;
+    transform: translateX(-80px) scaleX(1) translateZ(0);
+    transition: transform 15s linear;
 }
 
 .snail-disappear {
     opacity: 0;
-    transition: opacity 0.6s;
-    /* アニメーション完了後にGPUメモリから解放 */
+    transition: opacity 0.6s ease;
     animation-fill-mode: forwards;
 }
 
-/* ==================== 全体的なパフォーマンス最適化 ==================== */
+/* ==================== デバイス別最適化 ==================== */
 
-/* より高いパフォーマンスが必要な場合のオプション設定 */
+/* モバイルデバイス向け最適化 */
 @media (max-width: 768px) {
-    /* モバイルデバイスでのパフォーマンス最適化 */
     .bubble {
-        animation-duration: 2s; /* アニメーション時間を短縮 */
+        animation-duration: 2s;
+        width: 30px;
+        height: 30px;
     }
 
     .spider,
     .snail {
-        opacity: 0.6; /* 透明度を下げてレンダリング負荷軽減 */
+        opacity: 0.6;
     }
-}
 
-/* 低スペックデバイス向けの最適化 */
-@media (pointer: coarse) and (max-width: 1024px) {
+    .spider {
+        width: 30px;
+        height: 30px;
+    }
+
+    .snail {
+        width: 40px;
+        height: 40px;
+        transition: transform 10s linear;
+    }
+
+    .snail-move {
+        transition: transform 10s linear;
+    }
+
+    /* モバイルでは hover 効果を簡素化 */
     .spider:hover {
-        /* タッチデバイスではホバー効果を簡素化 */
-        transform: rotate(var(--rotate));
+        transform: translateZ(0); /* ホバー効果を無効化 */
     }
 }
 
-/* プリフェッチ最適化: アニメーション要素の事前準備 */
+/* 小画面スマートフォン向け */
+@media (max-width: 480px) {
+    .bubble {
+        animation-duration: 1.5s;
+        width: 25px;
+        height: 25px;
+    }
+
+    .spider,
+    .snail {
+        opacity: 0.5;
+    }
+
+    .spider {
+        width: 25px;
+        height: 25px;
+    }
+
+    .snail {
+        width: 35px;
+        height: 35px;
+        transition: transform 8s linear;
+    }
+
+    .snail-move {
+        transition: transform 8s linear;
+    }
+}
+
+/* プリフェッチ最適化 */
 .spider,
 .snail,
 .bubble {
-    /* レンダリングエンジンにヒントを提供 */
     transform-origin: center center;
     -webkit-transform-origin: center center;
 }

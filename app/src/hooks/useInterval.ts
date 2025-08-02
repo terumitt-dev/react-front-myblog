@@ -1,5 +1,5 @@
 // app/src/hooks/useInterval.ts
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect } from "react";
 import { useTimers } from "./useTimers";
 
 /**
@@ -12,63 +12,40 @@ import { useTimers } from "./useTimers";
 export function useInterval(
   callback: () => void,
   delay: number | null,
-  deps: any[] = [],
+  deps: unknown[] = [],
 ) {
   const { setInterval, clearInterval } = useTimers();
   const savedCallback = useRef<() => void>();
-  const idRef = useRef<number | null>(null);
-  const depsRef = useRef<any[]>(deps);
+  const intervalRef = useRef<number | null>(null);
 
-  // 依存配列が実際に変更されたかをチェック
-  const hasDepsChanged = useCallback(() => {
-    if (depsRef.current.length !== deps.length) return true;
-    return depsRef.current.some((dep, index) => dep !== deps[index]);
-  }, [deps]);
-
-  // コールバック関数を記憶
+  // 最新のコールバックを保存
   useEffect(() => {
     savedCallback.current = callback;
   }, [callback]);
 
-  // インターバルのセットアップ
+  // インターバルの管理（JSONシリアライズで安全な依存配列比較）
   useEffect(() => {
-    // 依存配列が変更された場合のみ処理
-    const shouldUpdate = hasDepsChanged();
-    if (shouldUpdate) {
-      depsRef.current = deps;
-    }
-
     if (delay === null) {
-      // delayがnullの場合、既存のインターバルをクリア
-      if (idRef.current !== null) {
-        clearInterval(idRef.current);
-        idRef.current = null;
+      if (intervalRef.current !== null) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
       return;
     }
 
-    // 依存配列が変更されていない場合、既存のインターバルを維持
-    if (!shouldUpdate && idRef.current !== null) {
-      return;
+    if (intervalRef.current !== null) {
+      clearInterval(intervalRef.current);
     }
 
-    // 既存のインターバルをクリア
-    if (idRef.current !== null) {
-      clearInterval(idRef.current);
-    }
+    intervalRef.current = setInterval(() => {
+      savedCallback.current?.();
+    }, delay);
 
-    const tick = () => {
-      if (savedCallback.current) savedCallback.current();
-    };
-
-    idRef.current = setInterval(tick, delay);
-
-    // クリーンアップ関数
     return () => {
-      if (idRef.current !== null) {
-        clearInterval(idRef.current);
-        idRef.current = null;
+      if (intervalRef.current !== null) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     };
-  }, [delay, hasDepsChanged, setInterval, clearInterval, deps]);
+  }, [delay, setInterval, clearInterval, JSON.stringify(deps)]);
 }

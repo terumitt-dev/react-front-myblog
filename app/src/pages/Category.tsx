@@ -1,6 +1,6 @@
 // app/src/pages/Category.tsx
 import { useParams, Link } from "react-router-dom";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import BackToHomeButton from "@/components/molecules/BackToHomeButton";
 import "./Category.css";
 import Header from "@/components/organisms/Header";
@@ -12,10 +12,30 @@ type Spider = { id: number; top: string; left: string; rotate: number };
 type Bubble = { id: number; top: string; left: string; createdAt: number };
 type Snail = { id: number; top: string; left: string; isMoved?: boolean };
 
-const MAX_BUBBLES = 8;
-const MAX_SPIDERS = 8;
-const MAX_SNAILS = 6;
-const BUBBLE_INTERVAL = 2000;
+// 有効なカテゴリタイプを定義
+type CategoryType = "hobby" | "tech" | "other";
+
+// デバイス性能に基づく設定（安定化）
+const getPerformanceSettings = () => {
+  const cores = navigator.hardwareConcurrency || 4;
+  const isLowEnd =
+    cores <= 2 ||
+    window.innerWidth < 768 ||
+    /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent,
+    );
+
+  return {
+    maxBubbles: isLowEnd ? 4 : 8,
+    maxSpiders: isLowEnd ? 4 : 8,
+    maxSnails: isLowEnd ? 3 : 6,
+    bubbleInterval: isLowEnd ? 3000 : 2000,
+    enableAnimations: !isLowEnd,
+  } as const;
+};
+
+// 回転角度の配列（計算を簡素化）
+const ROTATION_ANGLES = [0, 45, 90, 135, 180, 225, 270, 315] as const;
 
 const Category = () => {
   const { category } = useParams<{ category: string }>();
@@ -38,13 +58,34 @@ const Category = () => {
     () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
 
-  // タイマー管理フックを使用
+  // パフォーマンス設定を安定化（開発環境チェック修正）
+  const performanceSettings = useMemo(() => {
+    const settings = getPerformanceSettings();
+    // 開発環境での型エラーを回避
+    if (
+      typeof window !== "undefined" &&
+      window.location.hostname === "localhost"
+    ) {
+      console.log("Performance settings:", settings);
+    }
+    return settings;
+  }, []); // 空の依存配列で初期化時のみ実行
+
+  // タイマー管理フック
   const { setTimeout } = useTimers();
 
   // バブルID生成用のカウンター
   const bubbleIdCounterRef = useRef(0);
 
-  // prefers-reduced-motionの変更を監視（ブラウザ互換性対応）
+  // カテゴリの型安全性チェック
+  const isValidCategory = useCallback(
+    (cat: string | undefined): cat is CategoryType => {
+      return cat === "hobby" || cat === "tech" || cat === "other";
+    },
+    [],
+  );
+
+  // prefers-reduced-motionの変更を監視
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -52,16 +93,12 @@ const Category = () => {
       setReducedMotion(e.matches);
     };
 
-    // 新しいブラウザの場合
     if (mediaQuery.addEventListener) {
       mediaQuery.addEventListener("change", handleChange);
-    }
-    // 古いブラウザの場合（IE, Safari < 14など）
-    else if (mediaQuery.addListener) {
+    } else if (mediaQuery.addListener) {
       mediaQuery.addListener(handleChange);
     }
 
-    // クリーンアップ
     return () => {
       if (mediaQuery.removeEventListener) {
         mediaQuery.removeEventListener("change", handleChange);
@@ -71,8 +108,24 @@ const Category = () => {
     };
   }, []);
 
-  // 投稿とエフェクト初期化
+  // ランダム配置生成のヘルパー関数
+  const generateRandomPosition = useCallback(
+    (maxTop: number, maxLeft: number) => ({
+      top: `${Math.random() * maxTop + 10}%`,
+      left: `${Math.random() * maxLeft + 10}%`,
+    }),
+    [],
+  );
+
+  // ランダム回転角度生成
+  const generateRandomRotation = useCallback(() => {
+    const randomIndex = Math.floor(Math.random() * ROTATION_ANGLES.length);
+    return ROTATION_ANGLES[randomIndex];
+  }, []);
+
+  // 投稿とエフェクト初期化（最適化）
   useEffect(() => {
+    // 投稿の読み込み
     const saved = localStorage.getItem("myblog-posts");
     if (saved) {
       try {
@@ -84,15 +137,23 @@ const Category = () => {
       }
     }
 
+    // カテゴリ別エフェクト初期化
+    if (!isValidCategory(category)) return;
+
     if (category === "hobby") {
-      // アニメーション無効化設定がある場合は要素数を削減
-      const spiderCount = reducedMotion ? 4 : MAX_SPIDERS;
-      const newSpiders: Spider[] = [...Array(spiderCount)].map((_, i) => ({
-        id: i,
-        top: `${Math.random() * 80 + 10}%`,
-        left: `${Math.random() * 80 + 10}%`,
-        rotate: Math.floor(Math.random() * 8) * 45, // 45度刻みで制限
-      }));
+      const spiderCount = reducedMotion
+        ? Math.ceil(performanceSettings.maxSpiders / 2)
+        : performanceSettings.maxSpiders;
+
+      const newSpiders: Spider[] = Array.from(
+        { length: spiderCount },
+        (_, i) => ({
+          id: i,
+          ...generateRandomPosition(80, 80),
+          rotate: generateRandomRotation(),
+        }),
+      );
+
       setSpiders(newSpiders);
       setSpiderVisible(true);
     } else {
@@ -104,55 +165,59 @@ const Category = () => {
     }
 
     if (category === "other") {
-      // アニメーション無効化設定がある場合は要素数を削減
-      const snailCount = reducedMotion ? 3 : MAX_SNAILS;
-      const newSnails: Snail[] = [...Array(snailCount)].map((_, i) => ({
+      const snailCount = reducedMotion
+        ? Math.ceil(performanceSettings.maxSnails / 2)
+        : performanceSettings.maxSnails;
+
+      const newSnails: Snail[] = Array.from({ length: snailCount }, (_, i) => ({
         id: i,
-        top: `${Math.random() * 70 + 15}%`,
-        left: `${Math.random() * 70 + 15}%`,
+        ...generateRandomPosition(70, 70),
         isMoved: false,
       }));
+
       setSnails(newSnails);
     } else {
       setSnails([]);
     }
-  }, [category, reducedMotion]);
+  }, [
+    category,
+    reducedMotion,
+    performanceSettings,
+    isValidCategory,
+    generateRandomPosition,
+    generateRandomRotation,
+  ]);
 
-  // useIntervalを使用（バブル生成のみ）
+  // バブル生成関数（依存配列を修正）
+  const generateBubble = useCallback(() => {
+    if (reducedMotion) return;
+
+    setBubbles((prev) => {
+      const maxBubbles = performanceSettings.maxBubbles;
+
+      const newBubble: Bubble = {
+        id: ++bubbleIdCounterRef.current,
+        ...generateRandomPosition(80, 80),
+        createdAt: Date.now(),
+      };
+
+      if (prev.length >= maxBubbles) {
+        return [...prev.slice(1), newBubble];
+      }
+
+      return [...prev, newBubble];
+    });
+  }, [reducedMotion, performanceSettings.maxBubbles, generateRandomPosition]);
+
+  // useInterval（依存配列を最適化）
   useInterval(
-    () => {
-      // アニメーション無効化設定がある場合は生成しない
-      if (reducedMotion) return;
-
-      setBubbles((prev) => {
-        // 最大数に達している場合は古いものを削除してから新しいものを追加
-        if (prev.length >= MAX_BUBBLES) {
-          // 最も古いバブルを削除
-          const newBubbles = prev.slice(1);
-          const newBubble: Bubble = {
-            id: ++bubbleIdCounterRef.current,
-            top: `${Math.random() * 80 + 10}%`,
-            left: `${Math.random() * 80 + 10}%`,
-            createdAt: Date.now(),
-          };
-          return [...newBubbles, newBubble];
-        }
-
-        const newBubble: Bubble = {
-          id: ++bubbleIdCounterRef.current,
-          top: `${Math.random() * 80 + 10}%`,
-          left: `${Math.random() * 80 + 10}%`,
-          createdAt: Date.now(),
-        };
-        return [...prev, newBubble];
-      });
-    },
-    category === "tech" ? BUBBLE_INTERVAL : null,
+    generateBubble,
+    category === "tech" ? performanceSettings.bubbleInterval : null,
     [category, reducedMotion],
   );
 
-  // クモ削除ハンドラ
-  const handleClick = useCallback(
+  // クモ削除ハンドラ（依存配列修正）
+  const handleSpiderClick = useCallback(
     (id: number) => {
       setSpiderDisappearingIds((prev) => [...prev, id]);
 
@@ -161,10 +226,10 @@ const Category = () => {
         setSpiderDisappearingIds((prev) => prev.filter((x) => x !== id));
       }, 600);
     },
-    [setTimeout, setSpiders, setSpiderDisappearingIds],
+    [setTimeout], // setTimeoutを依存配列に追加
   );
 
-  // カタツムリ削除ハンドラ
+  // カタツムリ削除ハンドラ（依存配列修正）
   const handleSnailClick = useCallback(
     (id: number) => {
       setSnailDisappearingIds((prev) => [...prev, id]);
@@ -174,70 +239,83 @@ const Category = () => {
         setSnailDisappearingIds((prev) => prev.filter((x) => x !== id));
       }, 600);
     },
-    [setTimeout, setSnails, setSnailDisappearingIds],
+    [setTimeout], // setTimeoutを依存配列に追加
   );
 
-  // クモレイヤー
-  const renderSpiderLayer = () =>
-    category === "hobby" &&
-    spiderVisible && (
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        {spiders.map((s) => {
-          // 回転角度を8方向に丸める
-          const rotateClass = `rotate-${(Math.round(s.rotate / 45) * 45) % 360}`;
-
-          return (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => handleClick(s.id)}
-              aria-label="クモを消す"
-              className={`spider pointer-events-auto ${rotateClass} ${
-                spiderDisappearingIds.includes(s.id) ? "spider-disappear" : ""
-              }`}
-              style={{
-                top: s.top,
-                left: s.left,
-                position: "absolute",
-                background: "none",
-                border: "none",
-                padding: 0,
-                cursor: "pointer",
-              }}
-            >
-              <img
-                src="/patterns/spider.svg"
-                alt=""
-                draggable={false}
-                style={{ pointerEvents: "none" }}
-              />
-            </button>
-          );
-        })}
-      </div>
+  // カタツムリホバーハンドラ
+  const handleSnailHover = useCallback((id: number) => {
+    setSnails((prev) =>
+      prev.map((snail) =>
+        snail.id === id ? { ...snail, isMoved: true } : snail,
+      ),
     );
+  }, []);
 
-  // 泡レイヤー（削除ロジック統一版）
-  const renderBubbleLayer = useCallback(() => {
-    if (category !== "tech") return null;
+  // クモレイヤーレンダリング（最適化）
+  const renderSpiderLayer = useCallback(() => {
+    if (category !== "hobby" || !spiderVisible || spiders.length === 0)
+      return null;
 
     return (
       <div className="absolute inset-0 z-0 pointer-events-none">
-        {bubbles.map((b) => (
+        {spiders.map((spider) => (
+          <button
+            key={spider.id}
+            type="button"
+            onClick={() => handleSpiderClick(spider.id)}
+            aria-label="クモを消す"
+            className={`spider pointer-events-auto rotate-${spider.rotate} ${
+              spiderDisappearingIds.includes(spider.id)
+                ? "spider-disappear"
+                : ""
+            }`}
+            style={{
+              top: spider.top,
+              left: spider.left,
+              position: "absolute",
+              background: "none",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
+            }}
+          >
+            <img
+              src="/patterns/spider.svg"
+              alt=""
+              draggable={false}
+              style={{ pointerEvents: "none" }}
+            />
+          </button>
+        ))}
+      </div>
+    );
+  }, [
+    category,
+    spiderVisible,
+    spiders,
+    spiderDisappearingIds,
+    handleSpiderClick,
+  ]);
+
+  // 泡レイヤーレンダリング（最適化）
+  const renderBubbleLayer = useCallback(() => {
+    if (category !== "tech" || bubbles.length === 0) return null;
+
+    return (
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        {bubbles.map((bubble) => (
           <img
-            key={b.id}
+            key={bubble.id}
             src="/patterns/bubbles.svg"
             alt=""
             className="bubble"
             style={{
-              top: b.top,
-              left: b.left,
-              // CSSアニメーション無効化対応
+              top: bubble.top,
+              left: bubble.left,
               animationDuration: reducedMotion ? "0s" : undefined,
             }}
             onAnimationEnd={() => {
-              // アニメーション終了時に削除（唯一の削除ポイント）
-              setBubbles((prev) => prev.filter((x) => x.id !== b.id));
+              setBubbles((prev) => prev.filter((x) => x.id !== bubble.id));
             }}
           />
         ))}
@@ -245,33 +323,31 @@ const Category = () => {
     );
   }, [category, bubbles, reducedMotion]);
 
-  // カタツムリレイヤー
-  const renderSnailLayer = () =>
-    category === "other" && (
+  // カタツムリレイヤーレンダリング（最適化）
+  const renderSnailLayer = useCallback(() => {
+    if (category !== "other" || snails.length === 0) return null;
+
+    return (
       <div className="absolute inset-0 z-0 pointer-events-none">
-        {snails.map((s) => (
+        {snails.map((snail) => (
           <button
-            key={s.id}
+            key={snail.id}
             type="button"
             aria-label="カタツムリを削除"
-            className={`snail pointer-events-auto ${s.isMoved ? "snail-move" : ""} ${snailDisappearingIds.includes(s.id) ? "snail-disappear" : ""}`}
+            className={`snail pointer-events-auto ${snail.isMoved ? "snail-move" : ""} ${
+              snailDisappearingIds.includes(snail.id) ? "snail-disappear" : ""
+            }`}
             style={{
-              top: s.top,
-              left: s.left,
+              top: snail.top,
+              left: snail.left,
               position: "absolute",
               background: "none",
               border: "none",
               padding: 0,
               cursor: "pointer",
             }}
-            onClick={() => handleSnailClick(s.id)}
-            onMouseEnter={() => {
-              setSnails((prev) =>
-                prev.map((snail) =>
-                  snail.id === s.id ? { ...snail, isMoved: true } : snail,
-                ),
-              );
-            }}
+            onClick={() => handleSnailClick(snail.id)}
+            onMouseEnter={() => handleSnailHover(snail.id)}
           >
             <img
               src="/patterns/snail.svg"
@@ -283,25 +359,44 @@ const Category = () => {
         ))}
       </div>
     );
+  }, [
+    category,
+    snails,
+    snailDisappearingIds,
+    handleSnailClick,
+    handleSnailHover,
+  ]);
 
-  const labelMap = {
-    hobby: "しゅみ",
-    tech: "テック",
-    other: "その他",
-  } as const;
-  const bgMap = {
-    hobby: "bg-[#E1C6F9]",
-    tech: "bg-[#AFEBFF]",
-    other: "bg-[#CCF5B1]",
-  } as const;
+  // 定数をメモ化
+  const categoryConfig = useMemo(
+    () => ({
+      labelMap: {
+        hobby: "しゅみ",
+        tech: "テック",
+        other: "その他",
+      } as const,
+      bgMap: {
+        hobby: "bg-[#E1C6F9]",
+        tech: "bg-[#AFEBFF]",
+        other: "bg-[#CCF5B1]",
+      } as const,
+    }),
+    [],
+  );
+
+  const currentLabel = isValidCategory(category)
+    ? categoryConfig.labelMap[category]
+    : category;
+  const currentBg = isValidCategory(category)
+    ? categoryConfig.bgMap[category]
+    : "bg-white";
 
   return (
     <section
-      className={`relative min-h-screen p-6 space-y-6 overflow-hidden ${
-        bgMap[category as keyof typeof bgMap] ?? "bg-white"
-      }`}
+      className={`relative min-h-screen p-6 space-y-6 overflow-hidden ${currentBg}`}
     >
       <Header />
+
       {/* 背景レイヤー */}
       {renderSpiderLayer()}
       {renderBubbleLayer()}
@@ -309,17 +404,14 @@ const Category = () => {
 
       {/* コンテンツ */}
       <div className="relative z-10">
-        <h1 className="text-2xl font-bold">
-          {labelMap[category as keyof typeof labelMap] ?? category}{" "}
-          カテゴリの記事
-        </h1>
+        <h1 className="text-2xl font-bold">{currentLabel} カテゴリの記事</h1>
 
         {posts.length === 0 ? (
           <p>このカテゴリにはまだ投稿がありません。</p>
         ) : (
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
             {posts.map((post) => (
-              <div
+              <article
                 key={post.id}
                 className="bg-white p-4 rounded-xl shadow hover:shadow-md transition w-full"
               >
@@ -335,7 +427,7 @@ const Category = () => {
                 >
                   詳細を見る →
                 </Link>
-              </div>
+              </article>
             ))}
           </div>
         )}
