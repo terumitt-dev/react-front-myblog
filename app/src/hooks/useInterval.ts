@@ -1,5 +1,5 @@
 // app/src/hooks/useInterval.ts
-import { useRef, useEffect, useMemo } from "react";
+import { useRef, useEffect, useCallback } from "react";
 import { useTimers } from "./useTimers";
 
 /**
@@ -17,17 +17,27 @@ export function useInterval(
   const { setInterval, clearInterval } = useTimers();
   const savedCallback = useRef<() => void>();
   const idRef = useRef<number | null>(null);
+  const depsRef = useRef<any[]>(deps);
+
+  // 依存配列が実際に変更されたかをチェック
+  const hasDepsChanged = useCallback(() => {
+    if (depsRef.current.length !== deps.length) return true;
+    return depsRef.current.some((dep, index) => dep !== deps[index]);
+  }, [deps]);
 
   // コールバック関数を記憶
   useEffect(() => {
     savedCallback.current = callback;
   }, [callback]);
 
-  // 依存配列を安全にメモ化
-  const memoizedDeps = useMemo(() => deps, deps);
-
   // インターバルのセットアップ
   useEffect(() => {
+    // 依存配列が変更された場合のみ処理
+    const shouldUpdate = hasDepsChanged();
+    if (shouldUpdate) {
+      depsRef.current = deps;
+    }
+
     if (delay === null) {
       // delayがnullの場合、既存のインターバルをクリア
       if (idRef.current !== null) {
@@ -35,6 +45,16 @@ export function useInterval(
         idRef.current = null;
       }
       return;
+    }
+
+    // 依存配列が変更されていない場合、既存のインターバルを維持
+    if (!shouldUpdate && idRef.current !== null) {
+      return;
+    }
+
+    // 既存のインターバルをクリア
+    if (idRef.current !== null) {
+      clearInterval(idRef.current);
     }
 
     const tick = () => {
@@ -50,5 +70,5 @@ export function useInterval(
         idRef.current = null;
       }
     };
-  }, [delay, memoizedDeps, setInterval, clearInterval]);
+  }, [delay, hasDepsChanged, setInterval, clearInterval, deps]);
 }

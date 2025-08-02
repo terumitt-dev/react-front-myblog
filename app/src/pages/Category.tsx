@@ -44,20 +44,30 @@ const Category = () => {
   // バブルID生成用のカウンター
   const bubbleIdCounterRef = useRef(0);
 
-  // prefers-reduced-motionの変更を監視
+  // prefers-reduced-motionの変更を監視（ブラウザ互換性対応）
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 
-    const handleChange = (e: MediaQueryListEvent) => {
+    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
       setReducedMotion(e.matches);
     };
 
-    // イベントリスナーを追加
-    mediaQuery.addEventListener("change", handleChange);
+    // 新しいブラウザの場合
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", handleChange);
+    }
+    // 古いブラウザの場合（IE, Safari < 14など）
+    else if (mediaQuery.addListener) {
+      mediaQuery.addListener(handleChange);
+    }
 
     // クリーンアップ
     return () => {
-      mediaQuery.removeEventListener("change", handleChange);
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener("change", handleChange);
+      } else if (mediaQuery.removeListener) {
+        mediaQuery.removeListener(handleChange);
+      }
     };
   }, []);
 
