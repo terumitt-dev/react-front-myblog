@@ -58,10 +58,9 @@ const Category = () => {
     () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
 
-  // パフォーマンス設定を安定化（開発環境チェック修正）
+  // パフォーマンス設定を安定化（参照の一意性を保証）
   const performanceSettings = useMemo(() => {
     const settings = getPerformanceSettings();
-    // 開発環境での型エラーを回避
     if (
       typeof window !== "undefined" &&
       window.location.hostname === "localhost"
@@ -216,7 +215,7 @@ const Category = () => {
     [category, reducedMotion],
   );
 
-  // クモ削除ハンドラ（依存配列修正）
+  // クモ削除ハンドラ（依存配列を最適化）
   const handleSpiderClick = useCallback(
     (id: number) => {
       setSpiderDisappearingIds((prev) => [...prev, id]);
@@ -226,10 +225,10 @@ const Category = () => {
         setSpiderDisappearingIds((prev) => prev.filter((x) => x !== id));
       }, 600);
     },
-    [setTimeout], // setTimeoutを依存配列に追加
+    [setTimeout],
   );
 
-  // カタツムリ削除ハンドラ（依存配列修正）
+  // カタツムリ削除ハンドラ（依存配列を最適化）
   const handleSnailClick = useCallback(
     (id: number) => {
       setSnailDisappearingIds((prev) => [...prev, id]);
@@ -239,7 +238,7 @@ const Category = () => {
         setSnailDisappearingIds((prev) => prev.filter((x) => x !== id));
       }, 600);
     },
-    [setTimeout], // setTimeoutを依存配列に追加
+    [setTimeout],
   );
 
   // カタツムリホバーハンドラ

@@ -12,7 +12,7 @@ import { useTimers } from "./useTimers";
 export function useInterval(
   callback: () => void,
   delay: number | null,
-  deps: unknown[] = [],
+  deps: readonly unknown[] = [],
 ) {
   const { setInterval, clearInterval } = useTimers();
   const savedCallback = useRef<() => void>();
@@ -23,7 +23,7 @@ export function useInterval(
     savedCallback.current = callback;
   }, [callback]);
 
-  // インターバルの管理（JSONシリアライズで安全な依存配列比較）
+  // インターバルの管理（依存配列をそのまま展開）
   useEffect(() => {
     if (delay === null) {
       if (intervalRef.current !== null) {
@@ -47,5 +47,5 @@ export function useInterval(
         intervalRef.current = null;
       }
     };
-  }, [delay, setInterval, clearInterval, JSON.stringify(deps)]);
+  }, [delay, setInterval, clearInterval, ...deps]); // スプレッド演算子で展開
 }
