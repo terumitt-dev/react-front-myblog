@@ -1,5 +1,4 @@
 // app/src/pages/Admin.tsx
-/** biome-ignore-all lint/a11y/noStaticElementInteractions: <explanation> */
 import Layout from "@/components/layouts/Layout";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -198,32 +197,57 @@ const Admin = () => {
                       </div>
                     </button>
 
-                    {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
-                    <div
+                    {/* アクション部分：アクセシビリティ改善版 */}
+                    <nav
                       className="flex gap-4 mt-2 px-3"
-                      onClick={(e) => e.stopPropagation()}
+                      aria-label="投稿操作"
+                      role="toolbar"
                     >
                       <Link
                         to={`/posts/${post.id}`}
-                        className="text-blue-600 hover:underline"
+                        className="text-blue-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded"
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.stopPropagation();
+                          }
+                        }}
                       >
                         記事を確認 →
                       </Link>
                       <button
                         type="button"
-                        onClick={() => handleEdit(post)}
-                        className="text-green-600 hover:underline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(post);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.stopPropagation();
+                          }
+                        }}
+                        className="text-green-600 hover:underline focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 rounded"
+                        aria-label={`${post.title}を編集`}
                       >
                         編集
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleDelete(post.id)}
-                        className="text-red-600 hover:underline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(post.id);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.stopPropagation();
+                          }
+                        }}
+                        className="text-red-600 hover:underline focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 rounded"
+                        aria-label={`${post.title}を削除`}
                       >
                         削除
                       </button>
-                    </div>
+                    </nav>
                   </div>
                 );
               })}
