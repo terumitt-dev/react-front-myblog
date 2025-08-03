@@ -29,7 +29,14 @@ select:focus,
 
 /* モダンブラウザでのフォーカス最適化 */
 @supports selector(:focus-visible) {
-    :focus:not(:focus-visible) {
+    /* 共通フォーカススタイル */
+    :focus:not(:focus-visible),
+    button:focus:not(:focus-visible),
+    a:focus:not(:focus-visible),
+    input:focus:not(:focus-visible),
+    textarea:focus:not(:focus-visible),
+    select:focus:not(:focus-visible),
+    [tabindex]:focus:not(:focus-visible) {
         outline: none;
     }
 
@@ -78,7 +85,7 @@ select:focus,
     [tabindex]:focus:not(:focus-visible) {
         outline: none;
     }
-
+    :focus-visible,
     button:focus-visible,
     a:focus-visible,
     input:focus-visible,

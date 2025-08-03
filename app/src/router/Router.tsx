@@ -52,6 +52,7 @@ const Router = () => {
           isLoggedIn ? <AdminPageWrapper /> : <Navigate replace to="/login" />
         }
       />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 };
