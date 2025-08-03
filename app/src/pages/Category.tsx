@@ -15,14 +15,12 @@ type Snail = { id: number; top: string; left: string; isMoved?: boolean };
 // 有効なカテゴリタイプを定義
 type CategoryType = "hobby" | "tech" | "other";
 
-// 超軽量パフォーマンス判定（計算を最小化）
-const getPerformanceSettings = () => {
+// 動的パフォーマンス判定（リサイズ対応）
+const getPerformanceSettings = (width: number) => {
   const cores = navigator.hardwareConcurrency || 4;
-  const width = window.innerWidth;
   const isMobile = width < 768;
   const userAgent = navigator.userAgent;
 
-  // シンプルな判定ロジック
   const isMac =
     /Mac/i.test(userAgent) && !/(iPhone|iPad|iPod)/i.test(userAgent);
   const isLowEnd = !isMac && (cores <= 2 || width < 768);
@@ -52,7 +50,6 @@ const getPerformanceSettings = () => {
     } as const;
   }
 
-  // 標準設定
   return {
     maxBubbles: 4,
     maxSpiders: 4,
@@ -92,8 +89,14 @@ const Category = () => {
     () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
 
-  // パフォーマンス設定（1回だけ実行）
-  const performanceSettings = useMemo(() => getPerformanceSettings(), []);
+  // 画面幅の監視
+  const [screenWidth, setScreenWidth] = useState(() => window.innerWidth);
+
+  // 動的パフォーマンス設定（リサイズ対応）
+  const performanceSettings = useMemo(
+    () => getPerformanceSettings(screenWidth),
+    [screenWidth],
+  );
 
   // 安定化されたヘルパー関数
   const { setTimeout } = useTimers();
@@ -116,6 +119,16 @@ const Category = () => {
   const generateRandomRotation = useCallback(() => {
     const randomIndex = Math.floor(Math.random() * ROTATION_ANGLES.length);
     return ROTATION_ANGLES[randomIndex];
+  }, []);
+
+  // リサイズイベントの監視
+  useEffect(() => {
+    const handleResize = () => {
+      setScreenWidth(window.innerWidth);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // reduced-motion監視
@@ -235,7 +248,7 @@ const Category = () => {
     generateRandomPosition,
   ]);
 
-  // useInterval（プリミティブ値のみの依存配列）
+  // useInterval（プリミティブ値のみ）
   const shouldGenerateBubbles =
     category === "tech" &&
     performanceSettings.enableEffects &&
@@ -246,12 +259,12 @@ const Category = () => {
     generateBubble,
     shouldGenerateBubbles ? performanceSettings.bubbleInterval : null,
     [
-      category, // string
-      reducedMotion, // boolean
-      performanceSettings.maxBubbles, // number
-      performanceSettings.bubbleInterval, // number
-      performanceSettings.enableEffects, // boolean
-      performanceSettings.enableAnimations, // boolean
+      category,
+      reducedMotion,
+      performanceSettings.maxBubbles,
+      performanceSettings.bubbleInterval,
+      performanceSettings.enableEffects,
+      performanceSettings.enableAnimations,
     ],
   );
 
