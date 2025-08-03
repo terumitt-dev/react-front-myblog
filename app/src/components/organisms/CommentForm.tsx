@@ -27,14 +27,14 @@ const CommentForm = ({ onSubmit, onCancel }: Props) => {
   return (
     <div className="flex flex-col gap-3 p-4 rounded">
       <Input
-        id={userNameId}
+        id={`username-${userNameId}`}
         label="ユーザー名"
         value={userName}
         onChange={(e) => setUserName(e.target.value)}
         placeholder="ユーザ名"
       />
       <Textarea
-        id={commentId}
+        id={`comment-${commentId}`}
         label="コメント"
         value={comment}
         onChange={(e) => setComment(e.target.value)}
