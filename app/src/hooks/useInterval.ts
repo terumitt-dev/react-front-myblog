@@ -1,51 +1,56 @@
 // app/src/hooks/useInterval.ts
-import { useRef, useEffect } from "react";
-import { useTimers } from "./useTimers";
+import { useRef, useEffect, useCallback } from "react";
 
 /**
- * 指定した間隔で関数を実行するカスタムフック
- * delay=nullの場合は実行を停止
+ * 完全にクリーンアップされる安全なインターバルフック
+ * useTimersを使わずにネイティブAPIを直接使用
  * @param callback 実行する関数
  * @param delay 間隔（ミリ秒）またはnull
- * @param deps 依存配列（プリミティブ値のみ推奨）
+ * @param deps 依存配列（プリミティブ値のみ）
  */
 export function useInterval(
   callback: () => void,
   delay: number | null,
   deps: readonly (string | number | boolean | null | undefined)[] = [],
 ) {
-  const { setInterval, clearInterval } = useTimers();
   const savedCallback = useRef<() => void>();
-  const intervalRef = useRef<number | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // 最新のコールバックを保存
   useEffect(() => {
     savedCallback.current = callback;
   }, [callback]);
 
-  // インターバルの管理（依存配列をそのまま使用）
+  // 安全なクリアアップ関数
+  const clearCurrentInterval = useCallback(() => {
+    if (intervalRef.current !== null) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  // インターバルの管理
   useEffect(() => {
+    // 既存のインターバルをクリア
+    clearCurrentInterval();
+
     if (delay === null) {
-      if (intervalRef.current !== null) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
       return;
     }
 
-    if (intervalRef.current !== null) {
-      clearInterval(intervalRef.current);
-    }
-
+    // 新しいインターバルを設定
     intervalRef.current = setInterval(() => {
-      savedCallback.current?.();
+      if (savedCallback.current) {
+        savedCallback.current();
+      }
     }, delay);
 
-    return () => {
-      if (intervalRef.current !== null) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [delay, setInterval, clearInterval, ...deps]); // シンプルに戻す
+    // クリーンアップ関数
+    return clearCurrentInterval;
+  }, [delay, clearCurrentInterval, ...deps]);
+
+  // コンポーネントアンマウント時の強制クリーンアップ
+  useEffect(() => {
+    return clearCurrentInterval;
+  }, [clearCurrentInterval]);
 }

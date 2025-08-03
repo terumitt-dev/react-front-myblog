@@ -15,51 +15,70 @@ type Snail = { id: number; top: string; left: string; isMoved?: boolean };
 // 有効なカテゴリタイプを定義
 type CategoryType = "hobby" | "tech" | "other";
 
-// 動的パフォーマンス判定（リサイズ対応）
-const getPerformanceSettings = (width: number) => {
-  const cores = navigator.hardwareConcurrency || 4;
-  const isMobile = width < 768;
-  const userAgent = navigator.userAgent;
+// パフォーマンス設定の型定義
+type PerformanceSettings = {
+  readonly maxBubbles: number;
+  readonly maxSpiders: number;
+  readonly maxSnails: number;
+  readonly bubbleInterval: number;
+  readonly enableAnimations: boolean;
+  readonly reducedAnimations: boolean;
+  readonly enableEffects: boolean;
+};
 
+// 最適化されたパフォーマンス判定（メモ化対応）
+const createPerformanceSettings = (): ((
+  width: number,
+) => PerformanceSettings) => {
+  const cores = navigator.hardwareConcurrency || 4;
+  const userAgent = navigator.userAgent;
   const isMac =
     /Mac/i.test(userAgent) && !/(iPhone|iPad|iPod)/i.test(userAgent);
-  const isLowEnd = !isMac && (cores <= 2 || width < 768);
-  const isHighEnd = isMac || (!isMobile && cores >= 8);
 
-  if (isLowEnd) {
-    return {
-      maxBubbles: 2,
-      maxSpiders: 3,
-      maxSnails: 2,
-      bubbleInterval: 6000,
-      enableAnimations: true,
-      reducedAnimations: true,
-      enableEffects: true,
-    } as const;
-  }
+  // コア数とMac判定は一度だけ実行
+  return (width: number): PerformanceSettings => {
+    const isMobile = width < 768;
+    const isLowEnd = !isMac && (cores <= 2 || width < 768);
+    const isHighEnd = isMac || (!isMobile && cores >= 8);
 
-  if (isHighEnd) {
+    if (isLowEnd) {
+      return {
+        maxBubbles: 2,
+        maxSpiders: 3,
+        maxSnails: 2,
+        bubbleInterval: 6000,
+        enableAnimations: true,
+        reducedAnimations: true,
+        enableEffects: true,
+      };
+    }
+
+    if (isHighEnd) {
+      return {
+        maxBubbles: 8,
+        maxSpiders: 8,
+        maxSnails: 6,
+        bubbleInterval: 2000,
+        enableAnimations: true,
+        reducedAnimations: false,
+        enableEffects: true,
+      };
+    }
+
     return {
-      maxBubbles: 8,
-      maxSpiders: 8,
-      maxSnails: 6,
-      bubbleInterval: 2000,
+      maxBubbles: 4,
+      maxSpiders: 4,
+      maxSnails: 3,
+      bubbleInterval: 3000,
       enableAnimations: true,
       reducedAnimations: false,
       enableEffects: true,
-    } as const;
-  }
-
-  return {
-    maxBubbles: 4,
-    maxSpiders: 4,
-    maxSnails: 3,
-    bubbleInterval: 3000,
-    enableAnimations: true,
-    reducedAnimations: false,
-    enableEffects: true,
-  } as const;
+    };
+  };
 };
+
+// パフォーマンス設定ファクトリー（一度だけ作成）
+const getPerformanceSettings = createPerformanceSettings();
 
 // 定数を外部定義
 const ROTATION_ANGLES = [0, 45, 90, 135, 180, 225, 270, 315] as const;
@@ -89,19 +108,52 @@ const Category = () => {
     () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
 
-  // 画面幅の監視
+  // 画面幅の監視（デバウンス付き）
   const [screenWidth, setScreenWidth] = useState(() => window.innerWidth);
+  const resizeTimeoutRef = useRef<NodeJS.Timeout>();
 
-  // 動的パフォーマンス設定（リサイズ対応）
-  const performanceSettings = useMemo(
-    () => getPerformanceSettings(screenWidth),
-    [screenWidth],
-  );
+  // デバウンス付きリサイズハンドラー
+  useEffect(() => {
+    const handleResize = () => {
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current);
+      }
+
+      resizeTimeoutRef.current = setTimeout(() => {
+        setScreenWidth(window.innerWidth);
+      }, 150); // 150msデバウンス
+    };
+
+    window.addEventListener("resize", handleResize, { passive: true });
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // 動的パフォーマンス設定（メモ化強化）
+  const performanceSettings = useMemo(() => {
+    const settings = getPerformanceSettings(screenWidth);
+
+    if (process.env.NODE_ENV === "development") {
+      console.log("Performance settings updated:", {
+        screenWidth,
+        settings,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    return settings;
+  }, [screenWidth]);
 
   // 安定化されたヘルパー関数
   const { setTimeout } = useTimers();
   const bubbleIdCounterRef = useRef(0);
 
+  // 純粋関数として定義（依存なし）
   const isValidCategory = useCallback(
     (cat: string | undefined): cat is CategoryType =>
       cat === "hobby" || cat === "tech" || cat === "other",
@@ -119,16 +171,6 @@ const Category = () => {
   const generateRandomRotation = useCallback(() => {
     const randomIndex = Math.floor(Math.random() * ROTATION_ANGLES.length);
     return ROTATION_ANGLES[randomIndex];
-  }, []);
-
-  // リサイズイベントの監視
-  useEffect(() => {
-    const handleResize = () => {
-      setScreenWidth(window.innerWidth);
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // reduced-motion監視
@@ -220,7 +262,7 @@ const Category = () => {
     generateRandomRotation,
   ]);
 
-  // バブル生成
+  // バブル生成（安定化）
   const generateBubble = useCallback(() => {
     if (
       reducedMotion ||
@@ -248,27 +290,29 @@ const Category = () => {
     generateRandomPosition,
   ]);
 
-  // useInterval（プリミティブ値のみ）
+  // useInterval（完全に安全な依存配列）
   const shouldGenerateBubbles =
     category === "tech" &&
     performanceSettings.enableEffects &&
     performanceSettings.enableAnimations &&
     !reducedMotion;
 
-  useInterval(
-    generateBubble,
-    shouldGenerateBubbles ? performanceSettings.bubbleInterval : null,
-    [
-      category,
-      reducedMotion,
-      performanceSettings.maxBubbles,
-      performanceSettings.bubbleInterval,
-      performanceSettings.enableEffects,
-      performanceSettings.enableAnimations,
-    ],
-  );
+  const bubbleInterval = shouldGenerateBubbles
+    ? performanceSettings.bubbleInterval
+    : null;
 
-  // イベントハンドラー
+  useInterval(generateBubble, bubbleInterval, [
+    // プリミティブ値のみ（順序も重要）
+    category,
+    shouldGenerateBubbles,
+    performanceSettings.maxBubbles,
+    performanceSettings.bubbleInterval,
+    performanceSettings.enableEffects,
+    performanceSettings.enableAnimations,
+    reducedMotion,
+  ]);
+
+  // イベントハンドラー（安定化）
   const handleSpiderClick = useCallback(
     (id: number) => {
       setSpiderDisappearingIds((prev) => [...prev, id]);
@@ -316,7 +360,7 @@ const Category = () => {
     setBubbles((prev) => prev.filter((x) => x.id !== bubbleId));
   }, []);
 
-  // レンダリング関数
+  // レンダリング関数（安定化）
   const renderSpiderLayer = useCallback(() => {
     if (
       category !== "hobby" ||
