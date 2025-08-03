@@ -15,139 +15,53 @@ type Snail = { id: number; top: string; left: string; isMoved?: boolean };
 // 有効なカテゴリタイプを定義
 type CategoryType = "hobby" | "tech" | "other";
 
-// 安全なAPIアクセス用のヘルパー関数
-const getDeviceInfo = () => {
-  const cores = navigator.hardwareConcurrency || 4;
-
-  // deviceMemoryの安全な取得
-  let memory = 8; // 安全なデフォルト値
-  try {
-    const deviceMemory = (navigator as any).deviceMemory;
-    if (typeof deviceMemory === "number" && deviceMemory > 0) {
-      memory = deviceMemory;
-    }
-  } catch {
-    // 取得に失敗した場合はデフォルト値を使用
-  }
-
-  // connectionの安全な取得
-  let connectionType = "unknown";
-  let saveData = false;
-  try {
-    const connection = (navigator as any).connection;
-    if (connection) {
-      connectionType = connection.effectiveType || "unknown";
-      saveData = Boolean(connection.saveData);
-    }
-  } catch {
-    // 取得に失敗した場合はデフォルト値を使用
-  }
-
-  return { cores, memory, connectionType, saveData };
-};
-
-// より信頼性の高いパフォーマンス設定
+// 超軽量パフォーマンス判定（計算を最小化）
 const getPerformanceSettings = () => {
-  const { cores, memory, connectionType, saveData } = getDeviceInfo();
+  const cores = navigator.hardwareConcurrency || 4;
+  const width = window.innerWidth;
+  const isMobile = width < 768;
   const userAgent = navigator.userAgent;
-  const screenWidth = window.innerWidth;
 
-  // デバイス種類の判定
-  const isMobile =
-    /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
-  const isTablet =
-    /iPad|Android.*(?:Tablet|Tab)/i.test(userAgent) ||
-    (screenWidth >= 768 && screenWidth <= 1024 && isMobile);
-
-  // Apple デバイスの詳細判定
-  const isAppleDevice = /Mac|iPhone|iPad|iPod/i.test(userAgent);
-  const isMacOS =
+  // シンプルな判定ロジック
+  const isMac =
     /Mac/i.test(userAgent) && !/(iPhone|iPad|iPod)/i.test(userAgent);
-  const isAppleSilicon = isMacOS && cores >= 8; // M1以降の推定
+  const isLowEnd = !isMac && (cores <= 2 || width < 768);
+  const isHighEnd = isMac || (!isMobile && cores >= 8);
 
-  // ネットワーク状況の判定
-  const isSlowNetwork =
-    connectionType === "slow-2g" || connectionType === "2g" || saveData;
-
-  // パフォーマンスレベルの判定（より保守的なアプローチ）
-  let performanceLevel: "low" | "medium" | "high" = "medium";
-
-  // 低性能端末の判定
-  if (
-    (!isAppleDevice && cores <= 2) ||
-    memory <= 2 ||
-    screenWidth < 480 ||
-    isSlowNetwork ||
-    (isMobile && !isTablet && cores <= 4)
-  ) {
-    performanceLevel = "low";
-  }
-  // 高性能端末の判定
-  else if (
-    isAppleSilicon ||
-    (!isMobile && cores >= 8 && memory >= 8) ||
-    (isMacOS && cores >= 4) ||
-    (!isMobile && !isAppleDevice && cores >= 6 && memory >= 16)
-  ) {
-    performanceLevel = "high";
+  if (isLowEnd) {
+    return {
+      maxBubbles: 2,
+      maxSpiders: 3,
+      maxSnails: 2,
+      bubbleInterval: 6000,
+      enableAnimations: true,
+      reducedAnimations: true,
+      enableEffects: true,
+    } as const;
   }
 
-  // 開発時のログ出力
-  if (process.env.NODE_ENV === "development") {
-    console.log("Device Performance Analysis:", {
-      cores,
-      memory,
-      connectionType,
-      saveData,
-      isMobile,
-      isTablet,
-      isAppleDevice,
-      isMacOS,
-      isAppleSilicon,
-      screenWidth,
-      performanceLevel,
-      userAgent: userAgent.substring(0, 80) + "...",
-    });
+  if (isHighEnd) {
+    return {
+      maxBubbles: 8,
+      maxSpiders: 8,
+      maxSnails: 6,
+      bubbleInterval: 2000,
+      enableAnimations: true,
+      reducedAnimations: false,
+      enableEffects: true,
+    } as const;
   }
 
-  // パフォーマンスレベルに基づく設定
-  switch (performanceLevel) {
-    case "low":
-      return {
-        maxBubbles: 1,
-        maxSpiders: 2,
-        maxSnails: 1,
-        bubbleInterval: 8000,
-        enableAnimations: false,
-        reducedAnimations: true,
-        enableEffects: false,
-        performanceLevel: "low" as const,
-      };
-
-    case "high":
-      return {
-        maxBubbles: 8,
-        maxSpiders: 8,
-        maxSnails: 6,
-        bubbleInterval: 2000,
-        enableAnimations: true,
-        reducedAnimations: false,
-        enableEffects: true,
-        performanceLevel: "high" as const,
-      };
-
-    default: // medium
-      return {
-        maxBubbles: 4,
-        maxSpiders: 4,
-        maxSnails: 3,
-        bubbleInterval: 3000,
-        enableAnimations: true,
-        reducedAnimations: false,
-        enableEffects: true,
-        performanceLevel: "medium" as const,
-      };
-  }
+  // 標準設定
+  return {
+    maxBubbles: 4,
+    maxSpiders: 4,
+    maxSnails: 3,
+    bubbleInterval: 3000,
+    enableAnimations: true,
+    reducedAnimations: false,
+    enableEffects: true,
+  } as const;
 };
 
 // 定数を外部定義
@@ -178,7 +92,7 @@ const Category = () => {
     () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
 
-  // パフォーマンス設定（起動時に1回だけ取得）
+  // パフォーマンス設定（1回だけ実行）
   const performanceSettings = useMemo(() => getPerformanceSettings(), []);
 
   // 安定化されたヘルパー関数
@@ -321,37 +235,24 @@ const Category = () => {
     generateRandomPosition,
   ]);
 
-  // useInterval（安定した依存配列）
-  const intervalConfig = useMemo(
-    () => ({
-      shouldRun:
-        category === "tech" &&
-        performanceSettings.enableEffects &&
-        performanceSettings.enableAnimations &&
-        !reducedMotion,
-      interval: performanceSettings.bubbleInterval,
-      dependencies: {
-        category,
-        reducedMotion,
-        maxBubbles: performanceSettings.maxBubbles,
-        enableEffects: performanceSettings.enableEffects,
-        enableAnimations: performanceSettings.enableAnimations,
-      },
-    }),
-    [
-      category,
-      reducedMotion,
-      performanceSettings.maxBubbles,
-      performanceSettings.bubbleInterval,
-      performanceSettings.enableEffects,
-      performanceSettings.enableAnimations,
-    ],
-  );
+  // useInterval（プリミティブ値のみの依存配列）
+  const shouldGenerateBubbles =
+    category === "tech" &&
+    performanceSettings.enableEffects &&
+    performanceSettings.enableAnimations &&
+    !reducedMotion;
 
   useInterval(
     generateBubble,
-    intervalConfig.shouldRun ? intervalConfig.interval : null,
-    [intervalConfig.dependencies],
+    shouldGenerateBubbles ? performanceSettings.bubbleInterval : null,
+    [
+      category, // string
+      reducedMotion, // boolean
+      performanceSettings.maxBubbles, // number
+      performanceSettings.bubbleInterval, // number
+      performanceSettings.enableEffects, // boolean
+      performanceSettings.enableAnimations, // boolean
+    ],
   );
 
   // イベントハンドラー
