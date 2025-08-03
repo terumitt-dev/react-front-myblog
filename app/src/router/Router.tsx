@@ -20,6 +20,7 @@ function AdminPageWrapper() {
           <p>エラー: {error.message}</p>
           {/** biome-ignore lint/a11y/useButtonType: <explanation> */}
           <button
+            type="button"
             onClick={() => {
               localStorage.removeItem("myblog-posts");
               setResetKey((prev) => prev + 1);
