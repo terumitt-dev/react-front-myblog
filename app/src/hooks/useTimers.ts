@@ -32,7 +32,7 @@ export function useTimers() {
    * @param id タイムアウトID
    */
   const clearMyTimeout = useCallback((id: number) => {
-    window.clearMyTimeout(id);
+    window.clearTimeout(id);
     timeoutIdsRef.current = timeoutIdsRef.current.filter((tid) => tid !== id);
   }, []);
 
@@ -61,7 +61,7 @@ export function useTimers() {
   useEffect(() => {
     return () => {
       // すべてのタイムアウトをクリア
-      timeoutIdsRef.current.forEach((id) => window.clearMyTimeout(id));
+      timeoutIdsRef.current.forEach((id) => window.clearTimeout(id));
       // すべてのインターバルをクリア
       intervalIdsRef.current.forEach((id) => window.clearInterval(id));
       // 参照を空にする
