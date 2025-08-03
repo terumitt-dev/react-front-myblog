@@ -17,13 +17,20 @@ export function useInterval(
   const { setInterval, clearInterval } = useTimers();
   const savedCallback = useRef<() => void>();
   const intervalRef = useRef<number | null>(null);
+  const depsRef = useRef<readonly unknown[]>();
 
   // 最新のコールバックを保存
   useEffect(() => {
     savedCallback.current = callback;
   }, [callback]);
 
-  // インターバルの管理（依存配列をそのまま展開）
+  // 依存配列の変化チェック（シンプルな浅い比較）
+  const depsChanged =
+    !depsRef.current ||
+    depsRef.current.length !== deps.length ||
+    depsRef.current.some((dep, i) => dep !== deps[i]);
+
+  // インターバルの管理
   useEffect(() => {
     if (delay === null) {
       if (intervalRef.current !== null) {
@@ -47,5 +54,10 @@ export function useInterval(
         intervalRef.current = null;
       }
     };
-  }, [delay, setInterval, clearInterval, ...deps]); // スプレッド演算子で展開
+  }, [delay, setInterval, clearInterval, depsChanged]); // depsChangedを使用
+
+  // 依存配列を保存
+  useEffect(() => {
+    depsRef.current = deps;
+  }, [deps]);
 }
