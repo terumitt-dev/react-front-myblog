@@ -75,7 +75,7 @@ const Category = () => {
     };
   }, []);
 
-  // 初期化効果 - 最小限の依存配列でシンプルに
+  // 初期化効果 - 正しい依存配列で
   useEffect(() => {
     // 投稿読み込み
     const saved = localStorage.getItem("myblog-posts");
@@ -120,17 +120,21 @@ const Category = () => {
     } else {
       effects.clearSnails();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     category,
     reducedMotion,
     performanceSettings.maxSpiders,
     performanceSettings.maxSnails,
     performanceSettings.enableEffects,
-    // effectsとisValidCategoryは含めない（安定した参照のため）
+    isValidCategory,
+    effects.clearSpiders,
+    effects.clearBubbles,
+    effects.clearSnails,
+    effects.initializeSpiders,
+    effects.initializeSnails,
   ]);
 
-  // バブル生成 - effectsを依存配列から除外
+  // バブル生成 - 正しい依存配列で
   const generateBubble = useCallback(() => {
     if (
       reducedMotion ||
@@ -142,13 +146,12 @@ const Category = () => {
       performanceSettings.maxBubbles,
       generateRandomPositionRef.current,
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     reducedMotion,
     performanceSettings.maxBubbles,
     performanceSettings.enableEffects,
     performanceSettings.enableAnimations,
-    // effects.generateBubbleは含めない（安定した参照のため）
+    effects.generateBubble,
   ]);
 
   // useInterval

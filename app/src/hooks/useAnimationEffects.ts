@@ -29,7 +29,7 @@ export const useAnimationEffects = (reducedAnimations: boolean) => {
   const { setTimeout } = useTimers();
   const bubbleIdCounterRef = useRef(0);
 
-  // スパイダー関連
+  // スパイダー関連 - useCallbackで安定化
   const handleSpiderClick = useCallback(
     (id: number) => {
       setSpiderDisappearingIds((prev) => [...prev, id]);
@@ -58,14 +58,14 @@ export const useAnimationEffects = (reducedAnimations: boolean) => {
       );
       setSpiderVisible(true);
     },
-    [],
+    [], // 依存関係なし（引数で受け取るため）
   );
 
   const clearSpiders = useCallback(() => {
     setSpiders([]);
   }, []);
 
-  // バブル関連
+  // バブル関連 - useCallbackで安定化
   const generateBubble = useCallback(
     (maxBubbles: number, generateRandomPosition: RandomPositionGenerator) => {
       setBubbles((prev) => {
@@ -80,7 +80,7 @@ export const useAnimationEffects = (reducedAnimations: boolean) => {
           : [...prev, newBubble];
       });
     },
-    [],
+    [], // 依存関係なし（引数で受け取るため）
   );
 
   const handleBubbleEnd = useCallback((bubbleId: number) => {
@@ -91,7 +91,7 @@ export const useAnimationEffects = (reducedAnimations: boolean) => {
     setBubbles([]);
   }, []);
 
-  // カタツムリ関連
+  // カタツムリ関連 - useCallbackで安定化
   const handleSnailClick = useCallback(
     (id: number) => {
       setSnailDisappearingIds((prev) => [...prev, id]);
@@ -128,7 +128,7 @@ export const useAnimationEffects = (reducedAnimations: boolean) => {
         })),
       );
     },
-    [],
+    [], // 依存関係なし（引数で受け取るため）
   );
 
   const clearSnails = useCallback(() => {
