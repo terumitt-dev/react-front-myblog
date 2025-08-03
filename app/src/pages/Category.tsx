@@ -118,7 +118,7 @@ const Category = () => {
         clearTimeout(resizeTimeoutRef.current);
       }
 
-      resizeTimeoutRef.current = setTimeout(() => {
+      resizeTimeoutRef.current = window.setTimeout(() => {
         setScreenWidth(window.innerWidth);
       }, 150); // 150msデバウンス
     };
