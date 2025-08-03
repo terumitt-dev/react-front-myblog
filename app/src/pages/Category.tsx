@@ -110,8 +110,7 @@ const Category = () => {
 
   // 画面幅の監視（デバウンス付き）
   const [screenWidth, setScreenWidth] = useState(() => window.innerWidth);
-  const resizeTimeoutRef = useRef<NodeJS.Timeout>();
-
+  const resizeTimeoutRef = useRef<number | null>(null);
   // デバウンス付きリサイズハンドラー
   useEffect(() => {
     const handleResize = () => {

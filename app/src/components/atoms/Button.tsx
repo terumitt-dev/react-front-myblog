@@ -26,7 +26,7 @@ const Button = ({
     <button
       type={type}
       onClick={onClick}
-      className={`${base} ${variants[variant]} ${className}`}
+      className={`${base} ${variants[variant] ?? variants.primary} ${className}`}
     >
       {label}
     </button>
