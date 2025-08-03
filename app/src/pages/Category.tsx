@@ -208,11 +208,16 @@ const Category = () => {
     });
   }, [reducedMotion, performanceSettings.maxBubbles, generateRandomPosition]);
 
-  // useInterval（依存配列を最適化）
+  // useInterval（依存配列を修正）
   useInterval(
     generateBubble,
     category === "tech" ? performanceSettings.bubbleInterval : null,
-    [category, reducedMotion],
+    [
+      category,
+      reducedMotion,
+      performanceSettings.maxBubbles,
+      generateRandomPosition,
+    ],
   );
 
   // クモ削除ハンドラ（依存配列を最適化）
