@@ -24,7 +24,7 @@ export function useInterval(
   // 安全なクリアアップ関数
   const clearCurrentInterval = useCallback(() => {
     if (intervalRef.current !== null) {
-      clearInterval(intervalRef.current);
+      window.clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
   }, []);
@@ -47,6 +47,7 @@ export function useInterval(
 
     // クリーンアップ関数
     return clearCurrentInterval;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [delay, clearCurrentInterval, ...deps]);
 
   // コンポーネントアンマウント時の強制クリーンアップ
