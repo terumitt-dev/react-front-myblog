@@ -15,100 +15,139 @@ type Snail = { id: number; top: string; left: string; isMoved?: boolean };
 // 有効なカテゴリタイプを定義
 type CategoryType = "hobby" | "tech" | "other";
 
-// 修正されたパフォーマンス設定（Macの正確な判定）
-const getPerformanceSettings = () => {
+// 安全なAPIアクセス用のヘルパー関数
+const getDeviceInfo = () => {
   const cores = navigator.hardwareConcurrency || 4;
-  const memory = (navigator as any).deviceMemory || 8; // デフォルトを8GBに変更
-  const connection = (navigator as any).connection;
+
+  // deviceMemoryの安全な取得
+  let memory = 8; // 安全なデフォルト値
+  try {
+    const deviceMemory = (navigator as any).deviceMemory;
+    if (typeof deviceMemory === "number" && deviceMemory > 0) {
+      memory = deviceMemory;
+    }
+  } catch {
+    // 取得に失敗した場合はデフォルト値を使用
+  }
+
+  // connectionの安全な取得
+  let connectionType = "unknown";
+  let saveData = false;
+  try {
+    const connection = (navigator as any).connection;
+    if (connection) {
+      connectionType = connection.effectiveType || "unknown";
+      saveData = Boolean(connection.saveData);
+    }
+  } catch {
+    // 取得に失敗した場合はデフォルト値を使用
+  }
+
+  return { cores, memory, connectionType, saveData };
+};
+
+// より信頼性の高いパフォーマンス設定
+const getPerformanceSettings = () => {
+  const { cores, memory, connectionType, saveData } = getDeviceInfo();
   const userAgent = navigator.userAgent;
+  const screenWidth = window.innerWidth;
 
-  // Mac判定（高性能として扱う）
-  const isMac = /Mac|iPhone|iPad|iPod/.test(userAgent);
-  const isAppleSilicon = /Mac/.test(userAgent) && cores >= 8; // M1以降は8コア以上
-
-  // モバイル端末の判定
+  // デバイス種類の判定
   const isMobile =
     /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+  const isTablet =
+    /iPad|Android.*(?:Tablet|Tab)/i.test(userAgent) ||
+    (screenWidth >= 768 && screenWidth <= 1024 && isMobile);
 
-  // 低スペック判定を厳格化（Macは除外）
-  const isVeryLowEnd =
-    !isMac &&
-    (cores <= 1 ||
-      memory <= 2 ||
-      window.innerWidth < 480 ||
-      (connection && connection.effectiveType === "slow-2g"));
+  // Apple デバイスの詳細判定
+  const isAppleDevice = /Mac|iPhone|iPad|iPod/i.test(userAgent);
+  const isMacOS =
+    /Mac/i.test(userAgent) && !/(iPhone|iPad|iPod)/i.test(userAgent);
+  const isAppleSilicon = isMacOS && cores >= 8; // M1以降の推定
 
-  const isLowEnd =
-    !isMac &&
-    !isAppleSilicon &&
-    (cores <= 2 ||
-      memory <= 4 ||
-      window.innerWidth < 768 ||
-      (isMobile && cores <= 4) ||
-      (connection &&
-        (connection.effectiveType === "2g" || connection.saveData)));
+  // ネットワーク状況の判定
+  const isSlowNetwork =
+    connectionType === "slow-2g" || connectionType === "2g" || saveData;
 
+  // パフォーマンスレベルの判定（より保守的なアプローチ）
+  let performanceLevel: "low" | "medium" | "high" = "medium";
+
+  // 低性能端末の判定
+  if (
+    (!isAppleDevice && cores <= 2) ||
+    memory <= 2 ||
+    screenWidth < 480 ||
+    isSlowNetwork ||
+    (isMobile && !isTablet && cores <= 4)
+  ) {
+    performanceLevel = "low";
+  }
+  // 高性能端末の判定
+  else if (
+    isAppleSilicon ||
+    (!isMobile && cores >= 8 && memory >= 8) ||
+    (isMacOS && cores >= 4) ||
+    (!isMobile && !isAppleDevice && cores >= 6 && memory >= 16)
+  ) {
+    performanceLevel = "high";
+  }
+
+  // 開発時のログ出力
   if (process.env.NODE_ENV === "development") {
-    console.log("Device info:", {
+    console.log("Device Performance Analysis:", {
       cores,
       memory,
-      isMac,
-      isAppleSilicon,
+      connectionType,
+      saveData,
       isMobile,
-      isVeryLowEnd,
-      isLowEnd,
-      userAgent: userAgent.substring(0, 50) + "...",
+      isTablet,
+      isAppleDevice,
+      isMacOS,
+      isAppleSilicon,
+      screenWidth,
+      performanceLevel,
+      userAgent: userAgent.substring(0, 80) + "...",
     });
   }
 
-  // 設定を適切に分類
-  if (isVeryLowEnd) {
-    return {
-      maxBubbles: 1,
-      maxSpiders: 2,
-      maxSnails: 1,
-      bubbleInterval: 8000,
-      enableAnimations: false,
-      reducedAnimations: true,
-      enableEffects: false,
-    } as const;
-  }
+  // パフォーマンスレベルに基づく設定
+  switch (performanceLevel) {
+    case "low":
+      return {
+        maxBubbles: 1,
+        maxSpiders: 2,
+        maxSnails: 1,
+        bubbleInterval: 8000,
+        enableAnimations: false,
+        reducedAnimations: true,
+        enableEffects: false,
+        performanceLevel: "low" as const,
+      };
 
-  if (isLowEnd) {
-    return {
-      maxBubbles: 2,
-      maxSpiders: 3,
-      maxSnails: 2,
-      bubbleInterval: 6000,
-      enableAnimations: true,
-      reducedAnimations: true,
-      enableEffects: true,
-    } as const;
-  }
+    case "high":
+      return {
+        maxBubbles: 8,
+        maxSpiders: 8,
+        maxSnails: 6,
+        bubbleInterval: 2000,
+        enableAnimations: true,
+        reducedAnimations: false,
+        enableEffects: true,
+        performanceLevel: "high" as const,
+      };
 
-  // 高性能端末（Mac、Apple Silicon、高性能PC）
-  if (isAppleSilicon || cores >= 8 || memory >= 16) {
-    return {
-      maxBubbles: 8,
-      maxSpiders: 8,
-      maxSnails: 6,
-      bubbleInterval: 2000,
-      enableAnimations: true,
-      reducedAnimations: false,
-      enableEffects: true,
-    } as const;
+    default: // medium
+      return {
+        maxBubbles: 4,
+        maxSpiders: 4,
+        maxSnails: 3,
+        bubbleInterval: 3000,
+        enableAnimations: true,
+        reducedAnimations: false,
+        enableEffects: true,
+        performanceLevel: "medium" as const,
+      };
   }
-
-  // 標準端末
-  return {
-    maxBubbles: 4,
-    maxSpiders: 4,
-    maxSnails: 3,
-    bubbleInterval: 3000,
-    enableAnimations: true,
-    reducedAnimations: false,
-    enableEffects: true,
-  } as const;
 };
 
 // 定数を外部定義
@@ -139,70 +178,8 @@ const Category = () => {
     () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
 
-  // パフォーマンス監視を緩和（高性能端末では無効化）
-  const [performanceDegraded, setPerformanceDegraded] = useState(false);
-  const frameTimeRef = useRef<number>(0);
-  const frameCountRef = useRef<number>(0);
-  const performanceCheckRef = useRef<number>(0);
-
-  // パフォーマンス設定（動的調整対応）
-  const performanceSettings = useMemo(() => {
-    const baseSettings = getPerformanceSettings();
-
-    // 高性能端末ではパフォーマンス劣化検知を無効化
-    const isHighPerformance = baseSettings.maxBubbles >= 8;
-    if (isHighPerformance) {
-      return baseSettings;
-    }
-
-    // 低〜中性能端末のみパフォーマンス劣化時の調整を適用
-    if (performanceDegraded) {
-      return {
-        ...baseSettings,
-        maxBubbles: Math.max(1, Math.floor(baseSettings.maxBubbles / 2)),
-        maxSpiders: Math.max(1, Math.floor(baseSettings.maxSpiders / 2)),
-        maxSnails: Math.max(1, Math.floor(baseSettings.maxSnails / 2)),
-        bubbleInterval: baseSettings.bubbleInterval * 2,
-        enableAnimations: false,
-        reducedAnimations: true,
-      };
-    }
-
-    return baseSettings;
-  }, [performanceDegraded]);
-
-  // より緩やかなパフォーマンス監視（高性能端末では実行しない）
-  const monitorPerformance = useCallback(() => {
-    const isHighPerformance = performanceSettings.maxBubbles >= 8;
-    if (isHighPerformance) return; // 高性能端末では監視しない
-
-    const now = performance.now();
-    frameCountRef.current++;
-    performanceCheckRef.current++;
-
-    if (frameTimeRef.current > 0) {
-      const frameDelta = now - frameTimeRef.current;
-
-      // より厳しい条件（20fps未満、50ms以上）でのみ検出
-      if (frameDelta > 50 && performanceCheckRef.current % 60 === 0) {
-        if (!performanceDegraded) {
-          console.warn(
-            "Severe performance degradation detected, reducing effects",
-          );
-          setPerformanceDegraded(true);
-        }
-      } else if (
-        frameDelta < 25 &&
-        performanceDegraded &&
-        performanceCheckRef.current % 120 === 0
-      ) {
-        console.log("Performance recovered, restoring effects");
-        setPerformanceDegraded(false);
-      }
-    }
-
-    frameTimeRef.current = now;
-  }, [performanceDegraded, performanceSettings.maxBubbles]);
+  // パフォーマンス設定（起動時に1回だけ取得）
+  const performanceSettings = useMemo(() => getPerformanceSettings(), []);
 
   // 安定化されたヘルパー関数
   const { setTimeout } = useTimers();
@@ -226,32 +203,6 @@ const Category = () => {
     const randomIndex = Math.floor(Math.random() * ROTATION_ANGLES.length);
     return ROTATION_ANGLES[randomIndex];
   }, []);
-
-  // パフォーマンス監視の開始（高性能端末では無効）
-  useEffect(() => {
-    const isHighPerformance = performanceSettings.maxBubbles >= 8;
-    if (!performanceSettings.enableAnimations || isHighPerformance) return;
-
-    let animationId: number;
-    const performanceLoop = () => {
-      monitorPerformance();
-      animationId = requestAnimationFrame(performanceLoop);
-    };
-
-    // 10秒に1回だけ監視（さらに負荷軽減）
-    const monitorInterval = setInterval(() => {
-      animationId = requestAnimationFrame(performanceLoop);
-    }, 10000);
-
-    return () => {
-      clearInterval(monitorInterval);
-      if (animationId) cancelAnimationFrame(animationId);
-    };
-  }, [
-    monitorPerformance,
-    performanceSettings.enableAnimations,
-    performanceSettings.maxBubbles,
-  ]);
 
   // reduced-motion監視
   useEffect(() => {
@@ -342,7 +293,7 @@ const Category = () => {
     generateRandomRotation,
   ]);
 
-  // バブル生成（通常の処理に戻す）
+  // バブル生成
   const generateBubble = useCallback(() => {
     if (
       reducedMotion ||
@@ -370,22 +321,23 @@ const Category = () => {
     generateRandomPosition,
   ]);
 
-  // useInterval依存配列
-  const shouldGenerateBubbles =
-    category === "tech" &&
-    performanceSettings.enableEffects &&
-    performanceSettings.enableAnimations &&
-    !reducedMotion;
-
-  const intervalDependencies = useMemo(
-    () => [
-      category,
-      reducedMotion,
-      performanceSettings.maxBubbles,
-      performanceSettings.bubbleInterval,
-      performanceSettings.enableEffects,
-      performanceSettings.enableAnimations,
-    ],
+  // useInterval（安定した依存配列）
+  const intervalConfig = useMemo(
+    () => ({
+      shouldRun:
+        category === "tech" &&
+        performanceSettings.enableEffects &&
+        performanceSettings.enableAnimations &&
+        !reducedMotion,
+      interval: performanceSettings.bubbleInterval,
+      dependencies: {
+        category,
+        reducedMotion,
+        maxBubbles: performanceSettings.maxBubbles,
+        enableEffects: performanceSettings.enableEffects,
+        enableAnimations: performanceSettings.enableAnimations,
+      },
+    }),
     [
       category,
       reducedMotion,
@@ -398,8 +350,8 @@ const Category = () => {
 
   useInterval(
     generateBubble,
-    shouldGenerateBubbles ? performanceSettings.bubbleInterval : null,
-    intervalDependencies,
+    intervalConfig.shouldRun ? intervalConfig.interval : null,
+    [intervalConfig.dependencies],
   );
 
   // イベントハンドラー
@@ -608,13 +560,6 @@ const Category = () => {
       className={`relative min-h-screen p-6 space-y-6 overflow-hidden ${displayValues.currentBg}`}
     >
       <Header />
-
-      {/* パフォーマンス警告（開発時のみ） */}
-      {process.env.NODE_ENV === "development" && performanceDegraded && (
-        <div className="fixed top-4 right-4 bg-yellow-100 border border-yellow-400 text-yellow-700 px-3 py-2 rounded z-50 text-sm">
-          ⚠️ Low performance detected - Effects reduced
-        </div>
-      )}
 
       {/* 背景レイヤー */}
       {renderSpiderLayer()}
