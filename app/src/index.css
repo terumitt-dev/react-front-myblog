@@ -10,11 +10,18 @@ body {
 }
 
 #root {
-    height: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 /* フォーカス表示の改善（アクセシビリティ強化） */
-:focus {
+a:focus,
+button:focus,
+input:focus,
+textarea:focus,
+select:focus,
+[tabindex]:focus {
     outline: 2px solid #3b82f6; /* blue-500 */
     outline-offset: 2px;
 }
