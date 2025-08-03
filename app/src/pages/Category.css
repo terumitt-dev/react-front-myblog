@@ -72,8 +72,8 @@
 /* ==================== 蜘蛛 ==================== */
 .spider {
     position: absolute;
-    width: 50px; /* 40px → 50px */
-    height: 50px; /* 40px → 50px */
+    width: 50px;
+    height: 50px;
     opacity: 0.7;
     transition: transform 0.3s ease;
     cursor: pointer;
@@ -114,8 +114,8 @@
 /* ==================== 泡 ==================== */
 .bubble {
     position: absolute;
-    width: 50px; /* 40px → 50px */
-    height: 50px; /* 40px → 50px */
+    width: 50px;
+    height: 50px;
     opacity: 0.7;
     animation: grow-and-pop 3s ease-out forwards;
     pointer-events: none;
@@ -140,8 +140,8 @@
 /* ==================== カタツムリ ==================== */
 .snail {
     position: absolute;
-    width: 60px; /* 50px → 60px */
-    height: 60px; /* 50px → 60px */
+    width: 60px;
+    height: 60px;
     opacity: 0.85;
     transition: transform 15s linear;
     transform: scaleX(1) translateZ(0);
@@ -159,14 +159,47 @@
     animation-fill-mode: forwards;
 }
 
+/* ==================== パフォーマンス最適化 ==================== */
+
+/* 低スペック端末向けアニメーション簡素化 */
+.performance-reduced.bubble {
+    animation-duration: 2s !important;
+}
+
+.performance-reduced.spider {
+    transition: transform 0.2s ease !important;
+}
+
+.performance-reduced.spider:hover {
+    transform: translateY(-10px) rotate(var(--rotation)) translateZ(0) !important;
+}
+
+.performance-reduced.spider-disappear {
+    transition:
+        transform 0.3s ease,
+        opacity 0.3s ease !important;
+}
+
+.performance-reduced.snail {
+    transition: transform 8s linear !important;
+}
+
+.performance-reduced.snail-move {
+    transition: transform 8s linear !important;
+}
+
+.performance-reduced.snail-disappear {
+    transition: opacity 0.3s ease !important;
+}
+
 /* ==================== デバイス別最適化 ==================== */
 
 /* モバイルデバイス向け最適化 */
 @media (max-width: 768px) {
     .bubble {
         animation-duration: 2s;
-        width: 40px; /* 30px → 40px */
-        height: 40px; /* 30px → 40px */
+        width: 40px;
+        height: 40px;
     }
 
     .spider,
@@ -175,13 +208,13 @@
     }
 
     .spider {
-        width: 40px; /* 30px → 40px */
-        height: 40px; /* 30px → 40px */
+        width: 40px;
+        height: 40px;
     }
 
     .snail {
-        width: 50px; /* 40px → 50px */
-        height: 50px; /* 40px → 50px */
+        width: 50px;
+        height: 50px;
         transition: transform 10s linear;
     }
 
@@ -199,8 +232,8 @@
 @media (max-width: 480px) {
     .bubble {
         animation-duration: 1.5s;
-        width: 35px; /* 25px → 35px */
-        height: 35px; /* 25px → 35px */
+        width: 35px;
+        height: 35px;
     }
 
     .spider,
@@ -209,13 +242,13 @@
     }
 
     .spider {
-        width: 35px; /* 25px → 35px */
-        height: 35px; /* 25px → 35px */
+        width: 35px;
+        height: 35px;
     }
 
     .snail {
-        width: 45px; /* 35px → 45px */
-        height: 45px; /* 35px → 45px */
+        width: 45px;
+        height: 45px;
         transition: transform 8s linear;
     }
 

@@ -15,22 +15,22 @@ type Snail = { id: number; top: string; left: string; isMoved?: boolean };
 // 有効なカテゴリタイプを定義
 type CategoryType = "hobby" | "tech" | "other";
 
-// デバイス性能に基づく設定（安定化）
+// シンプルなデバイス性能判定
 const getPerformanceSettings = () => {
   const cores = navigator.hardwareConcurrency || 4;
   const isLowEnd =
     cores <= 2 ||
     window.innerWidth < 768 ||
-    /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent,
-    );
+    /Android.*Chrome\/[1-6][0-9]/i.test(navigator.userAgent) ||
+    /iPhone.*OS [1-9]_/i.test(navigator.userAgent);
 
   return {
-    maxBubbles: isLowEnd ? 4 : 8,
-    maxSpiders: isLowEnd ? 4 : 8,
-    maxSnails: isLowEnd ? 3 : 6,
-    bubbleInterval: isLowEnd ? 3000 : 2000,
-    enableAnimations: !isLowEnd,
+    maxBubbles: isLowEnd ? 3 : 6,
+    maxSpiders: isLowEnd ? 3 : 6,
+    maxSnails: isLowEnd ? 2 : 4,
+    bubbleInterval: isLowEnd ? 4000 : 2500,
+    enableAnimations: true,
+    reducedAnimations: isLowEnd,
   } as const;
 };
 
@@ -68,7 +68,7 @@ const Category = () => {
       console.log("Performance settings:", settings);
     }
     return settings;
-  }, []); // 空の依存配列で初期化時のみ実行
+  }, []);
 
   // タイマー管理フック
   const { setTimeout } = useTimers();
@@ -187,7 +187,7 @@ const Category = () => {
     generateRandomRotation,
   ]);
 
-  // バブル生成関数（依存配列を修正）
+  // バブル生成関数（パフォーマンス最適化）
   const generateBubble = useCallback(() => {
     if (reducedMotion) return;
 
@@ -216,6 +216,7 @@ const Category = () => {
       category,
       reducedMotion,
       performanceSettings.maxBubbles,
+      performanceSettings.bubbleInterval,
       generateRandomPosition,
     ],
   );
@@ -272,7 +273,7 @@ const Category = () => {
               spiderDisappearingIds.includes(spider.id)
                 ? "spider-disappear"
                 : ""
-            }`}
+            } ${performanceSettings.reducedAnimations ? "performance-reduced" : ""}`}
             style={{
               top: spider.top,
               left: spider.left,
@@ -299,6 +300,7 @@ const Category = () => {
     spiders,
     spiderDisappearingIds,
     handleSpiderClick,
+    performanceSettings.reducedAnimations,
   ]);
 
   // 泡レイヤーレンダリング（最適化）
@@ -312,7 +314,7 @@ const Category = () => {
             key={bubble.id}
             src="/patterns/bubbles.svg"
             alt=""
-            className="bubble"
+            className={`bubble ${performanceSettings.reducedAnimations ? "performance-reduced" : ""}`}
             style={{
               top: bubble.top,
               left: bubble.left,
@@ -325,7 +327,7 @@ const Category = () => {
         ))}
       </div>
     );
-  }, [category, bubbles, reducedMotion]);
+  }, [category, bubbles, reducedMotion, performanceSettings.reducedAnimations]);
 
   // カタツムリレイヤーレンダリング（最適化）
   const renderSnailLayer = useCallback(() => {
@@ -340,7 +342,7 @@ const Category = () => {
             aria-label="カタツムリを削除"
             className={`snail pointer-events-auto ${snail.isMoved ? "snail-move" : ""} ${
               snailDisappearingIds.includes(snail.id) ? "snail-disappear" : ""
-            }`}
+            } ${performanceSettings.reducedAnimations ? "performance-reduced" : ""}`}
             style={{
               top: snail.top,
               left: snail.left,
@@ -369,6 +371,7 @@ const Category = () => {
     snailDisappearingIds,
     handleSnailClick,
     handleSnailHover,
+    performanceSettings.reducedAnimations,
   ]);
 
   // 定数をメモ化
