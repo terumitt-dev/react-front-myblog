@@ -32,8 +32,14 @@ const PostDetail = () => {
   useEffect(() => {
     const savedPosts = localStorage.getItem("myblog-posts");
     if (savedPosts) {
-      const posts: Post[] = JSON.parse(savedPosts);
-      setPost(posts.find((p) => p.id === postId) ?? null);
+      try {
+        const posts: Post[] = JSON.parse(savedPosts);
+        setPost(posts.find((p) => p.id === postId) ?? null);
+      } catch (e) {
+        console.error("Failed to parse posts from localStorage:", e);
+        localStorage.removeItem("myblog-posts");
+        setPost(null);
+      }
     }
 
     const storedComments = localStorage.getItem(`myblog-comments-${postId}`);
