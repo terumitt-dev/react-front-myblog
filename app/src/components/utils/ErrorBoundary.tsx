@@ -1,5 +1,5 @@
 // app/src/components/utils/ErrorBoundary.tsx
-import { Component, ReactNode } from "react";
+import { Component, ReactNode, ErrorInfo } from "react";
 
 interface FallbackProps {
   error: Error;
@@ -30,7 +30,7 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: unknown, info: unknown) {
+  componentDidCatch(error: Error, info: ErrorInfo) {
     console.error("ErrorBoundary caught an error:", error);
     console.error("Error info:", info);
   }
