@@ -6,27 +6,30 @@ type Props = {
   fullWidth?: boolean;
 };
 
+// シンプルなcn関数（shadcn/uiパターンを参考）
+function cn(...classes: (string | undefined | null | false)[]): string {
+  return classes.filter(Boolean).join(" ");
+}
+
 const CategoryButtons = ({ fullWidth = false }: Props) => {
   const navigate = useNavigate();
 
-  // ラッパーのスタイル：fullWidth なら justify-between + w-full
-  const wrapperClass = fullWidth
-    ? "flex justify-between w-full gap-x-4"
-    : "flex justify-center gap-x-4";
-
-  // ボタン共通クラス
-  const btnBase = "py-2 rounded text-black shadow hover:opacity-90 transition";
-
-  // fullWidth の時だけ flex-1 で横幅均等に
-  const grow = fullWidth ? "flex-1" : "px-6";
-
   return (
-    <div className={wrapperClass}>
+    <div
+      className={cn(
+        "flex gap-x-4",
+        fullWidth ? "justify-between w-full" : "justify-center",
+      )}
+    >
       {/* しゅみ */}
       <button
         type="button"
         onClick={() => navigate("/category/hobby")}
-        className={`${btnBase} ${grow} bg-[#E1C6F9]`}
+        className={cn(
+          "py-2 rounded text-black shadow hover:opacity-90 transition",
+          fullWidth ? "flex-1" : "px-6",
+          "bg-[#E1C6F9]",
+        )}
       >
         しゅみ
       </button>
@@ -35,7 +38,11 @@ const CategoryButtons = ({ fullWidth = false }: Props) => {
       <button
         type="button"
         onClick={() => navigate("/category/tech")}
-        className={`${btnBase} ${grow} bg-[#AFEBFF]`}
+        className={cn(
+          "py-2 rounded text-black shadow hover:opacity-90 transition",
+          fullWidth ? "flex-1" : "px-6",
+          "bg-[#AFEBFF]",
+        )}
       >
         テック
       </button>
@@ -44,7 +51,11 @@ const CategoryButtons = ({ fullWidth = false }: Props) => {
       <button
         type="button"
         onClick={() => navigate("/category/other")}
-        className={`${btnBase} ${grow} bg-[#CCF5B1]`}
+        className={cn(
+          "py-2 rounded text-black shadow hover:opacity-90 transition",
+          fullWidth ? "flex-1" : "px-6",
+          "bg-[#CCF5B1]",
+        )}
       >
         その他
       </button>
