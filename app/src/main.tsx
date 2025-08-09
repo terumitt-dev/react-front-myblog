@@ -1,18 +1,26 @@
 // app/src/main.tsx
-/** biome-ignore-all lint/style/noNonNullAssertion: <explanation> */
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App'
-import './index.css'
-import { ThemeProvider } from './context/ThemeContext'
-import { AuthProvider } from './context/AuthContext'
+// 初期テーマを適用してFOUCを防止
+const initialTheme =
+  localStorage.getItem("theme") === "dark" ? "dark" : "light";
+if (initialTheme === "dark") {
+  document.documentElement.classList.add("dark");
+} else {
+  document.documentElement.classList.remove("dark");
+}
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App";
+import "./index.css";
+import { ThemeProvider } from "./context/ThemeContext";
+import { AuthProvider } from "./context/AuthContext";
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <AuthProvider>
       <ThemeProvider>
         <App />
       </ThemeProvider>
     </AuthProvider>
-  </React.StrictMode>
-)
+  </React.StrictMode>,
+);
