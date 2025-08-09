@@ -198,7 +198,12 @@ const Category = () => {
     if (saved) {
       try {
         const all: Post[] = JSON.parse(saved);
-        setPosts(all.filter((p) => p.category === category));
+        if (isValidCategory(category)) {
+          setPosts(all.filter((p) => p.category === category));
+        } else {
+          setPosts([]);
+          return; // 不正カテゴリ時は以降のエフェクト初期化をスキップ
+        }
       } catch (e) {
         console.error("JSON parse error:", e);
         localStorage.removeItem("myblog-posts");
