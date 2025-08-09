@@ -18,6 +18,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const devEmail = import.meta.env.VITE_DEV_ADMIN_EMAIL;
     const devPassword = import.meta.env.VITE_DEV_ADMIN_PASSWORD;
 
+    const now = Date.now();
+    const failInfoRaw = localStorage.getItem("myblog-auth-fails");
+    const failInfo: { count: number; until?: number } = failInfoRaw
+      ? JSON.parse(failInfoRaw)
+      : { count: 0 };
+
+    // 簡易ロックアウト: 5回失敗で5分ロック
+    if (failInfo.until && now < failInfo.until) {
+      alert("しばらくしてから再試行してください。");
+      return false;
+    }
+
     if (!devEmail || !devPassword) {
       console.error("環境変数が不足しています");
       alert("ログイン設定が不正です。管理者に連絡してください。");
@@ -27,9 +39,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (email === devEmail && password === devPassword) {
       setIsLoggedIn(true);
       localStorage.setItem("myblog-auth", "true");
+      localStorage.removeItem("myblog-auth-fails");
       return true;
     }
 
+    const nextCount = (failInfo.count || 0) + 1;
+    const next: { count: number; until?: number } =
+      nextCount >= 5
+        ? { count: 0, until: now + 5 * 60_000 }
+        : { count: nextCount };
+    localStorage.setItem("myblog-auth-fails", JSON.stringify(next));
     return false;
   };
 
