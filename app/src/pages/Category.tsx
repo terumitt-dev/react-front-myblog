@@ -191,6 +191,12 @@ const Category = () => {
       const leftMax = Math.max(0, Math.min(100 - safetyMargin, maxLeft));
       const topMin = safetyMargin;
       const leftMin = safetyMargin;
+
+      // 範囲が成立しない場合は中央にフォールバック
+      if (topMax <= topMin || leftMax <= leftMin) {
+        return { top: "50%", left: "50%" };
+      }
+
       const top = Math.random() * (topMax - topMin) + topMin;
       const left = Math.random() * (leftMax - leftMin) + leftMin;
       return { top: `${top.toFixed(2)}%`, left: `${left.toFixed(2)}%` };
