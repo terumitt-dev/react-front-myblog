@@ -137,7 +137,9 @@ const Category = () => {
   });
 
   // 画面幅の監視（デバウンス付き）
-  const [screenWidth, setScreenWidth] = useState(() => window.innerWidth);
+  const [screenWidth, setScreenWidth] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth : 1024,
+  );
   const resizeTimeoutRef = useRef<number | null>(null);
   // デバウンス付きリサイズハンドラー
   useEffect(() => {
