@@ -6,6 +6,11 @@ import CommentForm from "@/components/organisms/CommentForm";
 import BackToHomeButton from "@/components/molecules/BackToHomeButton";
 import CommentStartButton from "@/components/molecules/CommentStartButton";
 
+// シンプルなcn関数（shadcn/uiパターンを参考）
+function cn(...classes: (string | undefined | null | false)[]): string {
+  return classes.filter(Boolean).join(" ");
+}
+
 type Post = {
   id: number;
   title: string;
@@ -81,27 +86,46 @@ const PostDetail = () => {
 
   return (
     <Layout>
-      <div className="bg-[#D9D9D9] max-w-5xl w-full mx-auto px-4 sm:px-6 py-8 rounded-xl overflow-hidden">
+      <div
+        className={cn(
+          "bg-[#D9D9D9] max-w-5xl w-full mx-auto rounded-xl overflow-hidden",
+          "px-4 sm:px-6 py-8",
+        )}
+      >
         {/* 2カラム */}
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+        <div className={cn("grid gap-8", "grid-cols-1 md:grid-cols-3")}>
           {/* ===== 記事エリア ===== */}
-          <article className="w-full bg-white rounded-xl shadow p-6 md:col-span-2 space-y-6">
+          <article
+            className={cn(
+              "w-full bg-white rounded-xl shadow p-6 space-y-6",
+              "md:col-span-2",
+            )}
+          >
             <header>
-              <h1 className="text-3xl font-bold mb-3 break-words">
+              <h1 className={cn("text-3xl font-bold mb-3 break-words")}>
                 {post.title}
               </h1>
-              <span className="inline-block text-sm font-semibold px-3 py-1 rounded bg-gray-200">
+              <span
+                className={cn(
+                  "inline-block text-sm font-semibold",
+                  "px-3 py-1 rounded bg-gray-200",
+                )}
+              >
                 {post.category}
               </span>
               <hr className="mt-4" />
             </header>
-            <div className="leading-relaxed whitespace-pre-line break-words">
+            <div
+              className={cn("leading-relaxed whitespace-pre-line break-words")}
+            >
               {post.content}
             </div>
           </article>
 
           {/* ===== コメント一覧 ===== */}
-          <section className="w-full bg-white rounded-xl shadow p-6 space-y-4">
+          <section
+            className={cn("w-full bg-white rounded-xl shadow p-6 space-y-4")}
+          >
             <h2 className="text-xl font-semibold">コメント一覧</h2>
 
             {comments.length === 0 ? (
@@ -116,7 +140,11 @@ const PostDetail = () => {
                       key={c.id}
                       type="button"
                       onClick={() => toggleComment(c.id)}
-                      className="cursor-pointer bg-gray-50 p-4 rounded shadow-sm hover:bg-gray-100 transition text-sm break-words w-full text-left"
+                      className={cn(
+                        "cursor-pointer p-4 rounded shadow-sm text-sm w-full text-left",
+                        "bg-gray-50 hover:bg-gray-100",
+                        "transition break-words",
+                      )}
                     >
                       <p className="font-semibold">{c.user}</p>
                       <p className="text-gray-700 mt-1">
@@ -135,7 +163,7 @@ const PostDetail = () => {
         </div>
 
         {/* ===== ボタン列 ===== */}
-        <div className="flex flex-col sm:flex-row gap-4 mt-8">
+        <div className={cn("flex gap-4 mt-8", "flex-col sm:flex-row")}>
           <CommentStartButton
             onClick={() => setIsWriting(true)}
             className="w-full sm:basis-[60%]"
@@ -145,7 +173,7 @@ const PostDetail = () => {
 
         {/* ===== コメントフォーム ===== */}
         {isWriting && (
-          <div className="mt-3 bg-white p-3 rounded-xl shadow">
+          <div className={cn("mt-3 bg-white p-3 rounded-xl shadow")}>
             <CommentForm
               onSubmit={handleCommentSubmit}
               onCancel={() => setIsWriting(false)}
