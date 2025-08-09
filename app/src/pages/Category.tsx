@@ -7,6 +7,11 @@ import Header from "@/components/organisms/Header";
 import { useInterval } from "@/hooks/useInterval";
 import { useTimers } from "@/hooks/useTimers";
 
+// シンプルなcn関数（shadcn/uiパターンを参考）
+function cn(...classes: (string | undefined | null | false)[]): string {
+  return classes.filter(Boolean).join(" ");
+}
+
 type Post = { id: number; title: string; content: string; category: string };
 type Spider = { id: number; top: string; left: string; rotate: number };
 type Bubble = { id: number; top: string; left: string; createdAt: number };
@@ -136,14 +141,6 @@ const Category = () => {
   // 動的パフォーマンス設定（メモ化強化）
   const performanceSettings = useMemo(() => {
     const settings = getPerformanceSettings(screenWidth);
-
-    if (process.env.NODE_ENV === "development") {
-      console.log("Performance settings updated:", {
-        screenWidth,
-        settings,
-        timestamp: new Date().toISOString(),
-      });
-    }
 
     return settings;
   }, [screenWidth]);
@@ -377,11 +374,12 @@ const Category = () => {
             type="button"
             onClick={() => handleSpiderClick(spider.id)}
             aria-label="クモを消す"
-            className={`spider pointer-events-auto rotate-${spider.rotate} ${
-              spiderDisappearingIds.includes(spider.id)
-                ? "spider-disappear"
-                : ""
-            } ${performanceSettings.reducedAnimations ? "performance-reduced" : ""}`}
+            className={cn(
+              "spider pointer-events-auto",
+              `rotate-${spider.rotate}`,
+              spiderDisappearingIds.includes(spider.id) && "spider-disappear",
+              performanceSettings.reducedAnimations && "performance-reduced",
+            )}
             style={{
               top: spider.top,
               left: spider.left,
@@ -427,7 +425,10 @@ const Category = () => {
             key={bubble.id}
             src="/patterns/bubbles.svg"
             alt=""
-            className={`bubble ${performanceSettings.reducedAnimations ? "performance-reduced" : ""}`}
+            className={cn(
+              "bubble",
+              performanceSettings.reducedAnimations && "performance-reduced",
+            )}
             style={{
               top: bubble.top,
               left: bubble.left,
@@ -466,9 +467,12 @@ const Category = () => {
             key={snail.id}
             type="button"
             aria-label="カタツムリを削除"
-            className={`snail pointer-events-auto ${snail.isMoved ? "snail-move" : ""} ${
-              snailDisappearingIds.includes(snail.id) ? "snail-disappear" : ""
-            } ${performanceSettings.reducedAnimations ? "performance-reduced" : ""}`}
+            className={cn(
+              "snail pointer-events-auto",
+              snail.isMoved && "snail-move",
+              snailDisappearingIds.includes(snail.id) && "snail-disappear",
+              performanceSettings.reducedAnimations && "performance-reduced",
+            )}
             style={{
               top: snail.top,
               left: snail.left,
@@ -514,7 +518,10 @@ const Category = () => {
 
   return (
     <section
-      className={`relative min-h-screen p-6 space-y-6 overflow-hidden ${displayValues.currentBg}`}
+      className={cn(
+        "relative min-h-screen p-6 space-y-6 overflow-hidden",
+        displayValues.currentBg,
+      )}
     >
       <Header />
 
