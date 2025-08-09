@@ -5,6 +5,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import LogoutButton from "@/components/molecules/LogoutButton";
 
+// シンプルなcn関数（shadcn/uiパターンを参考）
+function cn(...classes: (string | undefined | null | false)[]): string {
+  return classes.filter(Boolean).join(" ");
+}
+
 type Post = {
   id: number;
   title: string;
@@ -143,7 +148,12 @@ const Admin = () => {
               <button
                 type="button"
                 onClick={handleSubmit}
-                className={`px-4 py-2 rounded text-white ${editingPostId !== null ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"}`}
+                className={cn(
+                  "px-4 py-2 rounded text-white",
+                  editingPostId !== null
+                    ? "bg-green-600 hover:bg-green-700"
+                    : "bg-blue-600 hover:bg-blue-700",
+                )}
               >
                 {editingPostId !== null ? "更新する" : "投稿を追加"}
               </button>
