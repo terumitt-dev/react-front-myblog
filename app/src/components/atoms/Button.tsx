@@ -25,7 +25,7 @@ const Button = ({
       onClick={onClick}
       className={cn(
         // ベースクラス（変数を使わずコンポーネント近くで直接定義）
-        "block w-auto px-4 py-2 rounded text-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+        "block w-auto px-4 py-2 rounded text-white transition focus-visible:ring-2 focus-visible:ring-offset-2",
         // variant別のクラス（変数を使わずコンポーネント近くで直接定義）
         variant === "primary" &&
           "bg-blue-600 hover:bg-blue-700 focus-visible:ring-blue-500",
