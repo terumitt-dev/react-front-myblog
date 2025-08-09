@@ -5,6 +5,7 @@ type Props = {
   variant?: "primary" | "secondary" | "danger";
   type?: "button" | "submit" | "reset";
   className?: string;
+  disabled?: boolean;
 };
 
 // シンプルなcn関数（shadcn/uiパターンを参考）
@@ -18,17 +19,19 @@ const Button = ({
   variant = "primary",
   type = "button",
   className = "",
+  disabled = false,
 }: Props) => {
   return (
     <button
       type={type}
       onClick={onClick}
+      disabled={disabled}
       className={cn(
         "block w-auto px-4 py-2 rounded text-white transition",
-        // フォーカス可視性のフォールバックとアクセシビリティ強化
         "outline-offset-2 focus:outline-none",
         "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-900",
         "focus-visible:outline-2 focus-visible:outline-blue-500",
+        disabled && "opacity-60 cursor-not-allowed",
         variant === "primary" &&
           "bg-blue-600 hover:bg-blue-700 focus-visible:ring-blue-500",
         variant === "secondary" &&
@@ -37,7 +40,7 @@ const Button = ({
           "bg-red-600 hover:bg-red-700 focus-visible:ring-red-500",
         className,
       )}
-      aria-disabled={type === "submit" ? undefined : undefined}
+      aria-disabled={disabled || undefined}
     >
       {label}
     </button>
