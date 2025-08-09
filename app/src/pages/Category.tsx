@@ -83,7 +83,18 @@ const createPerformanceSettings = (): ((
 };
 
 // パフォーマンス設定ファクトリー（一度だけ作成）
-const getPerformanceSettings = createPerformanceSettings();
+const getPerformanceSettings =
+  typeof navigator !== "undefined" && typeof window !== "undefined"
+    ? createPerformanceSettings()
+    : (width: number) => ({
+        maxBubbles: 4,
+        maxSpiders: 4,
+        maxSnails: 3,
+        bubbleInterval: 3000,
+        enableAnimations: false,
+        reducedAnimations: true,
+        enableEffects: false,
+      });
 
 // 定数を外部定義
 const ROTATION_ANGLES = [0, 45, 90, 135, 180, 225, 270, 315] as const;
@@ -129,7 +140,7 @@ const Category = () => {
       }, 150);
     };
 
-    window.addEventListener("resize", handleResize, { passive: true });
+    window.addEventListener("resize", handleResize);
 
     return () => {
       window.removeEventListener("resize", handleResize);
