@@ -24,9 +24,9 @@
     "noUncheckedSideEffectImports": true,
 
     /* パス設定を追加 */
-    "baseUrl": ".",
+    "baseUrl": "src",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["*"]
     }
   },
   "include": ["src"]
