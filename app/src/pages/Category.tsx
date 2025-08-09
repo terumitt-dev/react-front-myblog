@@ -35,8 +35,14 @@ type PerformanceSettings = {
 const createPerformanceSettings = (): ((
   width: number,
 ) => PerformanceSettings) => {
-  const cores = navigator.hardwareConcurrency || 4;
-  const userAgent = navigator.userAgent;
+  const cores =
+    typeof navigator !== "undefined" && navigator.hardwareConcurrency
+      ? navigator.hardwareConcurrency
+      : 4;
+  const userAgent =
+    typeof navigator !== "undefined" && navigator.userAgent
+      ? navigator.userAgent
+      : "";
   const isMac =
     /Mac/i.test(userAgent) && !/(iPhone|iPad|iPod)/i.test(userAgent);
 
