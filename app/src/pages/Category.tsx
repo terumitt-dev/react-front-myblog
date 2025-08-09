@@ -126,9 +126,15 @@ const Category = () => {
   );
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
   const [snails, setSnails] = useState<Snail[]>([]);
-  const [reducedMotion, setReducedMotion] = useState(
-    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-  );
+  const [reducedMotion, setReducedMotion] = useState(() => {
+    if (
+      typeof window === "undefined" ||
+      typeof window.matchMedia !== "function"
+    ) {
+      return false;
+    }
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  });
 
   // 画面幅の監視（デバウンス付き）
   const [screenWidth, setScreenWidth] = useState(() => window.innerWidth);
