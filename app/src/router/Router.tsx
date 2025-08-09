@@ -1,6 +1,6 @@
 // src/router/Router.tsx
 import React, { useState } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Top from "@/pages/Top";
 import Category from "@/pages/Category";
 import PostDetail from "@/pages/PostDetail";
@@ -39,6 +39,7 @@ function AdminPageWrapper() {
 
 const Router = () => {
   const { isLoggedIn } = useAuth();
+  const location = useLocation();
 
   return (
     <Routes>
@@ -49,7 +50,11 @@ const Router = () => {
       <Route
         path="/admin"
         element={
-          isLoggedIn ? <AdminPageWrapper /> : <Navigate replace to="/login" />
+          isLoggedIn ? (
+            <AdminPageWrapper />
+          ) : (
+            <Navigate replace to="/login" state={{ from: location }} />
+          )
         }
       />
       <Route path="*" element={<Navigate to="/" replace />} />
