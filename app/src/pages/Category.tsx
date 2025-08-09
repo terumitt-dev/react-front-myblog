@@ -121,19 +121,21 @@ const Category = () => {
     const handleResize = () => {
       if (resizeTimeoutRef.current !== null) {
         window.clearTimeout(resizeTimeoutRef.current);
+        resizeTimeoutRef.current = null;
       }
 
       resizeTimeoutRef.current = window.setTimeout(() => {
         setScreenWidth(window.innerWidth);
-      }, 150); // 150msデバウンス
+      }, 150);
     };
 
     window.addEventListener("resize", handleResize, { passive: true });
 
     return () => {
       window.removeEventListener("resize", handleResize);
-      if (resizeTimeoutRef.current) {
-        clearTimeout(resizeTimeoutRef.current);
+      if (resizeTimeoutRef.current !== null) {
+        window.clearTimeout(resizeTimeoutRef.current);
+        resizeTimeoutRef.current = null;
       }
     };
   }, []);
