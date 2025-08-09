@@ -119,8 +119,8 @@ const Category = () => {
   // デバウンス付きリサイズハンドラー
   useEffect(() => {
     const handleResize = () => {
-      if (resizeTimeoutRef.current) {
-        clearTimeout(resizeTimeoutRef.current);
+      if (resizeTimeoutRef.current !== null) {
+        window.clearTimeout(resizeTimeoutRef.current);
       }
 
       resizeTimeoutRef.current = window.setTimeout(() => {
