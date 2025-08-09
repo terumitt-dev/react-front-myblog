@@ -146,10 +146,11 @@
     transition: transform 15s linear;
     transform: scaleX(1) translateZ(0);
     cursor: pointer;
+    --snail-shift-x: -80px; /* 既定の移動距離（必要に応じてJSで上書き） */
 }
 
 .snail-move {
-    transform: translateX(-80px) scaleX(1) translateZ(0);
+    transform: translateX(var(--snail-shift-x)) scaleX(1) translateZ(0);
     transition: transform 15s linear;
 }
 
