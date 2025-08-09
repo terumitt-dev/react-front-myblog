@@ -170,10 +170,14 @@ const Category = () => {
   );
 
   const generateRandomPosition = useCallback(
-    (maxTop: number, maxLeft: number) => ({
-      top: `${Math.random() * maxTop + 10}%`,
-      left: `${Math.random() * maxLeft + 10}%`,
-    }),
+    (maxTop: number, maxLeft: number) => {
+      const margin = 10; // %
+      const maxTopClamped = Math.max(0, Math.min(100 - margin, maxTop));
+      const maxLeftClamped = Math.max(0, Math.min(100 - margin, maxLeft));
+      const top = Math.random() * maxTopClamped + margin;
+      const left = Math.random() * maxLeftClamped + margin;
+      return { top: `${top}%`, left: `${left}%` };
+    },
     [],
   );
 
