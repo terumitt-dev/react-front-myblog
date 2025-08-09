@@ -171,12 +171,15 @@ const Category = () => {
 
   const generateRandomPosition = useCallback(
     (maxTop: number, maxLeft: number) => {
-      const margin = 10; // %
-      const maxTopClamped = Math.max(0, Math.min(100 - margin, maxTop));
-      const maxLeftClamped = Math.max(0, Math.min(100 - margin, maxLeft));
-      const top = Math.random() * maxTopClamped + margin;
-      const left = Math.random() * maxLeftClamped + margin;
-      return { top: `${top}%`, left: `${left}%` };
+      // 要素サイズ(最大60px)を%換算で余白に反映
+      const safetyMargin = 12; // %
+      const topMax = Math.max(0, Math.min(100 - safetyMargin, maxTop));
+      const leftMax = Math.max(0, Math.min(100 - safetyMargin, maxLeft));
+      const topMin = safetyMargin;
+      const leftMin = safetyMargin;
+      const top = Math.random() * (topMax - topMin) + topMin;
+      const left = Math.random() * (leftMax - leftMin) + leftMin;
+      return { top: `${top.toFixed(2)}%`, left: `${left.toFixed(2)}%` };
     },
     [],
   );
