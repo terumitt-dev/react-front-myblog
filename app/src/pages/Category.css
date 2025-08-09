@@ -31,7 +31,7 @@
     }
 }
 
-/* 回転角度のプリセットクラス - CSS変数を使用 */
+/* 回転角度のプリセットクラス - CSS変数のみ定義 */
 .rotate-0 {
     --rotation: 0deg;
 }
@@ -57,15 +57,18 @@
     --rotation: 315deg;
 }
 
-/* 共通の回転スタイル（明示的セレクタで安全性確保） */
-.rotate-0,
-.rotate-45,
-.rotate-90,
-.rotate-135,
-.rotate-180,
-.rotate-225,
-.rotate-270,
-.rotate-315 {
+/* 削除：問題のある共通transformルール */
+/* .rotate-0, .rotate-45, ... { transform: rotate(var(--rotation)) translateZ(0); } */
+
+/* 基本回転を個別のspiderセレクタで適用（安全な特異性確保） */
+.spider.rotate-0,
+.spider.rotate-45,
+.spider.rotate-90,
+.spider.rotate-135,
+.spider.rotate-180,
+.spider.rotate-225,
+.spider.rotate-270,
+.spider.rotate-315 {
     transform: rotate(var(--rotation)) translateZ(0);
 }
 
@@ -79,7 +82,7 @@
     cursor: pointer;
 }
 
-/* ホバー時の動作（共通化・明示的セレクタ） */
+/* ホバー時の動作（既存と同じ） */
 .spider.rotate-0:hover,
 .spider.rotate-45:hover,
 .spider.rotate-90:hover,
@@ -91,7 +94,7 @@
     transform: translateY(-20px) rotate(var(--rotation)) translateZ(0);
 }
 
-/* 消失時の動作（共通化・明示的セレクタ） */
+/* 消失時の動作（既存と同じ） */
 .spider-disappear.rotate-0,
 .spider-disappear.rotate-45,
 .spider-disappear.rotate-90,
