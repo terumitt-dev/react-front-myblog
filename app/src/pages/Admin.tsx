@@ -162,7 +162,11 @@ const Admin = () => {
                 <button
                   type="button"
                   onClick={handleCancelEdit}
-                  className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition"
+                  className={cn(
+                    "px-4 py-2 rounded text-white",
+                    "bg-gray-500 hover:bg-gray-600",
+                    "transition",
+                  )}
                 >
                   キャンセル
                 </button>
@@ -185,7 +189,11 @@ const Admin = () => {
                     <button
                       type="button"
                       onClick={() => togglePost(post.id)}
-                      className="w-full text-left bg-white rounded-xl p-4 shadow hover:bg-gray-100 transition"
+                      className={cn(
+                        "w-full text-left rounded-xl p-4 shadow",
+                        "bg-white hover:bg-gray-100",
+                        "transition",
+                      )}
                     >
                       <div className="space-y-1">
                         <strong className="block break-words text-lg">
@@ -215,7 +223,11 @@ const Admin = () => {
                     >
                       <Link
                         to={`/posts/${post.id}`}
-                        className="text-blue-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded"
+                        className={cn(
+                          "text-blue-600 hover:underline rounded",
+                          "focus:outline-none focus:ring-2",
+                          "focus:ring-blue-500 focus:ring-offset-1",
+                        )}
                         onClick={(e) => e.stopPropagation()}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") {
@@ -236,7 +248,11 @@ const Admin = () => {
                             e.stopPropagation();
                           }
                         }}
-                        className="text-green-600 hover:underline focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 rounded"
+                        className={cn(
+                          "text-green-600 hover:underline rounded",
+                          "focus:outline-none focus:ring-2",
+                          "focus:ring-green-500 focus:ring-offset-1",
+                        )}
                         aria-label={`${post.title}を編集`}
                       >
                         編集
@@ -252,7 +268,11 @@ const Admin = () => {
                             e.stopPropagation();
                           }
                         }}
-                        className="text-red-600 hover:underline focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 rounded"
+                        className={cn(
+                          "text-red-600 hover:underline rounded",
+                          "focus:outline-none focus:ring-2",
+                          "focus:ring-red-500 focus:ring-offset-1",
+                        )}
                         aria-label={`${post.title}を削除`}
                       >
                         削除
