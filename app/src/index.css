@@ -27,7 +27,7 @@ select:focus,
     transition: outline-offset 0.2s ease;
 }
 
-/* モダンブラウザでのフォーカス最適化 */
+/* モダンブラウザでのフォーカス最適化（統合済み） */
 @supports selector(:focus-visible) {
     /* 共通フォーカススタイル */
     :focus:not(:focus-visible),
@@ -40,9 +40,16 @@ select:focus,
         outline: none;
     }
 
-    :focus-visible {
+    :focus-visible,
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible,
+    select:focus-visible,
+    [tabindex]:focus-visible {
         outline: 2px solid #3b82f6; /* blue-500 */
         outline-offset: 2px;
+        transition: outline-offset 0.2s ease;
     }
 }
 
@@ -76,28 +83,7 @@ select:focus,
     }
 }
 
-@supports selector(:focus-visible) {
-    :focus:not(:focus-visible),
-    button:focus:not(:focus-visible),
-    a:focus:not(:focus-visible),
-    input:focus:not(:focus-visible),
-    textarea:focus:not(:focus-visible),
-    select:focus:not(:focus-visible),
-    [tabindex]:focus:not(:focus-visible) {
-        outline: none;
-    }
-    :focus-visible,
-    button:focus-visible,
-    a:focus-visible,
-    input:focus-visible,
-    textarea:focus-visible,
-    select:focus-visible,
-    [tabindex]:focus-visible {
-        outline: 2px solid #3b82f6;
-        outline-offset: 2px;
-        transition: outline-offset 0.2s ease;
-    }
-}
+/* 重複ブロック削除：既に上部で@supports selector(:focus-visible)として統合済み */
 
 /* スキップリンク（アクセシビリティ） */
 .skip-link {

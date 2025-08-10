@@ -478,10 +478,7 @@ const Category = () => {
             style={{
               top: bubble.top,
               left: bubble.left,
-              animationDuration:
-                reducedMotion || !performanceSettings.enableAnimations
-                  ? "0s"
-                  : undefined,
+              // animationDuration削除：reduced-motion時の生成抑制で対応済み
             }}
             onAnimationEnd={() => handleBubbleEnd(bubble.id)}
           />
@@ -491,10 +488,10 @@ const Category = () => {
   }, [
     category,
     bubbles,
-    reducedMotion,
+    // reducedMotion, // 削除
     performanceSettings.reducedAnimations,
     performanceSettings.enableEffects,
-    performanceSettings.enableAnimations,
+    // performanceSettings.enableAnimations, // 削除
     handleBubbleEnd,
   ]);
 

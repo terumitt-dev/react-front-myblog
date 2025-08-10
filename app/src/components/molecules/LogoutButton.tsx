@@ -1,8 +1,13 @@
 // src/components/molecules/LogoutButton.tsx
-import Button from '@/components/atoms/Button';
+import Button from "@/components/atoms/Button";
 
-const LogoutButton = ({ onClick }: { onClick: () => void }) => (
-  <Button label="ログアウト" onClick={onClick} variant="danger" />
+const LogoutButton = ({ onClick }: { onClick?: () => void }) => (
+  <Button
+    label="ログアウト"
+    onClick={() => onClick?.()}
+    variant="danger"
+    type="button"
+  />
 );
 
 export default LogoutButton;

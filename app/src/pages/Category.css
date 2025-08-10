@@ -225,10 +225,19 @@
     .snail-move {
         transition: transform 10s linear;
     }
+}
 
-    /* モバイルでは hover 効果を簡素化 */
-    .spider:hover {
-        transform: translateZ(0); /* ホバー効果を無効化 */
+/* 真のモバイルデバイス（タッチデバイス）でのみホバー無効化 */
+@media (max-width: 768px) and (hover: none) {
+    .spider.rotate-0:hover,
+    .spider.rotate-45:hover,
+    .spider.rotate-90:hover,
+    .spider.rotate-135:hover,
+    .spider.rotate-180:hover,
+    .spider.rotate-225:hover,
+    .spider.rotate-270:hover,
+    .spider.rotate-315:hover {
+        transform: rotate(var(--rotation)) translateZ(0);
     }
 }
 
