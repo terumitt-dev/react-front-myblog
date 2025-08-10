@@ -117,7 +117,7 @@ const Category = () => {
   const { category } = useParams<{ category: string }>();
   const [posts, setPosts] = useState<Post[]>([]);
   const [spiders, setSpiders] = useState<Spider[]>([]);
-  const [spiderVisible, setSpiderVisible] = useState(true);
+  // const [spiderVisible, setSpiderVisible] = useState(true); // 削除：未使用状態
   const [spiderDisappearingIds, setSpiderDisappearingIds] = useState<number[]>(
     [],
   );
@@ -270,7 +270,7 @@ const Category = () => {
           rotate: generateRandomRotation(),
         })),
       );
-      setSpiderVisible(true);
+      // setSpiderVisible(true); // 削除：未使用状態
     } else {
       setSpiders([]);
     }
@@ -405,7 +405,6 @@ const Category = () => {
   const renderSpiderLayer = useCallback(() => {
     if (
       category !== "hobby" ||
-      !spiderVisible ||
       spiders.length === 0 ||
       !performanceSettings.enableEffects
     )
@@ -448,7 +447,6 @@ const Category = () => {
     );
   }, [
     category,
-    spiderVisible,
     spiders,
     spiderDisappearingIds,
     handleSpiderClick,

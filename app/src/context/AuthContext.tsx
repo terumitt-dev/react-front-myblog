@@ -1,9 +1,14 @@
 // app/src/context/AuthContext.tsx
 import { createContext, useContext, useState } from "react";
 
+type LoginResult = {
+  success: boolean;
+  error?: "locked" | "invalid_config" | "invalid_credentials";
+};
+
 type AuthContextType = {
   isLoggedIn: boolean;
-  login: (email: string, password: string) => boolean;
+  login: (email: string, password: string) => LoginResult;
   logout: () => void;
 };
 
@@ -17,7 +22,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.getItem("myblog-auth") === "true",
   );
 
-  const login = (email: string, password: string) => {
+  const login = (email: string, password: string): LoginResult => {
     const devEmail = import.meta.env.VITE_DEV_ADMIN_EMAIL;
     const devPassword = import.meta.env.VITE_DEV_ADMIN_PASSWORD;
 
@@ -32,14 +37,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       (persistedInfo.until && now < persistedInfo.until) ||
       (failMemoryRef.until && now < failMemoryRef.until)
     ) {
-      alert("しばらくしてから再試行してください。");
-      return false;
+      return { success: false, error: "locked" };
     }
 
     if (!devEmail || !devPassword) {
       console.error("環境変数が不足しています");
-      alert("ログイン設定が不正です。管理者に連絡してください。");
-      return false;
+      return { success: false, error: "invalid_config" };
     }
 
     if (email === devEmail && password === devPassword) {
@@ -48,7 +51,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       localStorage.removeItem("myblog-auth-fails");
       failMemoryRef.count = 0;
       failMemoryRef.until = 0;
-      return true;
+      return { success: true };
     }
 
     // 失敗カウントはメモリのみで増加させる
@@ -59,7 +62,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       failMemoryRef.until = until;
       localStorage.setItem("myblog-auth-fails", JSON.stringify({ until }));
     }
-    return false;
+    return { success: false, error: "invalid_credentials" };
   };
 
   const logout = () => {

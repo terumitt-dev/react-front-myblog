@@ -22,11 +22,23 @@ const Login = () => {
       return;
     }
 
-    const ok = login(email, password);
-    if (ok) {
+    const result = login(email, password);
+    if (result.success) {
       navigate("/admin");
     } else {
-      setError("ログインに失敗しました。");
+      switch (result.error) {
+        case "locked":
+          setError("しばらくしてから再試行してください。");
+          break;
+        case "invalid_config":
+          setError("ログイン設定が不正です。管理者に連絡してください。");
+          break;
+        case "invalid_credentials":
+          setError("ログインに失敗しました。");
+          break;
+        default:
+          setError("ログインに失敗しました。");
+      }
     }
   };
 
