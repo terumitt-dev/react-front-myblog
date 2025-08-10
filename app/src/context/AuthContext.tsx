@@ -4,11 +4,12 @@ import { createContext, useContext, useState } from "react";
 type LoginResult = {
   success: boolean;
   error?: "locked" | "invalid_config" | "invalid_credentials";
+  retryAfter?: number; // バックオフ時間（ミリ秒）
 };
 
 type AuthContextType = {
   isLoggedIn: boolean;
-  login: (email: string, password: string) => LoginResult;
+  login: (email: string, password: string) => Promise<LoginResult>;
   logout: () => void;
 };
 
@@ -22,13 +23,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.getItem("myblog-auth") === "true",
   );
 
-  const login = (email: string, password: string): LoginResult => {
+  const login = async (
+    email: string,
+    password: string,
+  ): Promise<LoginResult> => {
     const devEmail = import.meta.env.VITE_DEV_ADMIN_EMAIL;
     const devPassword = import.meta.env.VITE_DEV_ADMIN_PASSWORD;
 
     const now = Date.now();
     const persisted = localStorage.getItem("myblog-auth-fails");
-    const persistedInfo: { until?: number } = persisted
+    const persistedInfo: { until?: number; tryAfter?: number } = persisted
       ? JSON.parse(persisted)
       : {};
 
@@ -38,6 +42,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       (failMemoryRef.until && now < failMemoryRef.until)
     ) {
       return { success: false, error: "locked" };
+    }
+
+    // バックオフ待機時間チェック
+    if (persistedInfo.tryAfter && now < persistedInfo.tryAfter) {
+      return {
+        success: false,
+        error: "locked",
+        retryAfter: persistedInfo.tryAfter - now,
+      };
     }
 
     if (!devEmail || !devPassword) {
@@ -54,15 +67,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return { success: true };
     }
 
-    // 失敗カウントはメモリのみで増加させる
+    // 失敗時: 簡易バックオフ（最大2秒）
     failMemoryRef.count = (failMemoryRef.count || 0) + 1;
-    if (failMemoryRef.count >= 5) {
+    const backoffMs = Math.min(
+      2000,
+      200 * Math.pow(2, failMemoryRef.count - 1),
+    );
+    const lockThreshold = 5;
+
+    if (failMemoryRef.count >= lockThreshold) {
       const until = now + 5 * 60_000;
       failMemoryRef.count = 0;
       failMemoryRef.until = until;
       localStorage.setItem("myblog-auth-fails", JSON.stringify({ until }));
+    } else {
+      // 次回試行までの待機時間を保存
+      const tryAfter = now + backoffMs;
+      localStorage.setItem("myblog-auth-fails", JSON.stringify({ tryAfter }));
     }
-    return { success: false, error: "invalid_credentials" };
+
+    // バックオフ実行
+    await new Promise((resolve) => setTimeout(resolve, backoffMs));
+
+    return {
+      success: false,
+      error: "invalid_credentials",
+      retryAfter: backoffMs,
+    };
   };
 
   const logout = () => {
