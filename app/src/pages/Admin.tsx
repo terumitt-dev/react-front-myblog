@@ -10,6 +10,42 @@ function cn(...classes: (string | undefined | null | false)[]): string {
   return classes.filter(Boolean).join(" ");
 }
 
+// バリデーション関数
+const validateTitle = (title: string): string | null => {
+  if (!title.trim()) return "タイトルは必須です";
+  if (title.length > 100) return "タイトルは100文字以内で入力してください";
+  // HTMLタグのチェック
+  if (/<script|<iframe|javascript:/i.test(title)) {
+    return "タイトルに不正な文字が含まれています";
+  }
+  return null;
+};
+
+const validateContent = (content: string): string | null => {
+  if (!content.trim()) return "本文は必須です";
+  if (content.length > 5000) return "本文は5000文字以内で入力してください";
+  // 基本的なXSSチェック
+  if (/<script|<iframe|javascript:/i.test(content)) {
+    return "本文に不正な文字が含まれています";
+  }
+  return null;
+};
+
+const validateCategory = (category: string): string | null => {
+  const allowedCategories = ["tech", "hobby", "other"];
+  if (!allowedCategories.includes(category)) {
+    return "無効なカテゴリが選択されています";
+  }
+  return null;
+};
+
+// HTMLエスケープ関数
+const escapeHtml = (text: string): string => {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+};
+
 type Post = {
   id: number;
   title: string;
@@ -57,21 +93,40 @@ const Admin = () => {
   };
 
   const handleSubmit = () => {
-    if (!title.trim() || !content.trim()) {
-      setError("タイトルと本文は必須です。");
+    // 包括的なバリデーション
+    const titleError = validateTitle(title);
+    const contentError = validateContent(content);
+    const categoryError = validateCategory(category);
+
+    if (titleError) {
+      setError(titleError);
+      return;
+    }
+    if (contentError) {
+      setError(contentError);
+      return;
+    }
+    if (categoryError) {
+      setError(categoryError);
       return;
     }
 
+    // データの前処理（エスケープ）
+    const sanitizedTitle = escapeHtml(title.trim());
+    const sanitizedContent = escapeHtml(content.trim());
+
     if (editingPostId !== null) {
       const updated = posts.map((p) =>
-        p.id === editingPostId ? { ...p, title, content, category } : p,
+        p.id === editingPostId
+          ? { ...p, title: sanitizedTitle, content: sanitizedContent, category }
+          : p,
       );
       saveToLocalStorage(updated);
     } else {
       const newPost: Post = {
         id: Date.now(),
-        title,
-        content,
+        title: sanitizedTitle,
+        content: sanitizedContent,
         category,
         createdAt: new Date().toISOString(),
       };
@@ -127,17 +182,26 @@ const Admin = () => {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="タイトル"
               className="border p-2 w-full"
+              maxLength={100} // 文字数制限をHTML側でも設定
+              required
+              aria-label="記事のタイトル"
             />
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="本文"
               className="border p-2 w-full"
+              maxLength={5000} // 文字数制限をHTML側でも設定
+              rows={10}
+              required
+              aria-label="記事の本文"
             />
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               className="border p-2"
+              required
+              aria-label="記事のカテゴリ"
             >
               <option value="tech">Tech</option>
               <option value="hobby">Hobby</option>
