@@ -10,12 +10,11 @@ const CommentStartButton = ({ onClick, className = "" }: Props) => {
   return (
     <Button
       label="コメントする"
-      onClick={onClick ?? (() => {})}
+      onClick={onClick}
       variant="primary"
       className={className}
       type="button"
       disabled={!onClick}
-      aria-disabled={!onClick}
     />
   );
 };

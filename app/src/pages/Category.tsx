@@ -184,12 +184,12 @@ const Category = () => {
 
   const generateRandomPosition = useCallback(
     (containerWidth: number, containerHeight: number, elSize = 60) => {
-      const margin = elSize; // pxマージン
-      const maxLeftPx = Math.max(margin, containerWidth - margin);
-      const maxTopPx = Math.max(margin, containerHeight - margin);
+      const margin = elSize; // 要素サイズ分の余白
+      const maxLeftPx = Math.max(0, containerWidth - margin);
+      const maxTopPx = Math.max(0, containerHeight - margin);
 
-      const leftPx = Math.random() * (maxLeftPx - margin) + margin;
-      const topPx = Math.random() * (maxTopPx - margin) + margin;
+      const leftPx = Math.random() * maxLeftPx;
+      const topPx = Math.random() * maxTopPx;
 
       return { top: `${topPx}px`, left: `${leftPx}px` };
     },

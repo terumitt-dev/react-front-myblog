@@ -47,24 +47,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     const now = Date.now();
+    let persistedInfo: { until?: number; tryAfter?: number } = {};
     const persisted = localStorage.getItem("myblog-auth-fails");
-    const persistedInfo: { until?: number; tryAfter?: number } = persisted
-      ? JSON.parse(persisted)
-      : {};
+    if (persisted) {
+      try {
+        persistedInfo = JSON.parse(persisted);
+      } catch {
+        localStorage.removeItem("myblog-auth-fails");
+        persistedInfo = {};
+      }
+    }
 
     // ロック中の判定（優先）
-    const lockUntil = persistedInfo.until ?? failMemoryRef.until ?? 0;
+    const lockUntil =
+      (typeof persistedInfo.until === "number"
+        ? persistedInfo.until
+        : undefined) ??
+      failMemoryRef.until ??
+      0;
     if (lockUntil && now < lockUntil) {
       return { success: false, error: "locked", retryAfter: lockUntil - now };
     }
 
     // バックオフ待機時間チェック
-    if (persistedInfo.tryAfter && now < persistedInfo.tryAfter) {
-      return {
-        success: false,
-        error: "locked",
-        retryAfter: persistedInfo.tryAfter - now,
-      };
+    const tryAfter =
+      typeof persistedInfo.tryAfter === "number"
+        ? persistedInfo.tryAfter
+        : undefined;
+    if (tryAfter && now < tryAfter) {
+      return { success: false, error: "locked", retryAfter: tryAfter - now };
     }
 
     // 失敗時: 簡易バックオフ（最大2秒）

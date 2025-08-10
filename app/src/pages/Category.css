@@ -243,9 +243,18 @@
 }
 
 /* プリフェッチ最適化 */
-.spider,
-.snail,
 .bubble {
+    transform-origin: center center;
+    -webkit-transform-origin: center center;
+}
+
+.snail {
+    transform-origin: center center;
+    -webkit-transform-origin: center center;
+}
+
+/* 回転対象のみ基点を指定 */
+.spider .spider-rotator {
     transform-origin: center center;
     -webkit-transform-origin: center center;
 }
