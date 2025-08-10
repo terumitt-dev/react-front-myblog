@@ -52,12 +52,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       ? JSON.parse(persisted)
       : {};
 
-    // メモリ上のカウンタを優先し、持続ロックは localStorage の until のみに限定
-    if (
-      (persistedInfo.until && now < persistedInfo.until) ||
-      (failMemoryRef.until && now < failMemoryRef.until)
-    ) {
-      return { success: false, error: "locked" };
+    // ロック中の判定（優先）
+    const lockUntil = persistedInfo.until ?? failMemoryRef.until ?? 0;
+    if (lockUntil && now < lockUntil) {
+      return { success: false, error: "locked", retryAfter: lockUntil - now };
     }
 
     // バックオフ待機時間チェック

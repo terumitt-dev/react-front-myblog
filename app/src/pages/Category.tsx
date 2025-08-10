@@ -183,22 +183,15 @@ const Category = () => {
   );
 
   const generateRandomPosition = useCallback(
-    (maxTop: number, maxLeft: number) => {
-      // 要素サイズ(最大60px)を%換算で余白に反映
-      const safetyMargin = 12; // %
-      const topMax = Math.max(0, Math.min(100 - safetyMargin, maxTop));
-      const leftMax = Math.max(0, Math.min(100 - safetyMargin, maxLeft));
-      const topMin = safetyMargin;
-      const leftMin = safetyMargin;
+    (containerWidth: number, containerHeight: number, elSize = 60) => {
+      const margin = elSize; // pxマージン
+      const maxLeftPx = Math.max(margin, containerWidth - margin);
+      const maxTopPx = Math.max(margin, containerHeight - margin);
 
-      // 範囲が成立しない場合は中央にフォールバック
-      if (topMax <= topMin || leftMax <= leftMin) {
-        return { top: "50%", left: "50%" };
-      }
+      const leftPx = Math.random() * (maxLeftPx - margin) + margin;
+      const topPx = Math.random() * (maxTopPx - margin) + margin;
 
-      const top = Math.random() * (topMax - topMin) + topMin;
-      const left = Math.random() * (leftMax - leftMin) + leftMin;
-      return { top: `${top.toFixed(2)}%`, left: `${left.toFixed(2)}%` };
+      return { top: `${topPx}px`, left: `${leftPx}px` };
     },
     [],
   );
@@ -214,6 +207,9 @@ const Category = () => {
     const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
       setReducedMotion(e.matches);
     };
+
+    // 初期同期
+    setReducedMotion(mediaQuery.matches);
 
     if (mediaQuery.addEventListener) {
       mediaQuery.addEventListener("change", handleChange);
@@ -256,6 +252,10 @@ const Category = () => {
       return;
     }
 
+    // 画面サイズを取得
+    const containerWidth = window.innerWidth;
+    const containerHeight = window.innerHeight;
+
     // エフェクト初期化
     if (category === "hobby") {
       const spiderCount = reducedMotion
@@ -265,7 +265,7 @@ const Category = () => {
       setSpiders(
         Array.from({ length: spiderCount }, (_, i) => ({
           id: i,
-          ...generateRandomPosition(80, 80),
+          ...generateRandomPosition(containerWidth, containerHeight, 50),
           rotate: generateRandomRotation(),
         })),
       );
@@ -283,7 +283,7 @@ const Category = () => {
       setSnails(
         Array.from({ length: snailCount }, (_, i) => ({
           id: i,
-          ...generateRandomPosition(70, 70),
+          ...generateRandomPosition(containerWidth, containerHeight, 60),
           isMoved: false,
         })),
       );
@@ -311,9 +311,11 @@ const Category = () => {
       return;
 
     setBubbles((prev) => {
+      const containerWidth = window.innerWidth;
+      const containerHeight = window.innerHeight;
       const newBubble: Bubble = {
         id: ++bubbleIdCounterRef.current,
-        ...generateRandomPosition(80, 80),
+        ...generateRandomPosition(containerWidth, containerHeight, 50),
         createdAt: Date.now(),
       };
 
