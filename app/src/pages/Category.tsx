@@ -422,7 +422,6 @@ const Category = () => {
             aria-label="クモを消す"
             className={cn(
               "spider pointer-events-auto",
-              `rotate-${spider.rotate}`,
               spiderDisappearingIds.includes(spider.id) && "spider-disappear",
               performanceSettings.reducedAnimations && "performance-reduced",
             )}
@@ -434,6 +433,8 @@ const Category = () => {
               border: "none",
               padding: 0,
               cursor: "pointer",
+              // CSS変数で角度を確実に指定
+              ["--rotation" as any]: `${spider.rotate}deg`,
             }}
           >
             <span className="spider-rotator" aria-hidden="true">
@@ -528,6 +529,7 @@ const Category = () => {
             }}
             onClick={() => handleSnailClick(snail.id)}
             onMouseEnter={() => handleSnailHover(snail.id)}
+            onTouchStart={() => handleSnailHover(snail.id)}
           >
             <img
               src="/patterns/snail.svg"

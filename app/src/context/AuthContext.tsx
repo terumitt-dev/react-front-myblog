@@ -30,6 +30,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const devEmail = import.meta.env.VITE_DEV_ADMIN_EMAIL;
     const devPassword = import.meta.env.VITE_DEV_ADMIN_PASSWORD;
 
+    if (!devEmail || !devPassword) {
+      console.error("環境変数が不足しています");
+      return { success: false, error: "invalid_config" };
+    }
+
+    // 早期成功判定で確実にクリア
+    if (email === devEmail && password === devPassword) {
+      setIsLoggedIn(true);
+      localStorage.setItem("myblog-auth", "true");
+      // 失敗・ロック・待機情報を完全にクリア
+      localStorage.removeItem("myblog-auth-fails");
+      failMemoryRef.count = 0;
+      failMemoryRef.until = 0;
+      return { success: true };
+    }
+
     const now = Date.now();
     const persisted = localStorage.getItem("myblog-auth-fails");
     const persistedInfo: { until?: number; tryAfter?: number } = persisted
@@ -51,20 +67,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         error: "locked",
         retryAfter: persistedInfo.tryAfter - now,
       };
-    }
-
-    if (!devEmail || !devPassword) {
-      console.error("環境変数が不足しています");
-      return { success: false, error: "invalid_config" };
-    }
-
-    if (email === devEmail && password === devPassword) {
-      setIsLoggedIn(true);
-      localStorage.setItem("myblog-auth", "true");
-      localStorage.removeItem("myblog-auth-fails");
-      failMemoryRef.count = 0;
-      failMemoryRef.until = 0;
-      return { success: true };
     }
 
     // 失敗時: 簡易バックオフ（最大2秒）
