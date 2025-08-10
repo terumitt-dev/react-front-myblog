@@ -442,8 +442,8 @@ const Category = () => {
               border: "none",
               padding: 0,
               cursor: "pointer",
-              // CSS変数で角度を確実に指定（数値のみ）
-              ["--rotation" as any]: spider.rotate,
+              // CSS変数で角度を確実に指定（文字列で単位付き）
+              ["--rotation" as any]: `${spider.rotate}`,
             }}
           >
             <span className="spider-rotator" aria-hidden="true">

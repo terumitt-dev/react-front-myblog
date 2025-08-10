@@ -30,10 +30,6 @@ const PostDetail = () => {
   const postId = Number.isFinite(postIdRaw) ? postIdRaw : NaN;
   const isValidId = Number.isFinite(postId) && postId > 0;
 
-  if (!isValidId) {
-    return <div className="p-6">不正な記事IDです。</div>;
-  }
-
   const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [isWriting, setIsWriting] = useState(false);
@@ -41,6 +37,7 @@ const PostDetail = () => {
   const commentStorageKey = `myblog-comments-${postId}`;
 
   useEffect(() => {
+    if (!isValidId) return;
     const savedPosts = localStorage.getItem("myblog-posts");
     if (savedPosts) {
       try {
@@ -66,7 +63,11 @@ const PostDetail = () => {
         setComments([]);
       }
     }
-  }, [postId, commentStorageKey]);
+  }, [isValidId, postId, commentStorageKey]);
+
+  if (!isValidId) {
+    return <div className="p-6">不正な記事IDです。</div>;
+  }
 
   /* コメント送信 */
   const handleCommentSubmit = (user: string, content: string) => {

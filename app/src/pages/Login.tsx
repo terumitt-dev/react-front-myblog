@@ -1,6 +1,6 @@
 // app/src/pages/Login.tsx
 import Layout from "@/components/layouts/Layout";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
@@ -17,6 +17,15 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [retryTimeoutId, setRetryTimeoutId] = useState<number | null>(null);
   const navigate = useNavigate();
+
+  // タイマーのクリーンアップ
+  useEffect(() => {
+    return () => {
+      if (retryTimeoutId !== null) {
+        clearTimeout(retryTimeoutId);
+      }
+    };
+  }, [retryTimeoutId]);
 
   const handleSubmit = async () => {
     if (!email.trim() || !password.trim()) {
@@ -36,7 +45,6 @@ const Login = () => {
           setError(
             `${Math.ceil(result.retryAfter / 1000)}秒後に再試行してください。`,
           );
-          // 一時的に操作不可に
           const id = window.setTimeout(() => {
             setRetryTimeoutId(null);
           }, result.retryAfter);

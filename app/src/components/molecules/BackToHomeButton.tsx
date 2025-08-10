@@ -10,7 +10,7 @@ const BackToHomeButton = ({ className }: Props) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate("/", { replace: true });
+    navigate("/");
   };
 
   return (
