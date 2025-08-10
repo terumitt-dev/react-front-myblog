@@ -438,6 +438,7 @@ const Category = () => {
             <img
               src="/patterns/spider.svg"
               alt=""
+              role="presentation"
               draggable={false}
               style={{ pointerEvents: "none" }}
             />
@@ -470,6 +471,8 @@ const Category = () => {
             key={bubble.id}
             src="/patterns/bubbles.svg"
             alt=""
+            role="presentation"
+            draggable={false}
             className={cn(
               "bubble",
               performanceSettings.reducedAnimations && "performance-reduced",
@@ -533,6 +536,7 @@ const Category = () => {
             <img
               src="/patterns/snail.svg"
               alt=""
+              role="presentation"
               draggable={false}
               style={{ pointerEvents: "none" }}
             />

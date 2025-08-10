@@ -9,6 +9,9 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// メモリ上の失敗カウンタ（プロセス単位で管理）
+const failMemoryRef = { count: 0, until: 0 };
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(
     localStorage.getItem("myblog-auth") === "true",
@@ -19,13 +22,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const devPassword = import.meta.env.VITE_DEV_ADMIN_PASSWORD;
 
     const now = Date.now();
-    const failInfoRaw = localStorage.getItem("myblog-auth-fails");
-    const failInfo: { count: number; until?: number } = failInfoRaw
-      ? JSON.parse(failInfoRaw)
-      : { count: 0 };
+    const persisted = localStorage.getItem("myblog-auth-fails");
+    const persistedInfo: { until?: number } = persisted
+      ? JSON.parse(persisted)
+      : {};
 
-    // 簡易ロックアウト: 5回失敗で5分ロック
-    if (failInfo.until && now < failInfo.until) {
+    // メモリ上のカウンタを優先し、持続ロックは localStorage の until のみに限定
+    if (
+      (persistedInfo.until && now < persistedInfo.until) ||
+      (failMemoryRef.until && now < failMemoryRef.until)
+    ) {
       alert("しばらくしてから再試行してください。");
       return false;
     }
@@ -40,15 +46,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setIsLoggedIn(true);
       localStorage.setItem("myblog-auth", "true");
       localStorage.removeItem("myblog-auth-fails");
+      failMemoryRef.count = 0;
+      failMemoryRef.until = 0;
       return true;
     }
 
-    const nextCount = (failInfo.count || 0) + 1;
-    const next: { count: number; until?: number } =
-      nextCount >= 5
-        ? { count: 0, until: now + 5 * 60_000 }
-        : { count: nextCount };
-    localStorage.setItem("myblog-auth-fails", JSON.stringify(next));
+    // 失敗カウントはメモリのみで増加させる
+    failMemoryRef.count = (failMemoryRef.count || 0) + 1;
+    if (failMemoryRef.count >= 5) {
+      const until = now + 5 * 60_000;
+      failMemoryRef.count = 0;
+      failMemoryRef.until = until;
+      localStorage.setItem("myblog-auth-fails", JSON.stringify({ until }));
+    }
     return false;
   };
 
