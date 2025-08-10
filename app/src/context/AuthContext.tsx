@@ -1,9 +1,16 @@
 // app/src/context/AuthContext.tsx
 import { createContext, useContext, useState } from "react";
 
-// ⚠️ 重要な注意事項 ⚠️
-// このコードは開発/デモ用途のみです。
-// 本番環境では以下が必要です：
+// 開発環境フラグ
+const isDevelopment = import.meta.env.DEV;
+
+// ⚠️ 開発用認証システム ⚠️
+// 本番環境では無効化されます
+if (!isDevelopment) {
+  console.warn("本番環境では開発用認証は無効化されています");
+}
+
+// 本番環境での注意事項
 // - サーバー側での認証処理とセッション管理
 // - JWT/OAuth等のセキュアな認証方式
 // - サーバー側でのレート制限とブルートフォース対策
@@ -13,7 +20,7 @@ import { createContext, useContext, useState } from "react";
 
 type LoginResult = {
   success: boolean;
-  error?: "invalid_config" | "invalid_credentials";
+  error?: "invalid_config" | "invalid_credentials" | "production_disabled";
 };
 
 type AuthContextType = {
@@ -26,6 +33,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    // 本番環境では認証機能を無効化
+    if (!isDevelopment) {
+      return false;
+    }
+
     // 開発用：localStorageから認証状態を復元
     if (typeof window !== "undefined") {
       return localStorage.getItem("myblog-auth") === "true";
@@ -37,6 +49,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     email: string,
     password: string,
   ): Promise<LoginResult> => {
+    // 本番環境ガード
+    if (!isDevelopment) {
+      console.error("本番環境では開発用認証は使用できません");
+      return { success: false, error: "production_disabled" };
+    }
+
     // 環境変数から開発用の認証情報を取得
     const devEmail = import.meta.env.VITE_DEV_ADMIN_EMAIL;
     const devPassword = import.meta.env.VITE_DEV_ADMIN_PASSWORD;

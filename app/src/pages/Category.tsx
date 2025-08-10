@@ -1,106 +1,69 @@
 // app/src/pages/Category.tsx
+import { useMemo, useCallback, useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
-import { useEffect, useState, useCallback, useRef, useMemo } from "react";
-import BackToHomeButton from "@/components/molecules/BackToHomeButton";
-import "./Category.css";
 import Header from "@/components/organisms/Header";
+import BackToHomeButton from "@/components/molecules/BackToHomeButton";
 import { useInterval } from "@/hooks/useInterval";
 import { useTimers } from "@/hooks/useTimers";
+import "./Category.css";
 
 // シンプルなcn関数（shadcn/uiパターンを参考）
 function cn(...classes: (string | undefined | null | false)[]): string {
   return classes.filter(Boolean).join(" ");
 }
 
-type Post = { id: number; title: string; content: string; category: string };
+type Post = {
+  id: number;
+  title: string;
+  content: string;
+  category: string;
+  createdAt: string;
+};
 type Spider = { id: number; top: string; left: string; rotate: number };
 type Bubble = { id: number; top: string; left: string; createdAt: number };
-type Snail = { id: number; top: string; left: string; isMoved?: boolean };
+type Snail = { id: number; top: string; left: string; isMoved: boolean };
 
-// 有効なカテゴリタイプを定義
 type CategoryType = "hobby" | "tech" | "other";
 
-// パフォーマンス設定の型定義
 type PerformanceSettings = {
-  readonly maxBubbles: number;
-  readonly maxSpiders: number;
-  readonly maxSnails: number;
-  readonly bubbleInterval: number;
-  readonly enableAnimations: boolean;
-  readonly reducedAnimations: boolean;
-  readonly enableEffects: boolean;
+  maxSpiders: number;
+  maxBubbles: number;
+  maxSnails: number;
+  bubbleInterval: number;
+  enableEffects: boolean;
+  enableAnimations: boolean;
+  reducedAnimations: boolean;
 };
 
-// 最適化されたパフォーマンス判定（メモ化対応）
-const createPerformanceSettings = (): ((
-  width: number,
-) => PerformanceSettings) => {
-  const cores =
-    typeof navigator !== "undefined" && navigator.hardwareConcurrency
-      ? navigator.hardwareConcurrency
-      : 4;
-  const userAgent =
-    typeof navigator !== "undefined" && navigator.userAgent
-      ? navigator.userAgent
-      : "";
-  const isMac =
-    /Mac/i.test(userAgent) && !/(iPhone|iPad|iPod)/i.test(userAgent);
+const createPerformanceSettings = (
+  maxSpiders = 3,
+  maxBubbles = 5,
+  maxSnails = 4,
+  bubbleInterval = 3000,
+  enableEffects = true,
+  enableAnimations = true,
+  reducedAnimations = false,
+): PerformanceSettings => ({
+  maxSpiders,
+  maxBubbles,
+  maxSnails,
+  bubbleInterval,
+  enableEffects,
+  enableAnimations,
+  reducedAnimations,
+});
 
-  // コア数とMac判定は一度だけ実行
-  return (width: number): PerformanceSettings => {
-    const isMobile = width < 768;
-    const isLowEnd = !isMac && (cores <= 2 || width < 768);
-    const isHighEnd = isMac || (!isMobile && cores >= 8);
-
-    if (isLowEnd) {
-      return {
-        maxBubbles: 2,
-        maxSpiders: 3,
-        maxSnails: 2,
-        bubbleInterval: 6000,
-        enableAnimations: true,
-        reducedAnimations: true,
-        enableEffects: true,
-      };
-    }
-
-    if (isHighEnd) {
-      return {
-        maxBubbles: 8,
-        maxSpiders: 8,
-        maxSnails: 6,
-        bubbleInterval: 2000,
-        enableAnimations: true,
-        reducedAnimations: false,
-        enableEffects: true,
-      };
-    }
-
-    return {
-      maxBubbles: 4,
-      maxSpiders: 4,
-      maxSnails: 3,
-      bubbleInterval: 3000,
-      enableAnimations: true,
-      reducedAnimations: false,
-      enableEffects: true,
-    };
-  };
+const getPerformanceSettings = (screenWidth: number): PerformanceSettings => {
+  if (screenWidth < 768) {
+    return createPerformanceSettings(1, 2, 1, 4000, true, true, true);
+  } else if (screenWidth < 1024) {
+    return createPerformanceSettings(2, 3, 2, 3500, true, true, false);
+  } else if (screenWidth < 1280) {
+    return createPerformanceSettings(3, 4, 3, 3000, true, true, false);
+  } else {
+    return createPerformanceSettings(4, 6, 4, 2500, true, true, false);
+  }
 };
-
-// パフォーマンス設定ファクトリー（一度だけ作成）
-const getPerformanceSettings =
-  typeof navigator !== "undefined" && typeof window !== "undefined"
-    ? createPerformanceSettings()
-    : (width: number) => ({
-        maxBubbles: 4,
-        maxSpiders: 4,
-        maxSnails: 3,
-        bubbleInterval: 3000,
-        enableAnimations: false,
-        reducedAnimations: true,
-        enableEffects: false,
-      });
 
 // 定数を外部定義
 const ROTATION_ANGLES = [0, 45, 90, 135, 180, 225, 270, 315] as const;
@@ -108,13 +71,13 @@ const CATEGORY_CONFIG = {
   labelMap: { hobby: "しゅみ", tech: "テック", other: "その他" } as const,
   bgMap: {
     hobby: "bg-[#E1C6F9]",
-    tech: "bg-[#AFEBFF]",
-    other: "bg-[#CCF5B1]",
+    tech: "bg-[#C6E2FF]",
+    other: "bg-[#FFE5B4]",
   } as const,
 } as const;
 
-// アニメーション時間定数（CSS同期）
-const getDisappearDuration = (reduced: boolean) => (reduced ? 300 : 600);
+const getDisappearDuration = (reducedAnimations: boolean) =>
+  reducedAnimations ? 150 : 300;
 
 const Category = () => {
   const { category } = useParams<{ category: string }>();
@@ -144,6 +107,33 @@ const Category = () => {
   );
   const resizeTimeoutRef = useRef<number | null>(null);
 
+  // Page Visibility API で画面外時のパフォーマンス制御
+  const [isPageVisible, setIsPageVisible] = useState(() => {
+    if (typeof document === "undefined") return true;
+    return !document.hidden;
+  });
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    const handleVisibilityChange = () => {
+      setIsPageVisible(!document.hidden);
+
+      // 画面外になった時の即座清理
+      if (document.hidden) {
+        // エフェクトを即座に停止（オプション）
+        console.debug("Page hidden: パフォーマンス最適化モードに切り替え");
+      } else {
+        console.debug("Page visible: 通常モードに復帰");
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
   // デバウンス付きリサイズハンドラー
   useEffect(() => {
     const handleResize = () => {
@@ -168,11 +158,25 @@ const Category = () => {
     };
   }, []);
 
-  // 動的パフォーマンス設定（メモ化強化）
-  const performanceSettings = useMemo(() => {
-    const settings = getPerformanceSettings(screenWidth);
-    return settings;
-  }, [screenWidth]);
+  // パフォーマンス設定に画面可視性を組み込み
+  const enhancedPerformanceSettings = useMemo(() => {
+    const baseSettings = getPerformanceSettings(screenWidth);
+
+    // 画面外では全てのエフェクトを無効化（大幅なパフォーマンス向上）
+    if (!isPageVisible) {
+      return {
+        ...baseSettings,
+        enableEffects: false,
+        enableAnimations: false,
+        maxSpiders: 0,
+        maxBubbles: 0,
+        maxSnails: 0,
+        bubbleInterval: Number.MAX_SAFE_INTEGER, // バブル生成停止
+      };
+    }
+
+    return baseSettings;
+  }, [screenWidth, isPageVisible]);
 
   // 安定化されたヘルパー関数
   const { setTimeout } = useTimers();
@@ -248,7 +252,10 @@ const Category = () => {
       }
     }
 
-    if (!isValidCategory(category) || !performanceSettings.enableEffects) {
+    if (
+      !isValidCategory(category) ||
+      !enhancedPerformanceSettings.enableEffects
+    ) {
       setSpiders([]);
       setBubbles([]);
       setSnails([]);
@@ -262,8 +269,8 @@ const Category = () => {
     // エフェクト初期化
     if (category === "hobby") {
       const spiderCount = reducedMotion
-        ? Math.ceil(performanceSettings.maxSpiders / 2)
-        : performanceSettings.maxSpiders;
+        ? Math.ceil(enhancedPerformanceSettings.maxSpiders / 2)
+        : enhancedPerformanceSettings.maxSpiders;
 
       setSpiders(
         Array.from({ length: spiderCount }, (_, i) => ({
@@ -280,8 +287,8 @@ const Category = () => {
 
     if (category === "other") {
       const snailCount = reducedMotion
-        ? Math.ceil(performanceSettings.maxSnails / 2)
-        : performanceSettings.maxSnails;
+        ? Math.ceil(enhancedPerformanceSettings.maxSnails / 2)
+        : enhancedPerformanceSettings.maxSnails;
 
       setSnails(
         Array.from({ length: snailCount }, (_, i) => ({
@@ -296,9 +303,9 @@ const Category = () => {
   }, [
     category,
     reducedMotion,
-    performanceSettings.maxSpiders,
-    performanceSettings.maxSnails,
-    performanceSettings.enableEffects,
+    enhancedPerformanceSettings.maxSpiders,
+    enhancedPerformanceSettings.maxSnails,
+    enhancedPerformanceSettings.enableEffects,
     isValidCategory,
     generateRandomPosition,
     generateRandomRotation,
@@ -309,8 +316,9 @@ const Category = () => {
     if (
       typeof window === "undefined" ||
       reducedMotion ||
-      !performanceSettings.enableEffects ||
-      !performanceSettings.enableAnimations
+      !enhancedPerformanceSettings.enableEffects ||
+      !enhancedPerformanceSettings.enableAnimations ||
+      !isPageVisible // 画面外では生成停止
     ) {
       return;
     }
@@ -324,38 +332,41 @@ const Category = () => {
         createdAt: Date.now(),
       };
 
-      return prev.length >= performanceSettings.maxBubbles
+      return prev.length >= enhancedPerformanceSettings.maxBubbles
         ? [...prev.slice(1), newBubble]
         : [...prev, newBubble];
     });
   }, [
     reducedMotion,
-    performanceSettings.maxBubbles,
-    performanceSettings.enableEffects,
-    performanceSettings.enableAnimations,
+    enhancedPerformanceSettings.maxBubbles,
+    enhancedPerformanceSettings.enableEffects,
+    enhancedPerformanceSettings.enableAnimations,
     generateRandomPosition,
+    isPageVisible,
   ]);
 
   // useInterval（完全に安全な依存配列）
   const shouldGenerateBubbles =
     category === "tech" &&
-    performanceSettings.enableEffects &&
-    performanceSettings.enableAnimations &&
-    !reducedMotion;
+    enhancedPerformanceSettings.enableEffects &&
+    enhancedPerformanceSettings.enableAnimations &&
+    !reducedMotion &&
+    isPageVisible; // 画面表示中のみバブル生成
 
   const bubbleInterval = shouldGenerateBubbles
-    ? performanceSettings.bubbleInterval
+    ? enhancedPerformanceSettings.bubbleInterval
     : null;
 
   useInterval(generateBubble, bubbleInterval, [
     // プリミティブ値のみ（順序も重要）
     category,
     shouldGenerateBubbles,
-    performanceSettings.maxBubbles,
-    performanceSettings.bubbleInterval,
-    performanceSettings.enableEffects,
-    performanceSettings.enableAnimations,
+    enhancedPerformanceSettings.maxBubbles,
+    enhancedPerformanceSettings.bubbleInterval,
+    enhancedPerformanceSettings.enableEffects,
+    enhancedPerformanceSettings.enableAnimations,
     reducedMotion,
+    isPageVisible,
   ]);
 
   // イベントハンドラー（安定化 + 重複防止）
@@ -366,7 +377,7 @@ const Category = () => {
       );
 
       const animationDuration = getDisappearDuration(
-        performanceSettings.reducedAnimations,
+        enhancedPerformanceSettings.reducedAnimations,
       );
 
       setTimeout(() => {
@@ -374,7 +385,7 @@ const Category = () => {
         setSpiderDisappearingIds((prev) => prev.filter((x) => x !== id));
       }, animationDuration);
     },
-    [setTimeout, performanceSettings.reducedAnimations],
+    [setTimeout, enhancedPerformanceSettings.reducedAnimations],
   );
 
   const handleSnailClick = useCallback(
@@ -384,7 +395,7 @@ const Category = () => {
       );
 
       const animationDuration = getDisappearDuration(
-        performanceSettings.reducedAnimations,
+        enhancedPerformanceSettings.reducedAnimations,
       );
 
       setTimeout(() => {
@@ -392,12 +403,12 @@ const Category = () => {
         setSnailDisappearingIds((prev) => prev.filter((x) => x !== id));
       }, animationDuration);
     },
-    [setTimeout, performanceSettings.reducedAnimations],
+    [setTimeout, enhancedPerformanceSettings.reducedAnimations],
   );
 
   const handleSnailHover = useCallback(
     (id: number) => {
-      if (!performanceSettings.enableAnimations) return;
+      if (!enhancedPerformanceSettings.enableAnimations) return;
 
       setSnails((prev) =>
         prev.map((snail) =>
@@ -405,7 +416,7 @@ const Category = () => {
         ),
       );
     },
-    [performanceSettings.enableAnimations],
+    [enhancedPerformanceSettings.enableAnimations],
   );
 
   const handleBubbleEnd = useCallback((bubbleId: number) => {
@@ -417,7 +428,7 @@ const Category = () => {
     if (
       category !== "hobby" ||
       spiders.length === 0 ||
-      !performanceSettings.enableEffects
+      !enhancedPerformanceSettings.enableEffects
     )
       return null;
 
@@ -432,7 +443,8 @@ const Category = () => {
             className={cn(
               "spider pointer-events-auto",
               spiderDisappearingIds.includes(spider.id) && "spider-disappear",
-              performanceSettings.reducedAnimations && "performance-reduced",
+              enhancedPerformanceSettings.reducedAnimations &&
+                "performance-reduced",
             )}
             style={{
               top: spider.top,
@@ -464,15 +476,15 @@ const Category = () => {
     spiders,
     spiderDisappearingIds,
     handleSpiderClick,
-    performanceSettings.reducedAnimations,
-    performanceSettings.enableEffects,
+    enhancedPerformanceSettings.reducedAnimations,
+    enhancedPerformanceSettings.enableEffects,
   ]);
 
   const renderBubbleLayer = useCallback(() => {
     if (
       category !== "tech" ||
       bubbles.length === 0 ||
-      !performanceSettings.enableEffects
+      !enhancedPerformanceSettings.enableEffects
     )
       return null;
 
@@ -487,7 +499,8 @@ const Category = () => {
             draggable={false}
             className={cn(
               "bubble",
-              performanceSettings.reducedAnimations && "performance-reduced",
+              enhancedPerformanceSettings.reducedAnimations &&
+                "performance-reduced",
             )}
             style={{
               top: bubble.top,
@@ -501,8 +514,8 @@ const Category = () => {
   }, [
     category,
     bubbles,
-    performanceSettings.reducedAnimations,
-    performanceSettings.enableEffects,
+    enhancedPerformanceSettings.reducedAnimations,
+    enhancedPerformanceSettings.enableEffects,
     handleBubbleEnd,
   ]);
 
@@ -510,7 +523,7 @@ const Category = () => {
     if (
       category !== "other" ||
       snails.length === 0 ||
-      !performanceSettings.enableEffects
+      !enhancedPerformanceSettings.enableEffects
     )
       return null;
 
@@ -525,7 +538,8 @@ const Category = () => {
               "snail pointer-events-auto",
               snail.isMoved && "snail-move",
               snailDisappearingIds.includes(snail.id) && "snail-disappear",
-              performanceSettings.reducedAnimations && "performance-reduced",
+              enhancedPerformanceSettings.reducedAnimations &&
+                "performance-reduced",
             )}
             style={{
               top: snail.top,
@@ -557,8 +571,8 @@ const Category = () => {
     snailDisappearingIds,
     handleSnailClick,
     handleSnailHover,
-    performanceSettings.reducedAnimations,
-    performanceSettings.enableEffects,
+    enhancedPerformanceSettings.reducedAnimations,
+    enhancedPerformanceSettings.enableEffects,
   ]);
 
   // 表示用の値をメモ化（安全なフォールバック）

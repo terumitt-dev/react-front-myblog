@@ -15,17 +15,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [retryTimeoutId, setRetryTimeoutId] = useState<number | null>(null);
   const navigate = useNavigate();
-
-  // タイマーのクリーンアップ
-  useEffect(() => {
-    return () => {
-      if (retryTimeoutId !== null) {
-        clearTimeout(retryTimeoutId);
-      }
-    };
-  }, [retryTimeoutId]);
 
   const handleSubmit = async () => {
     if (!email.trim() || !password.trim()) {
@@ -41,16 +31,11 @@ const Login = () => {
       if (result.success) {
         navigate("/admin");
       } else {
-        if (result.error === "locked" && result.retryAfter) {
-          setError(
-            `${Math.ceil(result.retryAfter / 1000)}秒後に再試行してください。`,
-          );
-          const id = window.setTimeout(() => {
-            setRetryTimeoutId(null);
-          }, result.retryAfter);
-          setRetryTimeoutId(id);
-        } else if (result.error === "invalid_config") {
+        // 型に合わせて修正：locked と retryAfter を削除
+        if (result.error === "invalid_config") {
           setError("ログイン設定が不正です。管理者に連絡してください。");
+        } else if (result.error === "production_disabled") {
+          setError("本番環境では開発用ログインは使用できません。");
         } else {
           setError("ログインに失敗しました。");
         }
@@ -62,8 +47,8 @@ const Login = () => {
     }
   };
 
-  // クリーンアップ
-  const isDisabled = loading || retryTimeoutId !== null;
+  // シンプルな無効状態判定
+  const isDisabled = loading;
 
   return (
     <Layout>
@@ -103,11 +88,7 @@ const Login = () => {
               isDisabled && "opacity-50 cursor-not-allowed",
             )}
           >
-            {loading
-              ? "ログイン中..."
-              : retryTimeoutId !== null
-                ? "待機中..."
-                : "ログイン"}
+            {loading ? "ログイン中..." : "ログイン"}
           </button>
         </form>
       </div>
