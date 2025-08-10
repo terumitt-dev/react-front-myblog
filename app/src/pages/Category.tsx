@@ -117,7 +117,6 @@ const Category = () => {
   const { category } = useParams<{ category: string }>();
   const [posts, setPosts] = useState<Post[]>([]);
   const [spiders, setSpiders] = useState<Spider[]>([]);
-  // const [spiderVisible, setSpiderVisible] = useState(true); // 削除：未使用状態
   const [spiderDisappearingIds, setSpiderDisappearingIds] = useState<number[]>(
     [],
   );
@@ -141,6 +140,7 @@ const Category = () => {
     typeof window !== "undefined" ? window.innerWidth : 1024,
   );
   const resizeTimeoutRef = useRef<number | null>(null);
+
   // デバウンス付きリサイズハンドラー
   useEffect(() => {
     const handleResize = () => {
@@ -168,7 +168,6 @@ const Category = () => {
   // 動的パフォーマンス設定（メモ化強化）
   const performanceSettings = useMemo(() => {
     const settings = getPerformanceSettings(screenWidth);
-
     return settings;
   }, [screenWidth]);
 
@@ -270,7 +269,6 @@ const Category = () => {
           rotate: generateRandomRotation(),
         })),
       );
-      // setSpiderVisible(true); // 削除：未使用状態
     } else {
       setSpiders([]);
     }
@@ -353,10 +351,12 @@ const Category = () => {
     reducedMotion,
   ]);
 
-  // イベントハンドラー（安定化）
+  // イベントハンドラー（安定化 + 重複防止）
   const handleSpiderClick = useCallback(
     (id: number) => {
-      setSpiderDisappearingIds((prev) => [...prev, id]);
+      setSpiderDisappearingIds((prev) =>
+        prev.includes(id) ? prev : [...prev, id],
+      );
       const animationDuration = performanceSettings.reducedAnimations
         ? 300
         : 600;
@@ -371,7 +371,9 @@ const Category = () => {
 
   const handleSnailClick = useCallback(
     (id: number) => {
-      setSnailDisappearingIds((prev) => [...prev, id]);
+      setSnailDisappearingIds((prev) =>
+        prev.includes(id) ? prev : [...prev, id],
+      );
       const animationDuration = performanceSettings.reducedAnimations
         ? 300
         : 600;
@@ -480,7 +482,6 @@ const Category = () => {
             style={{
               top: bubble.top,
               left: bubble.left,
-              // animationDuration削除：reduced-motion時の生成抑制で対応済み
             }}
             onAnimationEnd={() => handleBubbleEnd(bubble.id)}
           />
@@ -490,10 +491,8 @@ const Category = () => {
   }, [
     category,
     bubbles,
-    // reducedMotion, // 削除
     performanceSettings.reducedAnimations,
     performanceSettings.enableEffects,
-    // performanceSettings.enableAnimations, // 削除
     handleBubbleEnd,
   ]);
 
@@ -551,13 +550,13 @@ const Category = () => {
     performanceSettings.enableEffects,
   ]);
 
-  // 表示用の値をメモ化
+  // 表示用の値をメモ化（安全なフォールバック）
   const displayValues = useMemo(() => {
     const validCategory = isValidCategory(category);
     return {
       currentLabel: validCategory
         ? CATEGORY_CONFIG.labelMap[category]
-        : category,
+        : "不明なカテゴリ",
       currentBg: validCategory ? CATEGORY_CONFIG.bgMap[category] : "bg-white",
     };
   }, [category, isValidCategory]);

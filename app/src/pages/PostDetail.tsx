@@ -27,6 +27,11 @@ type Comment = {
 const PostDetail = () => {
   const { id } = useParams<{ id: string }>();
   const postId = Number(id);
+  const isValidId = Number.isFinite(postId) && postId > 0;
+
+  if (!isValidId) {
+    return <div className="p-6">不正な記事IDです。</div>;
+  }
 
   const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);

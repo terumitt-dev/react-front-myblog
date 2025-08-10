@@ -4,7 +4,7 @@ import Button from "@/components/atoms/Button";
 const LogoutButton = ({ onClick }: { onClick?: () => void }) => (
   <Button
     label="ログアウト"
-    onClick={onClick ?? (() => {})}
+    onClick={onClick}
     variant="danger"
     type="button"
     disabled={!onClick}

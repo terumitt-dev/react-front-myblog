@@ -5,10 +5,6 @@ module.exports = {
   theme: {
     extend: {},
   },
-  safelist: [
-    {
-      pattern: /bg-\[[^\]]+\]/,
-    },
-  ],
+  safelist: [{ pattern: /(bg|text|border|shadow|outline)-\[[^\]]+\]/ }],
   plugins: [],
 };
