@@ -18,6 +18,35 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // メモリ上の失敗カウンタ（プロセス単位で管理）
 const failMemoryRef = { count: 0, until: 0 };
 
+// 永続化された状態を読み込み
+const loadFailState = () => {
+  const raw = localStorage.getItem("myblog-auth-fails");
+  if (!raw) return { count: 0, until: 0, tryAfter: 0 };
+  try {
+    const parsed = JSON.parse(raw) as {
+      count?: number;
+      until?: number;
+      tryAfter?: number;
+    };
+    return {
+      count: typeof parsed.count === "number" ? parsed.count : 0,
+      until: typeof parsed.until === "number" ? parsed.until : 0,
+      tryAfter: typeof parsed.tryAfter === "number" ? parsed.tryAfter : 0,
+    };
+  } catch {
+    localStorage.removeItem("myblog-auth-fails");
+    return { count: 0, until: 0, tryAfter: 0 };
+  }
+};
+
+const saveFailState = (state: {
+  count?: number;
+  until?: number;
+  tryAfter?: number;
+}) => {
+  localStorage.setItem("myblog-auth-fails", JSON.stringify(state));
+};
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(
     localStorage.getItem("myblog-auth") === "true",
@@ -47,54 +76,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     const now = Date.now();
-    let persistedInfo: { until?: number; tryAfter?: number } = {};
-    const persisted = localStorage.getItem("myblog-auth-fails");
-    if (persisted) {
-      try {
-        persistedInfo = JSON.parse(persisted);
-      } catch {
-        localStorage.removeItem("myblog-auth-fails");
-        persistedInfo = {};
-      }
-    }
+    const persistedInfo = loadFailState();
 
     // ロック中の判定（優先）
-    const lockUntil =
-      (typeof persistedInfo.until === "number"
-        ? persistedInfo.until
-        : undefined) ??
-      failMemoryRef.until ??
-      0;
+    const lockUntil = persistedInfo.until || failMemoryRef.until || 0;
     if (lockUntil && now < lockUntil) {
       return { success: false, error: "locked", retryAfter: lockUntil - now };
     }
 
     // バックオフ待機時間チェック
-    const tryAfter =
-      typeof persistedInfo.tryAfter === "number"
-        ? persistedInfo.tryAfter
-        : undefined;
-    if (tryAfter && now < tryAfter) {
-      return { success: false, error: "locked", retryAfter: tryAfter - now };
+    if (persistedInfo.tryAfter && now < persistedInfo.tryAfter) {
+      return {
+        success: false,
+        error: "locked",
+        retryAfter: persistedInfo.tryAfter - now,
+      };
     }
 
-    // 失敗時: 簡易バックオフ（最大2秒）
-    failMemoryRef.count = (failMemoryRef.count || 0) + 1;
-    const backoffMs = Math.min(
-      2000,
-      200 * Math.pow(2, failMemoryRef.count - 1),
-    );
+    // 失敗時
+    const nextCount = (persistedInfo.count || failMemoryRef.count || 0) + 1;
+    failMemoryRef.count = nextCount;
+    const backoffMs = Math.min(2000, 200 * Math.pow(2, nextCount - 1));
     const lockThreshold = 5;
 
-    if (failMemoryRef.count >= lockThreshold) {
+    if (nextCount >= lockThreshold) {
       const until = now + 5 * 60_000;
       failMemoryRef.count = 0;
       failMemoryRef.until = until;
-      localStorage.setItem("myblog-auth-fails", JSON.stringify({ until }));
+      saveFailState({ count: 0, until });
     } else {
-      // 次回試行までの待機時間を保存
       const tryAfter = now + backoffMs;
-      localStorage.setItem("myblog-auth-fails", JSON.stringify({ tryAfter }));
+      saveFailState({ count: nextCount, tryAfter });
     }
 
     // バックオフ実行

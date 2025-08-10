@@ -69,12 +69,12 @@
     transform: translateZ(0);
 }
 
-/* 内側ラッパー：回転専用（新規追加） */
+/* 内側ラッパー：回転専用（CSS変数から単位付きで回転） */
 .spider .spider-rotator {
     display: block;
     width: 100%;
     height: 100%;
-    transform: rotate(var(--rotation)) translateZ(0);
+    transform: rotate(calc(var(--rotation, 0) * 1deg)) translateZ(0);
     will-change: transform;
 }
 

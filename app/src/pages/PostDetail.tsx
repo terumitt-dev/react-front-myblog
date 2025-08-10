@@ -26,7 +26,8 @@ type Comment = {
 
 const PostDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const postId = Number(id);
+  const postIdRaw = Number(id);
+  const postId = Number.isFinite(postIdRaw) ? postIdRaw : NaN;
   const isValidId = Number.isFinite(postId) && postId > 0;
 
   if (!isValidId) {
@@ -37,13 +38,16 @@ const PostDetail = () => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [isWriting, setIsWriting] = useState(false);
   const [openCommentIds, setOpenCommentIds] = useState<number[]>([]);
+  const commentStorageKey = `myblog-comments-${postId}`;
 
-  /* 投稿とコメントを読み込む */
   useEffect(() => {
     const savedPosts = localStorage.getItem("myblog-posts");
     if (savedPosts) {
       try {
-        const posts: Post[] = JSON.parse(savedPosts);
+        const posts: Post[] = JSON.parse(savedPosts).map((p: any) => ({
+          ...p,
+          id: Number(p.id),
+        }));
         setPost(posts.find((p) => p.id === postId) ?? null);
       } catch (e) {
         console.error("Failed to parse posts from localStorage:", e);
@@ -52,17 +56,17 @@ const PostDetail = () => {
       }
     }
 
-    const storedComments = localStorage.getItem(`myblog-comments-${postId}`);
+    const storedComments = localStorage.getItem(commentStorageKey);
     if (storedComments) {
       try {
         setComments(JSON.parse(storedComments));
       } catch (e) {
         console.error("Failed to parse comments from localStorage:", e);
-        localStorage.removeItem(`myblog-comments-${postId}`);
+        localStorage.removeItem(commentStorageKey);
         setComments([]);
       }
     }
-  }, [postId]);
+  }, [postId, commentStorageKey]);
 
   /* コメント送信 */
   const handleCommentSubmit = (user: string, content: string) => {
@@ -74,7 +78,7 @@ const PostDetail = () => {
     };
     const updated = [...comments, newComment];
     setComments(updated);
-    localStorage.setItem(`myblog-comments-${postId}`, JSON.stringify(updated));
+    localStorage.setItem(commentStorageKey, JSON.stringify(updated));
     setIsWriting(false);
   };
 

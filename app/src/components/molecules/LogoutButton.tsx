@@ -6,11 +6,12 @@ const LogoutButton = ({ onClick }: { onClick?: () => void }) => {
   return (
     <Button
       label="ログアウト"
-      onClick={onClick}
+      onClick={isDisabled ? undefined : onClick}
       variant="danger"
       type="button"
       disabled={isDisabled}
       aria-disabled={isDisabled}
+      tabIndex={isDisabled ? -1 : 0}
     />
   );
 };
