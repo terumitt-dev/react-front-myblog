@@ -113,6 +113,9 @@ const CATEGORY_CONFIG = {
   } as const,
 } as const;
 
+// アニメーション時間定数（CSS同期）
+const getDisappearDuration = (reduced: boolean) => (reduced ? 300 : 600);
+
 const Category = () => {
   const { category } = useParams<{ category: string }>();
   const [posts, setPosts] = useState<Post[]>([]);
@@ -304,11 +307,13 @@ const Category = () => {
   // バブル生成（安定化）
   const generateBubble = useCallback(() => {
     if (
+      typeof window === "undefined" ||
       reducedMotion ||
       !performanceSettings.enableEffects ||
       !performanceSettings.enableAnimations
-    )
+    ) {
       return;
+    }
 
     setBubbles((prev) => {
       const containerWidth = window.innerWidth;
@@ -359,9 +364,10 @@ const Category = () => {
       setSpiderDisappearingIds((prev) =>
         prev.includes(id) ? prev : [...prev, id],
       );
-      const animationDuration = performanceSettings.reducedAnimations
-        ? 300
-        : 600;
+
+      const animationDuration = getDisappearDuration(
+        performanceSettings.reducedAnimations,
+      );
 
       setTimeout(() => {
         setSpiders((prev) => prev.filter((sp) => sp.id !== id));
@@ -376,9 +382,10 @@ const Category = () => {
       setSnailDisappearingIds((prev) =>
         prev.includes(id) ? prev : [...prev, id],
       );
-      const animationDuration = performanceSettings.reducedAnimations
-        ? 300
-        : 600;
+
+      const animationDuration = getDisappearDuration(
+        performanceSettings.reducedAnimations,
+      );
 
       setTimeout(() => {
         setSnails((prev) => prev.filter((snail) => snail.id !== id));

@@ -4,9 +4,14 @@ import Button from "@/components/atoms/Button";
 type Props = {
   onClick: () => void;
   className?: string;
+  disabled?: boolean;
 };
 
-const CommentStartButton = ({ onClick, className = "" }: Props) => {
+const CommentStartButton = ({
+  onClick,
+  className = "",
+  disabled = false,
+}: Props) => {
   return (
     <Button
       label="コメントする"
@@ -14,7 +19,7 @@ const CommentStartButton = ({ onClick, className = "" }: Props) => {
       variant="primary"
       className={className}
       type="button"
-      disabled={!onClick}
+      disabled={disabled}
     />
   );
 };
