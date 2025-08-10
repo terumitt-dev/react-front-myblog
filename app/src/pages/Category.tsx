@@ -434,13 +434,15 @@ const Category = () => {
               cursor: "pointer",
             }}
           >
-            <img
-              src="/patterns/spider.svg"
-              alt=""
-              role="presentation"
-              draggable={false}
-              style={{ pointerEvents: "none" }}
-            />
+            <span className="spider-rotator" aria-hidden="true">
+              <img
+                src="/patterns/spider.svg"
+                alt=""
+                role="presentation"
+                draggable={false}
+                style={{ pointerEvents: "none" }}
+              />
+            </span>
           </button>
         ))}
       </div>

@@ -15,6 +15,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [retryTimeoutId, setRetryTimeoutId] = useState<number | null>(null);
   const navigate = useNavigate();
 
   const handleSubmit = async () => {
@@ -31,32 +32,30 @@ const Login = () => {
       if (result.success) {
         navigate("/admin");
       } else {
-        switch (result.error) {
-          case "locked":
-            if (result.retryAfter) {
-              setError(
-                `${Math.ceil(result.retryAfter / 1000)}秒後に再試行してください。`,
-              );
-            } else {
-              setError("しばらくしてから再試行してください。");
-            }
-            break;
-          case "invalid_config":
-            setError("ログイン設定が不正です。管理者に連絡してください。");
-            break;
-          case "invalid_credentials":
-            setError("ログインに失敗しました。");
-            break;
-          default:
-            setError("ログインに失敗しました。");
+        if (result.error === "locked" && result.retryAfter) {
+          setError(
+            `${Math.ceil(result.retryAfter / 1000)}秒後に再試行してください。`,
+          );
+          // 一時的に操作不可に
+          const id = window.setTimeout(() => {
+            setRetryTimeoutId(null);
+          }, result.retryAfter);
+          setRetryTimeoutId(id);
+        } else if (result.error === "invalid_config") {
+          setError("ログイン設定が不正です。管理者に連絡してください。");
+        } else {
+          setError("ログインに失敗しました。");
         }
       }
-    } catch (err) {
+    } catch {
       setError("ログインに失敗しました。");
     } finally {
       setLoading(false);
     }
   };
+
+  // クリーンアップ
+  const isDisabled = loading || retryTimeoutId !== null;
 
   return (
     <Layout>
@@ -75,7 +74,7 @@ const Login = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className={cn("border p-2 w-full")}
-            disabled={loading}
+            disabled={isDisabled}
           />
           <input
             type="password"
@@ -83,20 +82,24 @@ const Login = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className={cn("border p-2 w-full")}
-            disabled={loading}
+            disabled={isDisabled}
           />
           {error && <p className={cn("text-red-600")}>{error}</p>}
           <button
             type="submit"
-            disabled={loading}
+            disabled={isDisabled}
             className={cn(
               "w-full px-4 py-2 rounded text-white",
               "bg-blue-600 hover:bg-blue-700",
               "transition duration-200",
-              loading && "opacity-50 cursor-not-allowed",
+              isDisabled && "opacity-50 cursor-not-allowed",
             )}
           >
-            {loading ? "ログイン中..." : "ログイン"}
+            {loading
+              ? "ログイン中..."
+              : retryTimeoutId !== null
+                ? "待機中..."
+                : "ログイン"}
           </button>
         </form>
       </div>
