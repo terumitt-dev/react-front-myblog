@@ -99,6 +99,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = () => {
     setIsLoggedIn(false);
     localStorage.removeItem("myblog-auth");
+    localStorage.removeItem("myblog-auth-fails"); // 失敗/ロック情報もクリア
+    failMemoryRef.count = 0;
+    failMemoryRef.until = 0;
   };
 
   return (
