@@ -73,12 +73,23 @@ export const displayText = (text: string, isEscaped = false): string => {
   return escapeHtml(text); // 生データはエスケープ
 };
 
-// 新しい表示関数（用途別）
+// より安全な表示関数
 export const displayTextSafe = (text: string): string => {
   if (!text) return "";
 
-  // エスケープ済みデータはそのまま返す（HTMLとして表示）
-  return text;
+  // 追加セキュリティチェック
+  const securityCheck = checkDisplayStrategy(text);
+  if (securityCheck.warning) {
+    console.warn("Security warning:", securityCheck.warning);
+  }
+
+  // 許可されていないHTMLタグを除去（strong, em, u, br, pのみ許可）
+  const cleaned = text.replace(
+    /<(?!\/?(?:strong|em|u|br|p)(?:\s[^>]*)?\/?>)[^>]*>/gi,
+    "",
+  );
+
+  return cleaned;
 };
 
 // プレーンテキストとして表示（検索結果など）

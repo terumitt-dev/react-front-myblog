@@ -2,7 +2,7 @@
 import Layout from "@/components/layouts/Layout";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 
 // シンプルなcn関数（shadcn/uiパターンを参考）
 function cn(...classes: (string | undefined | null | false)[]): string {

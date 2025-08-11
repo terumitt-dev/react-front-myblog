@@ -2,7 +2,7 @@
 import Layout from "@/components/layouts/Layout";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import LogoutButton from "@/components/molecules/LogoutButton";
 import {
   validateAndSanitize,
@@ -342,8 +342,10 @@ const Admin = () => {
                         <div className="flex gap-4 text-sm text-gray-600">
                           <span>カテゴリ: {post.category}</span>
                           <span>
-                            投稿日: {new Date(post.createdAt).toLocaleString()}
-                          </span>
+                            {post.createdAt
+                              ? new Date(post.createdAt).toLocaleDateString()
+                              : "日付不明"}
+                          </span>{" "}
                         </div>
 
                         <div

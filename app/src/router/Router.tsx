@@ -6,7 +6,7 @@ import Category from "@/pages/Category";
 import PostDetail from "@/pages/PostDetail";
 import Admin from "@/pages/Admin";
 import Login from "@/pages/Login";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { ResettableErrorBoundary } from "@/components/utils/ResettableErrorBoundary";
 
 function AdminPageWrapper() {

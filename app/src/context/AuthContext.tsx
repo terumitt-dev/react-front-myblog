@@ -1,6 +1,6 @@
 // app/src/context/AuthContext.tsx
-import { createContext, useContext, useState, useEffect } from "react";
-import { handleStorageError } from "../components/utils/errorHandler";
+import { createContext, useState, useEffect } from "react";
+import { handleStorageError } from "@/components/utils/errorHandler";
 
 // 複数の環境変数チェックで堅牢性を向上
 const NODE_ENV = import.meta.env.MODE;
@@ -219,10 +219,4 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within AuthProvider");
-  }
-  return context;
-};
+export { AuthContext };

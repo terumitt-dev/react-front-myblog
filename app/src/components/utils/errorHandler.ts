@@ -21,7 +21,13 @@ export const handleStorageError = (error: unknown, operation: string): void => {
   // クリティカルエラーの場合は通知
   if (error instanceof DOMException && error.name === "QuotaExceededError") {
     console.warn("⚠️ ストレージ容量が不足しています");
-    // TODO: ユーザーに通知する仕組みを追加
+
+    // カスタムイベントでユーザー通知
+    window.dispatchEvent(
+      new CustomEvent("storage-quota-exceeded", {
+        detail: { operation, error },
+      }),
+    );
   }
 };
 

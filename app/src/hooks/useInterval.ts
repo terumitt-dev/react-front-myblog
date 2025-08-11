@@ -13,7 +13,7 @@ export function useInterval(
   delay: number | null,
   deps: readonly (string | number | boolean | null | undefined)[] = [],
 ) {
-  const savedCallback = useRef<() => void>();
+  const savedCallback = useRef<() => void>(callback);
   const intervalRef = useRef<number | null>(null); // ブラウザ環境に合わせてnumber型に修正
 
   // 最新のコールバックを保存
@@ -24,7 +24,7 @@ export function useInterval(
   // 安全なクリアアップ関数
   const clearCurrentInterval = useCallback(() => {
     if (intervalRef.current !== null) {
-      clearInterval(intervalRef.current);
+      window.clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
   }, []);
@@ -47,7 +47,7 @@ export function useInterval(
 
     // クリーンアップ関数
     return clearCurrentInterval;
-  }, [delay, clearCurrentInterval, ...deps]);
+  }, [delay, clearCurrentInterval, deps]);
 
   // コンポーネントアンマウント時の強制クリーンアップ
   useEffect(() => {

@@ -1,5 +1,5 @@
 // app/src/pages/Category.tsx
-import { useMemo, useCallback, useState, useEffect, useRef } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import Header from "@/components/organisms/Header";
 import BackToHomeButton from "@/components/molecules/BackToHomeButton";
@@ -7,12 +7,10 @@ import {
   displayTextSafe,
   displayTextPlain,
 } from "@/components/utils/sanitizer";
-import { CATEGORY_COLORS } from "../components/utils/colors";
-import type { CategoryType } from "../components/utils/colors";
-import { useStaticEffects } from "../hooks/useStaticEffects";
-import { useBubbleGeneration } from "../hooks/useBubbleGeneration";
-import { ANIMATION_CONFIG } from "../constants/effectConfig";
-import "./Category.css";
+import { CATEGORY_COLORS } from "@/components/utils/colors";
+import { useStaticEffects } from "@/hooks/useStaticEffects";
+import { useBubbleGeneration } from "@/hooks/useBubbleGeneration";
+import "@/pages/Category.css";
 
 // シンプルなcn関数
 function cn(...classes: (string | undefined | null | false)[]): string {
@@ -21,13 +19,6 @@ function cn(...classes: (string | undefined | null | false)[]): string {
 
 const Category = () => {
   const { category } = useParams<{ category: string }>();
-
-  // 画面幅の監視（シンプル化）
-  const [screenWidth, setScreenWidth] = useState(() =>
-    typeof window !== "undefined" ? window.innerWidth : 1024,
-  );
-  const resizeTimeoutRef = useRef<number | null>(null);
-  const lastResizeRef = useRef<number>(0);
 
   // Page Visibility監視
   const [isPageVisible, setIsPageVisible] = useState(() => {
@@ -69,35 +60,6 @@ const Category = () => {
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, []);
-
-  // リサイズハンドラー（最適化）
-  useEffect(() => {
-    const handleResize = () => {
-      const now = Date.now();
-
-      if (now - lastResizeRef.current < ANIMATION_CONFIG.resize.throttle)
-        return;
-      lastResizeRef.current = now;
-
-      if (resizeTimeoutRef.current !== null) {
-        window.clearTimeout(resizeTimeoutRef.current);
-      }
-
-      resizeTimeoutRef.current = window.setTimeout(() => {
-        setScreenWidth(window.innerWidth);
-        resizeTimeoutRef.current = null;
-      }, ANIMATION_CONFIG.resize.debounce);
-    };
-
-    window.addEventListener("resize", handleResize, { passive: true });
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      if (resizeTimeoutRef.current !== null) {
-        window.clearTimeout(resizeTimeoutRef.current);
-      }
     };
   }, []);
 
@@ -288,7 +250,11 @@ const Category = () => {
                     {displayTextPlain(post.content).slice(0, 100)}...
                   </p>
                   <div className="flex justify-between items-center text-sm text-gray-500">
-                    <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                    <span>
+                      {post.createdAt
+                        ? new Date(post.createdAt).toLocaleDateString()
+                        : "日付不明"}
+                    </span>
                     <Link
                       to={`/posts/${post.id}`}
                       className="text-blue-600 hover:text-blue-800 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded transition"
