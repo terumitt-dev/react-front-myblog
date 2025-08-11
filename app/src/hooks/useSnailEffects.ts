@@ -5,6 +5,11 @@ import {
   getEffectCount,
   ANIMATION_CONFIG,
 } from "@/constants/effectConfig";
+import {
+  DEFAULT_SCREEN_SIZE,
+  EFFECT_SIZES,
+  ID_OFFSETS,
+} from "@/constants/appConfig";
 
 export type Snail = {
   id: number;
@@ -33,16 +38,24 @@ export const useSnailEffects = (
     }
 
     const containerWidth =
-      typeof window !== "undefined" ? window.innerWidth : 1024;
+      typeof window !== "undefined"
+        ? window.innerWidth
+        : DEFAULT_SCREEN_SIZE.WIDTH;
     const containerHeight =
-      typeof window !== "undefined" ? window.innerHeight : 768;
+      typeof window !== "undefined"
+        ? window.innerHeight
+        : DEFAULT_SCREEN_SIZE.HEIGHT;
     const snailCount = getEffectCount(category, containerWidth);
 
     if (snailCount > 0) {
       setSnails(
         Array.from({ length: snailCount }, (_, i) => ({
-          id: Date.now() + i + 1000,
-          ...generateRandomPosition(containerWidth, containerHeight, 60),
+          id: Date.now() + i + ID_OFFSETS.SNAIL_OFFSET,
+          ...generateRandomPosition(
+            containerWidth,
+            containerHeight,
+            EFFECT_SIZES.SNAIL_SIZE,
+          ),
           isMoved: false,
         })),
       );

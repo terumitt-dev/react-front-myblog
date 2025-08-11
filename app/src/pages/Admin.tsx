@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import LogoutButton from "@/components/molecules/LogoutButton";
+import { TEXT_LIMITS, UI_CONFIG } from "@/constants/appConfig";
 import {
   validateAndSanitize,
   validateCategory,
@@ -93,8 +94,16 @@ const Admin = () => {
 
   const handleSubmit = () => {
     // 包括的なバリデーション
-    const titleValidation = validateAndSanitize(title, 100, "タイトル");
-    const contentValidation = validateAndSanitize(content, 5000, "本文");
+    const titleValidation = validateAndSanitize(
+      title,
+      TEXT_LIMITS.TITLE_MAX_LENGTH,
+      "タイトル",
+    );
+    const contentValidation = validateAndSanitize(
+      content,
+      TEXT_LIMITS.CONTENT_MAX_LENGTH,
+      "本文",
+    );
     const categoryError = validateCategory(category);
 
     if (!titleValidation.isValid) {
@@ -212,7 +221,7 @@ const Admin = () => {
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="記事のタイトルを入力してください"
                 className="border border-gray-300 dark:border-gray-600 rounded-md p-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                maxLength={100}
+                maxLength={TEXT_LIMITS.TITLE_MAX_LENGTH}
                 required
                 aria-describedby="title-help"
               />
@@ -220,7 +229,7 @@ const Admin = () => {
                 id="title-help"
                 className="text-sm text-gray-500 dark:text-gray-400 mt-1"
               >
-                残り{100 - title.length}文字
+                残り{TEXT_LIMITS.TITLE_MAX_LENGTH - title.length}文字
               </div>
             </div>
 
@@ -237,8 +246,8 @@ const Admin = () => {
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="記事の本文を入力してください"
                 className="border border-gray-300 dark:border-gray-600 rounded-md p-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                maxLength={5000}
-                rows={10}
+                maxLength={TEXT_LIMITS.CONTENT_MAX_LENGTH}
+                rows={UI_CONFIG.TEXTAREA_ROWS}
                 required
                 aria-describedby="content-help"
               />
@@ -246,7 +255,7 @@ const Admin = () => {
                 id="content-help"
                 className="text-sm text-gray-500 dark:text-gray-400 mt-1"
               >
-                残り{5000 - content.length}文字
+                残り{TEXT_LIMITS.CONTENT_MAX_LENGTH - content.length}文字
               </div>
             </div>
 
@@ -374,8 +383,9 @@ const Admin = () => {
                             />
                           ) : (
                             <div className="break-words overflow-hidden">
-                              {displayText(post.content, true).length > 100
-                                ? `${displayText(post.content, true).slice(0, 100)}...`
+                              {displayText(post.content, true).length >
+                              TEXT_LIMITS.PREVIEW_LENGTH
+                                ? `${displayText(post.content, true).slice(0, TEXT_LIMITS.PREVIEW_LENGTH)}...`
                                 : displayText(post.content, true)}
                             </div>
                           )}

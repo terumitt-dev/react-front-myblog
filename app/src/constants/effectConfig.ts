@@ -1,4 +1,6 @@
 // app/src/constants/effectConfig.ts
+import { EFFECT_SIZES } from "@/constants/appConfig";
+
 export const ROTATION_ANGLES = [0, 45, 90, 135, 180, 225, 270, 315] as const;
 
 export const BREAKPOINTS = {
@@ -46,16 +48,15 @@ export const ANIMATION_CONFIG = {
 export const generateRandomPosition = (
   containerWidth: number,
   containerHeight: number,
-  elSize = 60,
+  elSize: number = EFFECT_SIZES.SNAIL_SIZE,
 ): { top: string; left: string } => {
-  const margin = Math.max(elSize, 20);
+  const margin = Math.max(elSize, EFFECT_SIZES.DEFAULT_MARGIN);
   const maxLeftPx = Math.max(margin, containerWidth - margin);
   const maxTopPx = Math.max(margin, containerHeight - margin);
 
   const leftPx = Math.random() * (maxLeftPx - margin) + margin;
-  const topPx = Math.random() * (maxTopPx - margin) + margin;
 
-  return { top: `${topPx}px`, left: `${leftPx}px` };
+  return { top: `${maxTopPx}px`, left: `${leftPx}px` };
 };
 
 export const generateRandomRotation = (): number => {

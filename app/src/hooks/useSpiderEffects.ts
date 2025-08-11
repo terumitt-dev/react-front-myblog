@@ -6,6 +6,11 @@ import {
   getEffectCount,
   ANIMATION_CONFIG,
 } from "@/constants/effectConfig";
+import {
+  DEFAULT_SCREEN_SIZE,
+  EFFECT_SIZES,
+  ID_OFFSETS,
+} from "@/constants/appConfig";
 
 export type Spider = {
   id: number;
@@ -34,16 +39,24 @@ export const useSpiderEffects = (
     }
 
     const containerWidth =
-      typeof window !== "undefined" ? window.innerWidth : 1024;
+      typeof window !== "undefined"
+        ? window.innerWidth
+        : DEFAULT_SCREEN_SIZE.WIDTH;
     const containerHeight =
-      typeof window !== "undefined" ? window.innerHeight : 768;
+      typeof window !== "undefined"
+        ? window.innerHeight
+        : DEFAULT_SCREEN_SIZE.HEIGHT;
     const spiderCount = getEffectCount(category, containerWidth);
 
     if (spiderCount > 0) {
       setSpiders(
         Array.from({ length: spiderCount }, (_, i) => ({
-          id: Date.now() + i,
-          ...generateRandomPosition(containerWidth, containerHeight, 50),
+          id: Date.now() + i + ID_OFFSETS.SPIDER_OFFSET,
+          ...generateRandomPosition(
+            containerWidth,
+            containerHeight,
+            EFFECT_SIZES.SPIDER_SIZE,
+          ),
           rotate: generateRandomRotation(),
         })),
       );

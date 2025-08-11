@@ -1,6 +1,7 @@
 // app/src/pages/Category.tsx
 import { useEffect, useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
+import { TEXT_LIMITS } from "@/constants/appConfig";
 import { CATEGORY_COLORS } from "@/components/utils/colors";
 import {
   displayTextSafe,
@@ -254,7 +255,11 @@ const Category = () => {
                     />
                   </h2>
                   <p className="text-gray-700 dark:text-gray-300 mb-4 break-words">
-                    {displayTextPlain(post.content).slice(0, 100)}...
+                    {displayTextPlain(post.content).slice(
+                      0,
+                      TEXT_LIMITS.PREVIEW_LENGTH,
+                    )}
+                    ...
                   </p>
                   <div className="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
                     <span>

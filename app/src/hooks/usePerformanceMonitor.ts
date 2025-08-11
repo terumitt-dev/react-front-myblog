@@ -1,5 +1,6 @@
 // app/src/hooks/usePerformanceMonitor.ts
 import { useState, useEffect, useRef } from "react";
+import { PERFORMANCE_CONFIG } from "@/constants/appConfig";
 
 interface PerformanceMetrics {
   isUnderStress: boolean;
@@ -39,9 +40,15 @@ export const usePerformanceMonitor = (enabled = true): PerformanceMetrics => {
       frameCountRef.current++;
 
       // 1秒ごとにフレームレートを計算
-      if (now - lastTimeRef.current >= 1000) {
+      // 1秒ごとにフレームレートを計算
+      if (
+        now - lastTimeRef.current >=
+        PERFORMANCE_CONFIG.FPS_CALCULATION_INTERVAL
+      ) {
         const fps =
-          (frameCountRef.current * 1000) / (now - lastTimeRef.current);
+          (frameCountRef.current *
+            PERFORMANCE_CONFIG.FPS_CALCULATION_INTERVAL) /
+          (now - lastTimeRef.current);
 
         setMetrics((prev) => ({
           ...prev,
@@ -96,7 +103,10 @@ export const usePerformanceMonitor = (enabled = true): PerformanceMetrics => {
       }
     };
 
-    const interval = setInterval(updateMemoryUsage, 5000);
+    const interval = setInterval(
+      updateMemoryUsage,
+      PERFORMANCE_CONFIG.MEMORY_UPDATE_INTERVAL,
+    );
     updateMemoryUsage(); // 初回実行
 
     return () => clearInterval(interval);

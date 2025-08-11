@@ -1,4 +1,6 @@
 // app/src/components/utils/sanitizer.tsx
+import { TEXT_LIMITS, VALIDATION } from "@/constants/appConfig";
+
 /**
  * 統一されたサニタイズ・表示戦略
  *
@@ -101,7 +103,7 @@ export const displayTextPlain = (text: string): string => {
 // バリデーション強化
 export const validateAndSanitize = (
   text: string,
-  maxLength: number = 1000,
+  maxLength: number = TEXT_LIMITS.DEFAULT_MAX_LENGTH,
   fieldName: string = "フィールド",
 ): { isValid: boolean; sanitized: string; error?: string } => {
   if (!text?.trim()) {
@@ -165,7 +167,7 @@ export const validateAndSanitize = (
 
 // カテゴリバリデーション（型安全版）
 export const validateCategory = (category: string): string | null => {
-  const allowedCategories = ["tech", "hobby", "other"] as const;
+  const allowedCategories = VALIDATION.ALLOWED_CATEGORIES;
   type AllowedCategory = (typeof allowedCategories)[number];
 
   if (!allowedCategories.includes(category as AllowedCategory)) {
