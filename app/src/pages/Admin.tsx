@@ -324,7 +324,7 @@ const Admin = () => {
                 return (
                   <div
                     key={post.id}
-                    className="bg-white dark:bg-gray-700 rounded-xl shadow"
+                    className="bg-white dark:bg-gray-700 rounded-xl shadow overflow-hidden"
                   >
                     <button
                       type="button"
@@ -339,22 +339,25 @@ const Admin = () => {
                       aria-controls={`post-content-${post.id}`}
                     >
                       <div className="space-y-2">
-                        <div className="flex justify-between items-start">
-                          <h3 className="font-semibold text-lg break-words flex-1 text-gray-900 dark:text-white">
+                        <div className="flex justify-between items-start gap-3">
+                          <h3 className="font-semibold text-lg break-words flex-1 text-gray-900 dark:text-white min-w-0">
                             <span
+                              className="block break-words"
                               dangerouslySetInnerHTML={{
                                 __html: displayTextSafe(post.title),
                               }}
                             />
                           </h3>
-                          <span className="text-xs text-gray-500 dark:text-gray-400 ml-2 flex-shrink-0">
+                          <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
                             {isOpen ? "▼" : "▶"}
                           </span>
                         </div>
 
-                        <div className="flex gap-4 text-sm text-gray-600 dark:text-gray-400">
-                          <span>カテゴリ: {post.category}</span>
-                          <span>
+                        <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
+                          <span className="whitespace-nowrap">
+                            カテゴリ: {post.category}
+                          </span>
+                          <span className="whitespace-nowrap">
                             {post.createdAt
                               ? new Date(post.createdAt).toLocaleDateString()
                               : "日付不明"}
@@ -363,16 +366,17 @@ const Admin = () => {
 
                         <div
                           id={`post-content-${post.id}`}
-                          className="text-gray-700 dark:text-gray-300 break-words whitespace-pre-line"
+                          className="text-gray-700 dark:text-gray-300 break-words whitespace-pre-line overflow-hidden"
                         >
                           {isOpen ? (
                             <div
+                              className="max-w-none break-words overflow-wrap-anywhere"
                               dangerouslySetInnerHTML={{
                                 __html: displayTextSafe(post.content),
                               }}
                             />
                           ) : (
-                            <div>
+                            <div className="break-words overflow-hidden">
                               {displayText(post.content, true).length > 100
                                 ? `${displayText(post.content, true).slice(0, 100)}...`
                                 : displayText(post.content, true)}
@@ -383,9 +387,9 @@ const Admin = () => {
                     </button>
 
                     {/* アクション部分 */}
-                    <div className="px-4 pb-4">
+                    <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-600 pt-3 mt-3">
                       <nav
-                        className="flex gap-4"
+                        className="flex flex-wrap gap-4"
                         aria-label="投稿操作"
                         role="toolbar"
                       >
@@ -395,7 +399,7 @@ const Admin = () => {
                             "text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline rounded",
                             "focus:outline-none focus:ring-2",
                             "focus:ring-blue-500 focus:ring-offset-1",
-                            "transition",
+                            "transition whitespace-nowrap",
                           )}
                         >
                           記事を確認 →
@@ -407,7 +411,7 @@ const Admin = () => {
                             "text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 hover:underline rounded",
                             "focus:outline-none focus:ring-2",
                             "focus:ring-green-500 focus:ring-offset-1",
-                            "transition",
+                            "transition whitespace-nowrap",
                           )}
                           aria-label={`${displayText(post.title, true)}を編集`}
                         >
@@ -428,7 +432,7 @@ const Admin = () => {
                             "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 hover:underline rounded",
                             "focus:outline-none focus:ring-2",
                             "focus:ring-red-500 focus:ring-offset-1",
-                            "transition",
+                            "transition whitespace-nowrap",
                           )}
                           aria-label={`${displayText(post.title, true)}を削除`}
                         >
