@@ -5,6 +5,8 @@ import { useParams } from "react-router-dom";
 import CommentForm from "@/components/organisms/CommentForm";
 import BackToHomeButton from "@/components/molecules/BackToHomeButton";
 import CommentStartButton from "@/components/molecules/CommentStartButton";
+import { displayTextSafe } from "../components/utils/sanitizer";
+import { safeJsonParse } from "../components/utils/errorHandler";
 
 // シンプルなcn関数（shadcn/uiパターンを参考）
 function cn(...classes: (string | undefined | null | false)[]): string {
@@ -16,7 +18,17 @@ type Post = {
   title: string;
   content: string;
   category: string;
+  createdAt: string;
 };
+
+// JSONから読み込む際の型（idが文字列の場合もある）
+interface RawPost {
+  id: string | number;
+  title: string;
+  content: string;
+  category: string;
+  createdAt?: string;
+}
 
 type Comment = {
   id: number;
@@ -38,12 +50,15 @@ const PostDetail = () => {
 
   useEffect(() => {
     if (!isValidId) return;
+
     const savedPosts = localStorage.getItem("myblog-posts");
     if (savedPosts) {
       try {
-        const posts: Post[] = JSON.parse(savedPosts).map((p: any) => ({
+        const rawPosts = safeJsonParse<RawPost[]>(savedPosts, []);
+        const posts: Post[] = rawPosts.map((p: RawPost) => ({
           ...p,
           id: Number(p.id),
+          createdAt: p.createdAt || new Date().toISOString(),
         }));
         setPost(posts.find((p) => p.id === postId) ?? null);
       } catch (e) {
@@ -56,7 +71,8 @@ const PostDetail = () => {
     const storedComments = localStorage.getItem(commentStorageKey);
     if (storedComments) {
       try {
-        setComments(JSON.parse(storedComments));
+        const parsedComments = safeJsonParse<Comment[]>(storedComments, []);
+        setComments(parsedComments);
       } catch (e) {
         console.error("Failed to parse comments from localStorage:", e);
         localStorage.removeItem(commentStorageKey);
@@ -113,7 +129,11 @@ const PostDetail = () => {
           >
             <header>
               <h1 className={cn("text-3xl font-bold mb-3 break-words")}>
-                {post.title}
+                <span
+                  dangerouslySetInnerHTML={{
+                    __html: displayTextSafe(post.title),
+                  }}
+                />
               </h1>
               <span
                 className={cn(
@@ -127,9 +147,10 @@ const PostDetail = () => {
             </header>
             <div
               className={cn("leading-relaxed whitespace-pre-line break-words")}
-            >
-              {post.content}
-            </div>
+              dangerouslySetInnerHTML={{
+                __html: displayTextSafe(post.content),
+              }}
+            />
           </article>
 
           {/* ===== コメント一覧 ===== */}

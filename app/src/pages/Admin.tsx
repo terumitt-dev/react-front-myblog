@@ -4,47 +4,21 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import LogoutButton from "@/components/molecules/LogoutButton";
+import {
+  validateAndSanitize,
+  validateCategory,
+  displayText,
+  displayTextSafe,
+} from "@/components/utils/sanitizer";
+import {
+  handleStorageError,
+  safeJsonParse,
+} from "@/components/utils/errorHandler";
 
 // シンプルなcn関数（shadcn/uiパターンを参考）
 function cn(...classes: (string | undefined | null | false)[]): string {
   return classes.filter(Boolean).join(" ");
 }
-
-// バリデーション関数
-const validateTitle = (title: string): string | null => {
-  if (!title.trim()) return "タイトルは必須です";
-  if (title.length > 100) return "タイトルは100文字以内で入力してください";
-  // HTMLタグのチェック
-  if (/<script|<iframe|javascript:/i.test(title)) {
-    return "タイトルに不正な文字が含まれています";
-  }
-  return null;
-};
-
-const validateContent = (content: string): string | null => {
-  if (!content.trim()) return "本文は必須です";
-  if (content.length > 5000) return "本文は5000文字以内で入力してください";
-  // 基本的なXSSチェック
-  if (/<script|<iframe|javascript:/i.test(content)) {
-    return "本文に不正な文字が含まれています";
-  }
-  return null;
-};
-
-const validateCategory = (category: string): string | null => {
-  const allowedCategories = ["tech", "hobby", "other"];
-  if (!allowedCategories.includes(category)) {
-    return "無効なカテゴリが選択されています";
-  }
-  return null;
-};
-
-// HTMLエスケープ関数
-const escapeHtml = (text: string): string => {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
-};
 
 type Post = {
   id: number;
@@ -53,6 +27,15 @@ type Post = {
   category: string;
   createdAt: string;
 };
+
+// JSONから読み込む際の型（型安全性向上）
+interface RawPost {
+  id: string | number;
+  title: string;
+  content: string;
+  category: string;
+  createdAt?: string;
+}
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -66,22 +49,41 @@ const Admin = () => {
   const [error, setError] = useState("");
   const [openPostIds, setOpenPostIds] = useState<number[]>([]);
 
+  // ローカルストレージからの読み込み（エラーハンドリング強化）
   useEffect(() => {
     const saved = localStorage.getItem("myblog-posts");
     if (saved) {
       try {
-        const parsed = JSON.parse(saved);
-        setPosts(parsed);
+        const rawPosts = safeJsonParse<RawPost[]>(saved, []);
+        const validPosts: Post[] = rawPosts
+          .filter((p): p is RawPost => p && typeof p === "object")
+          .map((p: RawPost) => ({
+            ...p,
+            id: Number(p.id),
+            createdAt: p.createdAt || new Date().toISOString(),
+          }))
+          .filter((p) => p.id && p.title && p.content && p.category);
+
+        setPosts(validPosts);
       } catch (error) {
         console.error("Failed to parse posts from localStorage:", error);
+        handleStorageError(error, "load posts");
         localStorage.removeItem("myblog-posts");
+        setPosts([]);
       }
     }
   }, []);
 
+  // ローカルストレージへの保存（エラーハンドリング強化）
   const saveToLocalStorage = (updatedPosts: Post[]) => {
-    setPosts(updatedPosts);
-    localStorage.setItem("myblog-posts", JSON.stringify(updatedPosts));
+    try {
+      setPosts(updatedPosts);
+      localStorage.setItem("myblog-posts", JSON.stringify(updatedPosts));
+    } catch (error) {
+      console.error("Failed to save posts to localStorage:", error);
+      handleStorageError(error, "save posts");
+      setError("投稿の保存に失敗しました。ストレージ容量を確認してください。");
+    }
   };
 
   const resetForm = () => {
@@ -94,16 +96,16 @@ const Admin = () => {
 
   const handleSubmit = () => {
     // 包括的なバリデーション
-    const titleError = validateTitle(title);
-    const contentError = validateContent(content);
+    const titleValidation = validateAndSanitize(title, 100, "タイトル");
+    const contentValidation = validateAndSanitize(content, 5000, "本文");
     const categoryError = validateCategory(category);
 
-    if (titleError) {
-      setError(titleError);
+    if (!titleValidation.isValid) {
+      setError(titleValidation.error!);
       return;
     }
-    if (contentError) {
-      setError(contentError);
+    if (!contentValidation.isValid) {
+      setError(contentValidation.error!);
       return;
     }
     if (categoryError) {
@@ -111,39 +113,53 @@ const Admin = () => {
       return;
     }
 
-    // データの前処理（エスケープ）
-    const sanitizedTitle = escapeHtml(title.trim());
-    const sanitizedContent = escapeHtml(content.trim());
+    try {
+      if (editingPostId !== null) {
+        // 編集モード
+        const updated = posts.map((p) =>
+          p.id === editingPostId
+            ? {
+                ...p,
+                title: titleValidation.sanitized,
+                content: contentValidation.sanitized,
+                category,
+              }
+            : p,
+        );
+        saveToLocalStorage(updated);
+      } else {
+        // 新規投稿モード
+        const newPost: Post = {
+          id: Date.now(),
+          title: titleValidation.sanitized,
+          content: contentValidation.sanitized,
+          category,
+          createdAt: new Date().toISOString(),
+        };
+        saveToLocalStorage([...posts, newPost]);
+      }
 
-    if (editingPostId !== null) {
-      const updated = posts.map((p) =>
-        p.id === editingPostId
-          ? { ...p, title: sanitizedTitle, content: sanitizedContent, category }
-          : p,
-      );
-      saveToLocalStorage(updated);
-    } else {
-      const newPost: Post = {
-        id: Date.now(),
-        title: sanitizedTitle,
-        content: sanitizedContent,
-        category,
-        createdAt: new Date().toISOString(),
-      };
-      saveToLocalStorage([...posts, newPost]);
+      resetForm();
+    } catch (error) {
+      console.error("Failed to submit post:", error);
+      setError("投稿の処理中にエラーが発生しました。");
     }
-
-    resetForm();
   };
 
   const handleDelete = (id: number) => {
-    const updated = posts.filter((p) => p.id !== id);
-    saveToLocalStorage(updated);
+    try {
+      const updated = posts.filter((p) => p.id !== id);
+      saveToLocalStorage(updated);
+    } catch (error) {
+      console.error("Failed to delete post:", error);
+      setError("投稿の削除に失敗しました。");
+    }
   };
 
   const handleEdit = (post: Post) => {
-    setTitle(post.title);
-    setContent(post.content);
+    // エスケープ済みデータを編集時にプレーンテキスト化
+    setTitle(displayText(post.title, true));
+    setContent(displayText(post.content, true));
     setCategory(post.category);
     setEditingPostId(post.id);
     setError("");
@@ -175,48 +191,92 @@ const Admin = () => {
         {/* 投稿フォーム */}
         <div className="bg-gray-200 rounded-xl p-6">
           <div className="space-y-4">
-            {error && <p className="text-red-500">{error}</p>}
+            {error && (
+              <div
+                className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded"
+                role="alert"
+              >
+                <span className="block sm:inline">{error}</span>
+              </div>
+            )}
 
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="タイトル"
-              className="border p-2 w-full"
-              maxLength={100} // 文字数制限をHTML側でも設定
-              required
-              aria-label="記事のタイトル"
-            />
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="本文"
-              className="border p-2 w-full"
-              maxLength={5000} // 文字数制限をHTML側でも設定
-              rows={10}
-              required
-              aria-label="記事の本文"
-            />
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="border p-2"
-              required
-              aria-label="記事のカテゴリ"
-            >
-              <option value="tech">Tech</option>
-              <option value="hobby">Hobby</option>
-              <option value="other">Other</option>
-            </select>
+            <div>
+              <label
+                htmlFor="title-input"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                タイトル（最大100文字）
+              </label>
+              <input
+                id="title-input"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="記事のタイトルを入力してください"
+                className="border border-gray-300 rounded-md p-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                maxLength={100}
+                required
+                aria-describedby="title-help"
+              />
+              <div id="title-help" className="text-sm text-gray-500 mt-1">
+                残り{100 - title.length}文字
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="content-input"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                本文（最大5000文字）
+              </label>
+              <textarea
+                id="content-input"
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="記事の本文を入力してください"
+                className="border border-gray-300 rounded-md p-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                maxLength={5000}
+                rows={10}
+                required
+                aria-describedby="content-help"
+              />
+              <div id="content-help" className="text-sm text-gray-500 mt-1">
+                残り{5000 - content.length}文字
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="category-select"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                カテゴリ
+              </label>
+              <select
+                id="category-select"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+              >
+                <option value="tech">Tech</option>
+                <option value="hobby">Hobby</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
 
             <div className="flex gap-4">
               <button
                 type="button"
                 onClick={handleSubmit}
+                disabled={!title.trim() || !content.trim()}
                 className={cn(
-                  "px-4 py-2 rounded text-white",
+                  "px-4 py-2 rounded text-white font-medium transition",
+                  "focus:outline-none focus:ring-2 focus:ring-offset-2",
                   editingPostId !== null
-                    ? "bg-green-600 hover:bg-green-700"
-                    : "bg-blue-600 hover:bg-blue-700",
+                    ? "bg-green-600 hover:bg-green-700 focus:ring-green-500"
+                    : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500",
+                  "disabled:opacity-50 disabled:cursor-not-allowed",
                 )}
               >
                 {editingPostId !== null ? "更新する" : "投稿を追加"}
@@ -227,8 +287,9 @@ const Admin = () => {
                   type="button"
                   onClick={handleCancelEdit}
                   className={cn(
-                    "px-4 py-2 rounded text-white",
+                    "px-4 py-2 rounded text-white font-medium",
                     "bg-gray-500 hover:bg-gray-600",
+                    "focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2",
                     "transition",
                   )}
                 >
@@ -241,107 +302,125 @@ const Admin = () => {
 
         {/* 投稿一覧 */}
         <div className="bg-gray-200 rounded-xl p-6">
-          <h2 className="text-xl font-semibold mb-4">現在の投稿一覧</h2>
+          <h2 className="text-xl font-semibold mb-4">
+            現在の投稿一覧（{posts.length}件）
+          </h2>
           {posts.length === 0 ? (
-            <p>まだ投稿がありません。</p>
+            <p className="text-gray-600">まだ投稿がありません。</p>
           ) : (
             <div className="space-y-4">
               {posts.map((post) => {
                 const isOpen = openPostIds.includes(post.id);
                 return (
-                  <div key={post.id}>
+                  <div key={post.id} className="bg-white rounded-xl shadow">
                     <button
                       type="button"
                       onClick={() => togglePost(post.id)}
                       className={cn(
-                        "w-full text-left rounded-xl p-4 shadow",
-                        "bg-white hover:bg-gray-100",
+                        "w-full text-left p-4 rounded-xl",
+                        "hover:bg-gray-50 focus:bg-gray-50",
+                        "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset",
                         "transition",
                       )}
+                      aria-expanded={isOpen}
+                      aria-controls={`post-content-${post.id}`}
                     >
-                      <div className="space-y-1">
-                        <strong className="block break-words text-lg">
-                          {post.title}
-                        </strong>
-                        <span className="text-sm text-gray-600">
-                          カテゴリ: {post.category}
-                        </span>
-                        <div className="text-xs text-gray-500">
-                          投稿日: {new Date(post.createdAt).toLocaleString()}
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-start">
+                          <h3 className="font-semibold text-lg break-words flex-1">
+                            <span
+                              dangerouslySetInnerHTML={{
+                                __html: displayTextSafe(post.title),
+                              }}
+                            />
+                          </h3>
+                          <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
+                            {isOpen ? "▼" : "▶"}
+                          </span>
                         </div>
-                        <div className="text-gray-700 break-words whitespace-pre-line mt-2">
-                          {isOpen
-                            ? post.content
-                            : post.content.length > 100
-                              ? `${post.content.slice(0, 100)}...`
-                              : post.content}
+
+                        <div className="flex gap-4 text-sm text-gray-600">
+                          <span>カテゴリ: {post.category}</span>
+                          <span>
+                            投稿日: {new Date(post.createdAt).toLocaleString()}
+                          </span>
+                        </div>
+
+                        <div
+                          id={`post-content-${post.id}`}
+                          className="text-gray-700 break-words whitespace-pre-line"
+                        >
+                          {isOpen ? (
+                            <div
+                              dangerouslySetInnerHTML={{
+                                __html: displayTextSafe(post.content),
+                              }}
+                            />
+                          ) : (
+                            <div>
+                              {displayText(post.content, true).length > 100
+                                ? `${displayText(post.content, true).slice(0, 100)}...`
+                                : displayText(post.content, true)}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </button>
 
-                    {/* アクション部分：アクセシビリティ改善版 */}
-                    <nav
-                      className="flex gap-4 mt-2 px-3"
-                      aria-label="投稿操作"
-                      role="toolbar"
-                    >
-                      <Link
-                        to={`/posts/${post.id}`}
-                        className={cn(
-                          "text-blue-600 hover:underline rounded",
-                          "focus:outline-none focus:ring-2",
-                          "focus:ring-blue-500 focus:ring-offset-1",
-                        )}
-                        onClick={(e) => e.stopPropagation()}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.stopPropagation();
-                          }
-                        }}
+                    {/* アクション部分 */}
+                    <div className="px-4 pb-4">
+                      <nav
+                        className="flex gap-4"
+                        aria-label="投稿操作"
+                        role="toolbar"
                       >
-                        記事を確認 →
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEdit(post);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.stopPropagation();
-                          }
-                        }}
-                        className={cn(
-                          "text-green-600 hover:underline rounded",
-                          "focus:outline-none focus:ring-2",
-                          "focus:ring-green-500 focus:ring-offset-1",
-                        )}
-                        aria-label={`${post.title}を編集`}
-                      >
-                        編集
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(post.id);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.stopPropagation();
-                          }
-                        }}
-                        className={cn(
-                          "text-red-600 hover:underline rounded",
-                          "focus:outline-none focus:ring-2",
-                          "focus:ring-red-500 focus:ring-offset-1",
-                        )}
-                        aria-label={`${post.title}を削除`}
-                      >
-                        削除
-                      </button>
-                    </nav>
+                        <Link
+                          to={`/posts/${post.id}`}
+                          className={cn(
+                            "text-blue-600 hover:text-blue-800 hover:underline rounded",
+                            "focus:outline-none focus:ring-2",
+                            "focus:ring-blue-500 focus:ring-offset-1",
+                            "transition",
+                          )}
+                        >
+                          記事を確認 →
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(post)}
+                          className={cn(
+                            "text-green-600 hover:text-green-800 hover:underline rounded",
+                            "focus:outline-none focus:ring-2",
+                            "focus:ring-green-500 focus:ring-offset-1",
+                            "transition",
+                          )}
+                          aria-label={`${displayText(post.title, true)}を編集`}
+                        >
+                          編集
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                `「${displayText(post.title, true)}」を削除しますか？`,
+                              )
+                            ) {
+                              handleDelete(post.id);
+                            }
+                          }}
+                          className={cn(
+                            "text-red-600 hover:text-red-800 hover:underline rounded",
+                            "focus:outline-none focus:ring-2",
+                            "focus:ring-red-500 focus:ring-offset-1",
+                            "transition",
+                          )}
+                          aria-label={`${displayText(post.title, true)}を削除`}
+                        >
+                          削除
+                        </button>
+                      </nav>
+                    </div>
                   </div>
                 );
               })}
