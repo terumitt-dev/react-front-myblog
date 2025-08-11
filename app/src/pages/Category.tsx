@@ -80,7 +80,7 @@ const createPerformanceSettings = (
   useLowQualityEffects,
 });
 
-// パフォーマンス設定（デバイス性能を考慮）
+// パフォーマンス設定（バブル用のみ使用）
 const getPerformanceSettings = (
   screenWidth: number,
   deviceInfo: DeviceInfo = {},
@@ -94,13 +94,13 @@ const getPerformanceSettings = (
     isLowEndDevice || isLowCPU || isUnderStress || !isPageVisible;
 
   if (screenWidth < 768 || shouldReduceEffects) {
-    return createPerformanceSettings(0, 1, 0, 6000, false, true, true);
+    return createPerformanceSettings(0, 2, 0, 6000, false, true, true);
   } else if (screenWidth < 1024) {
-    return createPerformanceSettings(1, 2, 1, 4500, true, true, true);
+    return createPerformanceSettings(2, 3, 2, 4500, true, true, true);
   } else if (screenWidth < 1280) {
-    return createPerformanceSettings(2, 3, 2, 3500, true, true, false);
+    return createPerformanceSettings(3, 5, 3, 3500, true, true, false);
   } else {
-    return createPerformanceSettings(3, 4, 3, 3000, true, true, false);
+    return createPerformanceSettings(5, 6, 5, 3000, true, true, false);
   }
 };
 
@@ -219,7 +219,7 @@ const Category = () => {
     };
   }, []);
 
-  // パフォーマンス設定（デバイス情報を含める）
+  // パフォーマンス設定（バブル生成用のみ）
   const enhancedPerformanceSettings = useMemo(() => {
     return getPerformanceSettings(
       screenWidth,
@@ -236,7 +236,6 @@ const Category = () => {
 
   // 安定化されたヘルパー関数
   const bubbleIdCounterRef = useRef(0);
-  const animationFrameRef = useRef<number | null>(null);
 
   // カテゴリバリデーション（純粋関数）
   const isValidCategory = useCallback(
@@ -292,7 +291,7 @@ const Category = () => {
     };
   }, []);
 
-  // 初期化効果（最適化）
+  // 完全に静的な初期化（カテゴリ変更時のみ）
   useEffect(() => {
     // 投稿読み込み
     const saved = localStorage.getItem("myblog-posts");
@@ -322,38 +321,30 @@ const Category = () => {
       }
     }
 
-    // エフェクト初期化の早期リターン
-    if (
-      !isValidCategory(category) ||
-      !enhancedPerformanceSettings.enableEffects ||
-      reducedMotion
-    ) {
+    // カテゴリが無効な場合のみクリア
+    if (!isValidCategory(category)) {
       setSpiders([]);
       setBubbles([]);
       setSnails([]);
       return;
     }
 
-    // 画面サイズ取得（フォールバック強化）
+    // 画面サイズ取得
     const containerWidth = window?.innerWidth || 1024;
     const containerHeight = window?.innerHeight || 768;
 
-    // RequestAnimationFrameを使用して描画を最適化
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-    }
+    // 固定数でエフェクト初期化（設定に依存しない）
+    if (category === "hobby") {
+      // 画面サイズに応じた固定数（1.5倍）
+      let spiderCount = 5; // デフォルト（大画面）
+      if (containerWidth < 768) spiderCount = 0;
+      else if (containerWidth < 1024) spiderCount = 2;
+      else if (containerWidth < 1280) spiderCount = 3;
 
-    animationFrameRef.current = requestAnimationFrame(() => {
-      // カテゴリ別エフェクト初期化
-      if (category === "hobby" && enhancedPerformanceSettings.maxSpiders > 0) {
-        const spiderCount = Math.min(
-          enhancedPerformanceSettings.maxSpiders,
-          Math.ceil(containerWidth / 300),
-        );
-
+      if (spiderCount > 0) {
         setSpiders(
           Array.from({ length: spiderCount }, (_, i) => ({
-            id: i,
+            id: Date.now() + i,
             ...generateRandomPosition(containerWidth, containerHeight, 50),
             rotate: generateRandomRotation(),
           })),
@@ -361,22 +352,27 @@ const Category = () => {
       } else {
         setSpiders([]);
       }
+    } else {
+      setSpiders([]);
+    }
 
-      if (category === "tech") {
-        setBubbles([]);
-      } else {
-        setBubbles([]);
-      }
+    if (category === "tech") {
+      setBubbles([]); // 初期化のみ、バブルは別途生成
+    } else {
+      setBubbles([]);
+    }
 
-      if (category === "other" && enhancedPerformanceSettings.maxSnails > 0) {
-        const snailCount = Math.min(
-          enhancedPerformanceSettings.maxSnails,
-          Math.ceil(containerWidth / 400),
-        );
+    if (category === "other") {
+      // 画面サイズに応じた固定数（1.5倍）
+      let snailCount = 5; // デフォルト（大画面）
+      if (containerWidth < 768) snailCount = 0;
+      else if (containerWidth < 1024) snailCount = 2;
+      else if (containerWidth < 1280) snailCount = 3;
 
+      if (snailCount > 0) {
         setSnails(
           Array.from({ length: snailCount }, (_, i) => ({
-            id: i,
+            id: Date.now() + i + 1000,
             ...generateRandomPosition(containerWidth, containerHeight, 60),
             isMoved: false,
           })),
@@ -384,20 +380,11 @@ const Category = () => {
       } else {
         setSnails([]);
       }
-    });
-
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = null;
-      }
-    };
+    } else {
+      setSnails([]);
+    }
   }, [
-    category,
-    enhancedPerformanceSettings.enableEffects,
-    enhancedPerformanceSettings.maxSpiders,
-    enhancedPerformanceSettings.maxSnails,
-    reducedMotion,
+    category, // カテゴリ変更時のみ
     isValidCategory,
     generateRandomPosition,
     generateRandomRotation,
@@ -469,84 +456,68 @@ const Category = () => {
     ? enhancedPerformanceSettings.bubbleInterval
     : null;
 
-  useInterval(generateBubble, bubbleInterval, [shouldGenerateBubbles]);
+  useInterval(generateBubble, bubbleInterval, [
+    category,
+    shouldGenerateBubbles,
+    enhancedPerformanceSettings.maxBubbles,
+    enhancedPerformanceSettings.bubbleInterval,
+    enhancedPerformanceSettings.enableEffects,
+    enhancedPerformanceSettings.enableAnimations,
+    reducedMotion,
+    isPageVisible,
+    performanceMetrics.isUnderStress,
+  ]);
 
-  // イベントハンドラー（最適化）
+  // スパイダークリックハンドラー
   const handleSpiderClick = useCallback(
-    (id: number) => {
-      if (!enhancedPerformanceSettings.enableAnimations) return;
-
-      setSpiderDisappearingIds((prev) => new Set([...prev, id]));
-
-      const animationDuration = getDisappearDuration(
-        enhancedPerformanceSettings.useLowQualityEffects,
-      );
+    (spiderId: number) => {
+      setSpiderDisappearingIds((prev) => new Set([...prev, spiderId]));
 
       setTimeout(() => {
-        setSpiders((prev) => prev.filter((spider) => spider.id !== id));
+        setSpiders((prev) => prev.filter((spider) => spider.id !== spiderId));
         setSpiderDisappearingIds((prev) => {
           const newSet = new Set(prev);
-          newSet.delete(id);
+          newSet.delete(spiderId);
           return newSet;
         });
-      }, animationDuration);
+      }, getDisappearDuration(reducedMotion));
     },
-    [
-      enhancedPerformanceSettings.enableAnimations,
-      enhancedPerformanceSettings.useLowQualityEffects,
-    ],
+    [reducedMotion],
   );
 
+  // カタツムリハンドラー
   const handleSnailClick = useCallback(
-    (id: number) => {
-      if (!enhancedPerformanceSettings.enableAnimations) return;
-
-      setSnailDisappearingIds((prev) => new Set([...prev, id]));
-
-      const animationDuration = getDisappearDuration(
-        enhancedPerformanceSettings.useLowQualityEffects,
-      );
+    (snailId: number) => {
+      setSnailDisappearingIds((prev) => new Set([...prev, snailId]));
 
       setTimeout(() => {
-        setSnails((prev) => prev.filter((snail) => snail.id !== id));
+        setSnails((prev) => prev.filter((snail) => snail.id !== snailId));
         setSnailDisappearingIds((prev) => {
           const newSet = new Set(prev);
-          newSet.delete(id);
+          newSet.delete(snailId);
           return newSet;
         });
-      }, animationDuration);
+      }, getDisappearDuration(reducedMotion));
     },
-    [
-      enhancedPerformanceSettings.enableAnimations,
-      enhancedPerformanceSettings.useLowQualityEffects,
-    ],
+    [reducedMotion],
   );
 
-  const handleSnailHover = useCallback(
-    (id: number) => {
-      if (!enhancedPerformanceSettings.enableAnimations) return;
-
-      setSnails((prev) =>
-        prev.map((snail) =>
-          snail.id === id ? { ...snail, isMoved: true } : snail,
-        ),
-      );
-    },
-    [enhancedPerformanceSettings.enableAnimations],
-  );
-
-  const handleBubbleEnd = useCallback((bubbleId: number) => {
-    setBubbles((prev) => prev.filter((x) => x.id !== bubbleId));
+  const handleSnailHover = useCallback((snailId: number) => {
+    setSnails((prev) =>
+      prev.map((snail) =>
+        snail.id === snailId ? { ...snail, isMoved: true } : snail,
+      ),
+    );
   }, []);
 
-  // レンダリング関数（最適化）
+  // バブル終了ハンドラー
+  const handleBubbleEnd = useCallback((bubbleId: number) => {
+    setBubbles((prev) => prev.filter((bubble) => bubble.id !== bubbleId));
+  }, []);
+
+  // スパイダーレイヤー（最適化レンダリング）
   const renderSpiderLayer = useCallback(() => {
-    if (
-      category !== "hobby" ||
-      spiders.length === 0 ||
-      !enhancedPerformanceSettings.enableEffects
-    )
-      return null;
+    if (category !== "hobby" || spiders.length === 0) return null;
 
     return (
       <div className="absolute inset-0 z-0 pointer-events-none">
@@ -555,31 +526,35 @@ const Category = () => {
             key={spider.id}
             type="button"
             onClick={() => handleSpiderClick(spider.id)}
-            aria-label="クモを消す"
+            aria-label="蜘蛛を消す"
             className={cn(
               "spider pointer-events-auto",
               spiderDisappearingIds.has(spider.id) && "spider-disappear",
               enhancedPerformanceSettings.useLowQualityEffects &&
                 "performance-reduced",
             )}
-            style={{
-              top: spider.top,
-              left: spider.left,
-              position: "absolute",
-              background: "none",
-              border: "none",
-              padding: 0,
-              cursor: "pointer",
-              transform: `rotate(${spider.rotate}deg)`,
-            }}
+            style={
+              {
+                top: spider.top,
+                left: spider.left,
+                position: "absolute",
+                background: "none",
+                border: "none",
+                padding: 0,
+                cursor: "pointer",
+                "--rotation": `${spider.rotate}deg`,
+              } as React.CSSProperties & { "--rotation": string }
+            }
           >
-            <img
-              src="/patterns/spider.svg"
-              alt=""
-              role="presentation"
-              draggable={false}
-              style={{ pointerEvents: "none", width: "50px", height: "50px" }}
-            />
+            <span className="spider-rotator">
+              <img
+                src="/patterns/spider.svg"
+                alt=""
+                role="presentation"
+                draggable={false}
+                style={{ pointerEvents: "none", width: "50px", height: "50px" }}
+              />
+            </span>
           </button>
         ))}
       </div>
@@ -590,16 +565,11 @@ const Category = () => {
     spiderDisappearingIds,
     handleSpiderClick,
     enhancedPerformanceSettings.useLowQualityEffects,
-    enhancedPerformanceSettings.enableEffects,
   ]);
 
+  // バブルレイヤー
   const renderBubbleLayer = useCallback(() => {
-    if (
-      category !== "tech" ||
-      bubbles.length === 0 ||
-      !enhancedPerformanceSettings.enableEffects
-    )
-      return null;
+    if (category !== "tech" || bubbles.length === 0) return null;
 
     return (
       <div className="absolute inset-0 z-0 pointer-events-none">
@@ -632,16 +602,11 @@ const Category = () => {
     bubbles,
     handleBubbleEnd,
     enhancedPerformanceSettings.useLowQualityEffects,
-    enhancedPerformanceSettings.enableEffects,
   ]);
 
+  // カタツムリレイヤー
   const renderSnailLayer = useCallback(() => {
-    if (
-      category !== "other" ||
-      snails.length === 0 ||
-      !enhancedPerformanceSettings.enableEffects
-    )
-      return null;
+    if (category !== "other" || snails.length === 0) return null;
 
     return (
       <div className="absolute inset-0 z-0 pointer-events-none">
@@ -654,7 +619,7 @@ const Category = () => {
             aria-label="カタツムリを消す"
             className={cn(
               "snail pointer-events-auto",
-              snail.isMoved && "snail-moved",
+              snail.isMoved && "snail-move",
               snailDisappearingIds.has(snail.id) && "snail-disappear",
               enhancedPerformanceSettings.useLowQualityEffects &&
                 "performance-reduced",
@@ -687,7 +652,6 @@ const Category = () => {
     handleSnailClick,
     handleSnailHover,
     enhancedPerformanceSettings.useLowQualityEffects,
-    enhancedPerformanceSettings.enableEffects,
   ]);
 
   // カテゴリバリデーション
