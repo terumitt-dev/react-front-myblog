@@ -55,8 +55,9 @@ export const generateRandomPosition = (
   const maxTopPx = Math.max(margin, containerHeight - margin);
 
   const leftPx = Math.random() * (maxLeftPx - margin) + margin;
+  const topPx = Math.random() * (maxTopPx - margin) + margin;
 
-  return { top: `${maxTopPx}px`, left: `${leftPx}px` };
+  return { top: `${topPx}px`, left: `${leftPx}px` };
 };
 
 export const generateRandomRotation = (): number => {
