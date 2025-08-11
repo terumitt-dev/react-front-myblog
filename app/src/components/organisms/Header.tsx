@@ -1,5 +1,5 @@
 // app/src/components/organisms/Header.tsx
-import ThemeToggle from "../molecules/ThemeToggle";
+import ThemeToggle from "@/components/molecules/ThemeToggle";
 
 const Header = () => {
   return (

@@ -1,6 +1,6 @@
 // app/src/components/layouts/Layout.tsx
 import type { ReactNode } from "react";
-import Header from "../organisms/Header";
+import Header from "@/components/organisms/Header";
 
 type Props = {
   children: ReactNode;

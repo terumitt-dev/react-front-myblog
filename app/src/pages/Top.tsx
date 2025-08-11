@@ -1,31 +1,35 @@
 // app/src/pages/Top.tsx
-import Layout from '@/components/layouts/Layout'
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import CategoryButtons from '@/components/organisms/CategoryButtons'
+import Layout from "@/components/layouts/Layout";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import CategoryButtons from "@/components/organisms/CategoryButtons";
 
 type Post = {
-  id: number
-  title: string
-  category: string
-}
+  id: number;
+  title: string;
+  category: string;
+};
 
 const Top = () => {
-  const [posts, setPosts] = useState<Post[]>([])
+  const [posts, setPosts] = useState<Post[]>([]);
 
-  /* 投稿データ読み込み */
   useEffect(() => {
-    const saved = localStorage.getItem('myblog-posts')
+    const saved = localStorage.getItem("myblog-posts");
     if (saved) {
-      const normalized = (JSON.parse(saved) as Post[]).map((p) => ({
-        ...p,
-        id: Number(p.id),
-      }))
-      setPosts(normalized)
+      try {
+        const normalized = (JSON.parse(saved) as Post[]).map((p) => ({
+          ...p,
+          id: Number(p.id),
+        }));
+        setPosts(normalized);
+      } catch (error) {
+        console.error("Posts loading error:", error);
+        setPosts([]);
+      }
     }
-  }, [])
+  }, []);
 
-  const latestArticles = posts.slice(-3).reverse()
+  const latestArticles = posts.slice(-3).reverse();
 
   return (
     <Layout>
@@ -44,33 +48,35 @@ const Top = () => {
           <CategoryButtons fullWidth />
         </section>
 
-        {/* 最新記事（グレー背景ボックス） */}
+        {/* 最新記事 */}
         <section className="space-y-4">
-          <div className="bg-[#D9D9D9] rounded-xl p-4 sm:p-6 overflow-hidden">
-            <h2 className="text-xl font-semibold text-center mb-4">
+          <div className="bg-gray-200 dark:bg-gray-800 rounded-xl p-4 sm:p-6 overflow-hidden">
+            <h2 className="text-xl font-semibold text-center mb-4 text-gray-900 dark:text-white">
               最新記事
             </h2>
 
             {latestArticles.length === 0 ? (
-              <p className="text-center text-gray-500">まだ投稿がありません。</p>
+              <p className="text-center text-gray-500 dark:text-gray-400">
+                まだ投稿がありません。
+              </p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full">
                 {latestArticles.map((article) => (
                   <div
                     key={article.id}
-                    className="bg-white rounded-xl shadow p-4 flex flex-col justify-between w-full"
+                    className="bg-white dark:bg-gray-700 rounded-xl shadow p-4 flex flex-col justify-between w-full min-w-0"
                   >
-                    <div>
-                      <h3 className="font-bold break-words">
+                    <div className="min-w-0">
+                      <h3 className="font-bold text-gray-900 dark:text-white break-words">
                         {article.title}
                       </h3>
-                      <p className="text-sm text-gray-600 mt-1 break-words">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 break-words">
                         カテゴリー: {article.category}
                       </p>
                     </div>
                     <Link
                       to={`/posts/${article.id}`}
-                      className="mt-4 text-blue-600 hover:underline self-start"
+                      className="mt-4 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline self-start focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded transition"
                     >
                       記事を読む →
                     </Link>
@@ -82,7 +88,7 @@ const Top = () => {
         </section>
       </div>
     </Layout>
-  )
-}
+  );
+};
 
-export default Top
+export default Top;

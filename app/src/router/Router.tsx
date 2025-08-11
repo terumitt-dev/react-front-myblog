@@ -18,7 +18,6 @@ function AdminPageWrapper() {
       fallback={({ error, resetErrorBoundary }) => (
         <div>
           <p>エラー: {error.message}</p>
-          {/** biome-ignore lint/a11y/useButtonType: <explanation> */}
           <button
             type="button"
             onClick={() => {

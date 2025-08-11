@@ -53,7 +53,9 @@ const Login = () => {
   return (
     <Layout>
       <div className={cn("p-6 space-y-4 max-w-md mx-auto")}>
-        <h1 className={cn("text-xl font-bold")}>ログイン</h1>
+        <h1 className={cn("text-xl font-bold text-gray-900 dark:text-white")}>
+          ログイン
+        </h1>
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -66,7 +68,13 @@ const Login = () => {
             placeholder="メールアドレス"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className={cn("border p-2 w-full")}
+            className={cn(
+              "border border-gray-300 dark:border-gray-600 p-2 w-full rounded",
+              "bg-white dark:bg-gray-700 text-gray-900 dark:text-white",
+              "placeholder-gray-500 dark:placeholder-gray-400",
+              "focus:ring-2 focus:ring-blue-500 focus:border-blue-500",
+              "transition-colors",
+            )}
             disabled={isDisabled}
           />
           <input
@@ -74,16 +82,27 @@ const Login = () => {
             placeholder="パスワード"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className={cn("border p-2 w-full")}
+            className={cn(
+              "border border-gray-300 dark:border-gray-600 p-2 w-full rounded",
+              "bg-white dark:bg-gray-700 text-gray-900 dark:text-white",
+              "placeholder-gray-500 dark:placeholder-gray-400",
+              "focus:ring-2 focus:ring-blue-500 focus:border-blue-500",
+              "transition-colors",
+            )}
             disabled={isDisabled}
           />
-          {error && <p className={cn("text-red-600")}>{error}</p>}
+          {error && (
+            <p className={cn("text-red-600 dark:text-red-400 text-sm")}>
+              {error}
+            </p>
+          )}
           <button
             type="submit"
             disabled={isDisabled}
             className={cn(
               "w-full px-4 py-2 rounded text-white",
-              "bg-blue-600 hover:bg-blue-700",
+              "bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800",
+              "focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
               "transition duration-200",
               isDisabled && "opacity-50 cursor-not-allowed",
             )}

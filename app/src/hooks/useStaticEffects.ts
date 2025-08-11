@@ -1,8 +1,9 @@
+// app/src/hooks/useStaticEffects.ts
 import { usePosts } from "@/hooks/usePosts";
 import { useSpiderEffects } from "@/hooks/useSpiderEffects";
 import { useSnailEffects } from "@/hooks/useSnailEffects";
 import { useCategoryValidation } from "@/hooks/useCategoryValidation";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useAccessibility } from "@/hooks/useAccessibility";
 
 // 型を再エクスポート（既存のインポートとの互換性のため）
 export type { Post } from "@/hooks/usePosts";
@@ -14,19 +15,22 @@ export type { Snail } from "@/hooks/useSnailEffects";
  * 各専用フックを組み合わせて使用
  */
 export const useStaticEffects = (category: string | undefined) => {
-  const reducedMotion = useReducedMotion();
+  const a11yState = useAccessibility();
   const { posts } = usePosts(category);
   const { isValidCategory } = useCategoryValidation();
   const { spiders, spiderDisappearingIds, handleSpiderClick } =
-    useSpiderEffects(category, reducedMotion);
+    useSpiderEffects(category, a11yState.reducedMotion);
   const { snails, snailDisappearingIds, handleSnailClick, handleSnailHover } =
-    useSnailEffects(category, reducedMotion);
+    useSnailEffects(category, a11yState.reducedMotion);
 
   return {
     posts,
     spiders,
     snails,
-    reducedMotion,
+    reducedMotion: a11yState.reducedMotion,
+    highContrast: a11yState.highContrast,
+    screenReader: a11yState.screenReader,
+    focusVisible: a11yState.focusVisible,
     spiderDisappearingIds,
     snailDisappearingIds,
     handleSpiderClick,

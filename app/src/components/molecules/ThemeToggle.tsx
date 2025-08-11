@@ -1,15 +1,25 @@
 // app/src/components/molecules/ThemeToggle.tsx
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme } from "@/context/ThemeContext";
 import { Sun, Moon } from "lucide-react";
+import { useStaticEffects } from "@/hooks/useStaticEffects";
 
 const ThemeToggle = () => {
   const { theme, toggleTheme } = useTheme();
+  // useStaticEffectsからアクセシビリティ状態を取得
+  const { highContrast } = useStaticEffects(undefined);
+
+  // 高コントラストモード用のクラス
+  const buttonClass = `p-2 rounded-full border transition-colors ${
+    highContrast
+      ? "border-black dark:border-white bg-white dark:bg-gray-900"
+      : "border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800"
+  } hover:bg-gray-100 dark:hover:bg-gray-700`;
 
   return (
     <button
       type="button"
       onClick={toggleTheme}
-      className="p-2 rounded-full border border-gray-300 dark:border-gray-600"
+      className={buttonClass}
       aria-label={
         theme === "dark"
           ? "ライトモードに切り替える"
@@ -22,9 +32,21 @@ const ThemeToggle = () => {
       }
     >
       {theme === "dark" ? (
-        <Sun className="text-yellow-300" aria-hidden="true" />
+        <Sun
+          className={highContrast ? "text-yellow-500" : "text-yellow-300"}
+          aria-hidden="true"
+          size={20}
+        />
       ) : (
-        <Moon aria-hidden="true" />
+        <Moon
+          className={
+            highContrast
+              ? "text-blue-900 dark:text-blue-100"
+              : "text-gray-700 dark:text-gray-300"
+          }
+          aria-hidden="true"
+          size={20}
+        />
       )}
     </button>
   );

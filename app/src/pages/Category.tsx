@@ -190,12 +190,12 @@ const Category = () => {
   // カテゴリバリデーション
   if (!isValidCategory(category)) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800">
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200">
             無効なカテゴリです
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-gray-600 dark:text-gray-400 mt-2">
             有効なカテゴリ: hobby, tech, other
           </p>
           <BackToHomeButton className="mt-4" />
@@ -219,10 +219,10 @@ const Category = () => {
 
       <main className="relative z-10 container mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-4">
+          <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-200 mb-4">
             {categoryConfig.name}のページ
           </h1>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
             {posts.length > 0
               ? `${posts.length}件の投稿があります`
               : "まだ投稿がありません"}
@@ -236,20 +236,20 @@ const Category = () => {
             {posts.map((post) => (
               <article
                 key={post.id}
-                className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+                className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow"
               >
                 <div className="p-6">
-                  <h2 className="text-xl font-semibold break-words mb-2">
+                  <h2 className="text-xl font-semibold break-words mb-2 text-gray-900 dark:text-white">
                     <span
                       dangerouslySetInnerHTML={{
                         __html: displayTextSafe(post.title),
                       }}
                     />
                   </h2>
-                  <p className="text-gray-700 mb-4 break-words">
+                  <p className="text-gray-700 dark:text-gray-300 mb-4 break-words">
                     {displayTextPlain(post.content).slice(0, 100)}...
                   </p>
-                  <div className="flex justify-between items-center text-sm text-gray-500">
+                  <div className="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
                     <span>
                       {post.createdAt
                         ? new Date(post.createdAt).toLocaleDateString()
@@ -257,7 +257,7 @@ const Category = () => {
                     </span>
                     <Link
                       to={`/posts/${post.id}`}
-                      className="text-blue-600 hover:text-blue-800 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded transition"
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded transition"
                     >
                       読む →
                     </Link>

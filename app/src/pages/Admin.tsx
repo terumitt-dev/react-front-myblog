@@ -184,16 +184,18 @@ const Admin = () => {
     <Layout>
       <div className="p-6 space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">投稿管理（Admin）</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            投稿管理（Admin）
+          </h1>
           <LogoutButton onClick={handleLogout} />
         </div>
 
         {/* 投稿フォーム */}
-        <div className="bg-gray-200 rounded-xl p-6">
+        <div className="bg-gray-200 dark:bg-gray-800 rounded-xl p-6">
           <div className="space-y-4">
             {error && (
               <div
-                className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded"
+                className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-200 px-4 py-3 rounded"
                 role="alert"
               >
                 <span className="block sm:inline">{error}</span>
@@ -203,7 +205,7 @@ const Admin = () => {
             <div>
               <label
                 htmlFor="title-input"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
                 タイトル（最大100文字）
               </label>
@@ -212,12 +214,15 @@ const Admin = () => {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="記事のタイトルを入力してください"
-                className="border border-gray-300 rounded-md p-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="border border-gray-300 dark:border-gray-600 rounded-md p-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                 maxLength={100}
                 required
                 aria-describedby="title-help"
               />
-              <div id="title-help" className="text-sm text-gray-500 mt-1">
+              <div
+                id="title-help"
+                className="text-sm text-gray-500 dark:text-gray-400 mt-1"
+              >
                 残り{100 - title.length}文字
               </div>
             </div>
@@ -225,7 +230,7 @@ const Admin = () => {
             <div>
               <label
                 htmlFor="content-input"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
                 本文（最大5000文字）
               </label>
@@ -234,13 +239,16 @@ const Admin = () => {
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="記事の本文を入力してください"
-                className="border border-gray-300 rounded-md p-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="border border-gray-300 dark:border-gray-600 rounded-md p-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                 maxLength={5000}
                 rows={10}
                 required
                 aria-describedby="content-help"
               />
-              <div id="content-help" className="text-sm text-gray-500 mt-1">
+              <div
+                id="content-help"
+                className="text-sm text-gray-500 dark:text-gray-400 mt-1"
+              >
                 残り{5000 - content.length}文字
               </div>
             </div>
@@ -248,7 +256,7 @@ const Admin = () => {
             <div>
               <label
                 htmlFor="category-select"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
                 カテゴリ
               </label>
@@ -256,7 +264,7 @@ const Admin = () => {
                 id="category-select"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="border border-gray-300 dark:border-gray-600 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 required
               >
                 <option value="tech">Tech</option>
@@ -301,24 +309,29 @@ const Admin = () => {
         </div>
 
         {/* 投稿一覧 */}
-        <div className="bg-gray-200 rounded-xl p-6">
-          <h2 className="text-xl font-semibold mb-4">
+        <div className="bg-gray-200 dark:bg-gray-800 rounded-xl p-6">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
             現在の投稿一覧（{posts.length}件）
           </h2>
           {posts.length === 0 ? (
-            <p className="text-gray-600">まだ投稿がありません。</p>
+            <p className="text-gray-600 dark:text-gray-400">
+              まだ投稿がありません。
+            </p>
           ) : (
             <div className="space-y-4">
               {posts.map((post) => {
                 const isOpen = openPostIds.includes(post.id);
                 return (
-                  <div key={post.id} className="bg-white rounded-xl shadow">
+                  <div
+                    key={post.id}
+                    className="bg-white dark:bg-gray-700 rounded-xl shadow"
+                  >
                     <button
                       type="button"
                       onClick={() => togglePost(post.id)}
                       className={cn(
                         "w-full text-left p-4 rounded-xl",
-                        "hover:bg-gray-50 focus:bg-gray-50",
+                        "hover:bg-gray-50 dark:hover:bg-gray-600 focus:bg-gray-50 dark:focus:bg-gray-600",
                         "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset",
                         "transition",
                       )}
@@ -327,30 +340,30 @@ const Admin = () => {
                     >
                       <div className="space-y-2">
                         <div className="flex justify-between items-start">
-                          <h3 className="font-semibold text-lg break-words flex-1">
+                          <h3 className="font-semibold text-lg break-words flex-1 text-gray-900 dark:text-white">
                             <span
                               dangerouslySetInnerHTML={{
                                 __html: displayTextSafe(post.title),
                               }}
                             />
                           </h3>
-                          <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
+                          <span className="text-xs text-gray-500 dark:text-gray-400 ml-2 flex-shrink-0">
                             {isOpen ? "▼" : "▶"}
                           </span>
                         </div>
 
-                        <div className="flex gap-4 text-sm text-gray-600">
+                        <div className="flex gap-4 text-sm text-gray-600 dark:text-gray-400">
                           <span>カテゴリ: {post.category}</span>
                           <span>
                             {post.createdAt
                               ? new Date(post.createdAt).toLocaleDateString()
                               : "日付不明"}
-                          </span>{" "}
+                          </span>
                         </div>
 
                         <div
                           id={`post-content-${post.id}`}
-                          className="text-gray-700 break-words whitespace-pre-line"
+                          className="text-gray-700 dark:text-gray-300 break-words whitespace-pre-line"
                         >
                           {isOpen ? (
                             <div
@@ -379,7 +392,7 @@ const Admin = () => {
                         <Link
                           to={`/posts/${post.id}`}
                           className={cn(
-                            "text-blue-600 hover:text-blue-800 hover:underline rounded",
+                            "text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline rounded",
                             "focus:outline-none focus:ring-2",
                             "focus:ring-blue-500 focus:ring-offset-1",
                             "transition",
@@ -391,7 +404,7 @@ const Admin = () => {
                           type="button"
                           onClick={() => handleEdit(post)}
                           className={cn(
-                            "text-green-600 hover:text-green-800 hover:underline rounded",
+                            "text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 hover:underline rounded",
                             "focus:outline-none focus:ring-2",
                             "focus:ring-green-500 focus:ring-offset-1",
                             "transition",
@@ -412,7 +425,7 @@ const Admin = () => {
                             }
                           }}
                           className={cn(
-                            "text-red-600 hover:text-red-800 hover:underline rounded",
+                            "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 hover:underline rounded",
                             "focus:outline-none focus:ring-2",
                             "focus:ring-red-500 focus:ring-offset-1",
                             "transition",

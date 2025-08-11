@@ -101,3 +101,23 @@ select:focus,
 .skip-link:focus {
     top: 6px;
 }
+
+/* フォーカス可視性フラグに基づく強化スタイル */
+[data-focus-visible="true"] *:focus {
+    outline: 3px solid #3b82f6 !important; /* blue-500、既存と統一 */
+    outline-offset: 3px !important;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3) !important;
+}
+
+/* スクリーンリーダー用の追加クラス */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
