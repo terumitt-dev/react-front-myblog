@@ -1,33 +1,21 @@
-// src/components/organisms/CategoryButtons.tsx
-import { useNavigate } from "react-router-dom";
-import { CATEGORY_COLORS } from "../utils/colors";
+// app/src/components/organisms/CategoryButtons.tsx
+import { Link } from "react-router-dom";
+import { CATEGORY_COLORS } from "@/components/utils/colors";
+import { cn } from "@/components/utils/cn";
 
 type Props = {
-  /** true のとき親要素の幅いっぱいに押し広げる */
   fullWidth?: boolean;
+  className?: string;
 };
 
-// シンプルなcn関数（shadcn/uiパターンを参考）
-function cn(...classes: (string | undefined | null | false)[]): string {
-  return classes.filter(Boolean).join(" ");
-}
-
-const CategoryButtons = ({ fullWidth = false }: Props) => {
-  const navigate = useNavigate();
-
+const CategoryButtons = ({ fullWidth = false, className }: Props) => {
   return (
-    <div
-      className={cn(
-        "flex gap-x-4",
-        fullWidth ? "justify-between w-full" : "justify-center",
-      )}
-    >
+    <div className={cn("flex gap-4", fullWidth ? "w-full" : "", className)}>
       {/* しゅみ */}
-      <button
-        type="button"
-        onClick={() => navigate("/category/hobby")}
+      <Link
+        to="/category/hobby"
         className={cn(
-          "py-2 rounded text-black shadow hover:opacity-90 transition",
+          "py-2 rounded text-black shadow hover:opacity-90 transition text-center block",
           "focus:outline-none focus:ring-2 focus:ring-offset-2",
           fullWidth ? "flex-1" : "px-6",
           CATEGORY_COLORS.hobby.bg,
@@ -36,14 +24,13 @@ const CategoryButtons = ({ fullWidth = false }: Props) => {
         aria-label="趣味カテゴリーに移動"
       >
         {CATEGORY_COLORS.hobby.name}
-      </button>
+      </Link>
 
       {/* テック */}
-      <button
-        type="button"
-        onClick={() => navigate("/category/tech")}
+      <Link
+        to="/category/tech"
         className={cn(
-          "py-2 rounded text-black shadow hover:opacity-90 transition",
+          "py-2 rounded text-black shadow hover:opacity-90 transition text-center block",
           "focus:outline-none focus:ring-2 focus:ring-offset-2",
           fullWidth ? "flex-1" : "px-6",
           CATEGORY_COLORS.tech.bg,
@@ -52,14 +39,13 @@ const CategoryButtons = ({ fullWidth = false }: Props) => {
         aria-label="テックカテゴリーに移動"
       >
         {CATEGORY_COLORS.tech.name}
-      </button>
+      </Link>
 
       {/* その他 */}
-      <button
-        type="button"
-        onClick={() => navigate("/category/other")}
+      <Link
+        to="/category/other"
         className={cn(
-          "py-2 rounded text-black shadow hover:opacity-90 transition",
+          "py-2 rounded text-black shadow hover:opacity-90 transition text-center block",
           "focus:outline-none focus:ring-2 focus:ring-offset-2",
           fullWidth ? "flex-1" : "px-6",
           CATEGORY_COLORS.other.bg,
@@ -68,7 +54,7 @@ const CategoryButtons = ({ fullWidth = false }: Props) => {
         aria-label="その他カテゴリーに移動"
       >
         {CATEGORY_COLORS.other.name}
-      </button>
+      </Link>
     </div>
   );
 };

@@ -1,29 +1,24 @@
-// src/components/atoms/Button.tsx
+// app/src/components/atoms/Button.tsx
+import { cn } from "@/components/utils/cn";
+
 type Props = {
   label: string;
-  onClick?: () => void;
+  onClick: () => void;
   variant?: "primary" | "secondary" | "danger";
-  type?: "button" | "submit" | "reset";
-  className?: string;
   disabled?: boolean;
+  className?: string;
 };
-
-// シンプルなcn関数（shadcn/uiパターンを参考）
-function cn(...classes: (string | undefined | null | false)[]): string {
-  return classes.filter(Boolean).join(" ");
-}
 
 const Button = ({
   label,
   onClick,
   variant = "primary",
-  type = "button",
-  className = "",
   disabled = false,
+  className,
 }: Props) => {
   return (
     <button
-      type={type}
+      type="button"
       onClick={onClick}
       disabled={disabled}
       className={cn(

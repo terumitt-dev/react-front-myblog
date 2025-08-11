@@ -4,6 +4,6 @@ export const LoadingFallback = () => {
   return null; // 最小限の実装
 };
 
-export const ComponentErrorFallback = ({ error }: { error: Error }) => {
+export const ComponentErrorFallback = () => {
   return null; // 最小限の実装
 };

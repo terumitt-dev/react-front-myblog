@@ -1,5 +1,5 @@
 // src/router/Router.tsx
-import React, { useState } from "react";
+import { useState } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Top from "@/pages/Top";
 import Category from "@/pages/Category";

@@ -1,13 +1,9 @@
 // app/src/pages/Login.tsx
 import Layout from "@/components/layouts/Layout";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-
-// シンプルなcn関数（shadcn/uiパターンを参考）
-function cn(...classes: (string | undefined | null | false)[]): string {
-  return classes.filter(Boolean).join(" ");
-}
+import { cn } from "@/components/utils/cn";
 
 const Login = () => {
   const { login } = useAuth();

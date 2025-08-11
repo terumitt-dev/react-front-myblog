@@ -7,18 +7,14 @@ import BackToHomeButton from "@/components/molecules/BackToHomeButton";
 import CommentStartButton from "@/components/molecules/CommentStartButton";
 import { displayTextSafe } from "@/components/utils/sanitizer";
 import { safeJsonParse } from "@/components/utils/errorHandler";
+import { cn } from "@/components/utils/cn";
 
-// シンプルなcn関数（shadcn/uiパターンを参考）
-function cn(...classes: (string | undefined | null | false)[]): string {
-  return classes.filter(Boolean).join(" ");
-}
-
+// 型定義
 type Post = {
   id: number;
   title: string;
   content: string;
   category: string;
-  createdAt: string;
 };
 
 // JSONから読み込む際の型（idが文字列の場合もある）

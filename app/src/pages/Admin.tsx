@@ -14,12 +14,9 @@ import {
   handleStorageError,
   safeJsonParse,
 } from "@/components/utils/errorHandler";
+import { cn } from "@/components/utils/cn";
 
-// シンプルなcn関数（shadcn/uiパターンを参考）
-function cn(...classes: (string | undefined | null | false)[]): string {
-  return classes.filter(Boolean).join(" ");
-}
-
+// 型定義
 type Post = {
   id: number;
   title: string;

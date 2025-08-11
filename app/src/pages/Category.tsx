@@ -1,21 +1,17 @@
 // app/src/pages/Category.tsx
-import { useCallback, useState, useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
-import Header from "@/components/organisms/Header";
-import BackToHomeButton from "@/components/molecules/BackToHomeButton";
+import { CATEGORY_COLORS } from "@/components/utils/colors";
 import {
   displayTextSafe,
   displayTextPlain,
 } from "@/components/utils/sanitizer";
-import { CATEGORY_COLORS } from "@/components/utils/colors";
+import BackToHomeButton from "@/components/molecules/BackToHomeButton";
 import { useStaticEffects } from "@/hooks/useStaticEffects";
 import { useBubbleGeneration } from "@/hooks/useBubbleGeneration";
-import "@/pages/Category.css";
-
-// シンプルなcn関数
-function cn(...classes: (string | undefined | null | false)[]): string {
-  return classes.filter(Boolean).join(" ");
-}
+import { cn } from "@/components/utils/cn";
+import ThemeToggle from "@/components/molecules/ThemeToggle";
+import "./Category.css";
 
 const Category = () => {
   const { category } = useParams<{ category: string }>();
@@ -191,6 +187,10 @@ const Category = () => {
   if (!isValidCategory(category)) {
     return (
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
+        <header className="absolute top-0 left-0 right-0 flex justify-between items-center px-4 py-2">
+          <h1 className="text-xl font-bold">My Blog</h1>
+          <ThemeToggle />
+        </header>
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200">
             無効なカテゴリです
@@ -208,9 +208,16 @@ const Category = () => {
 
   return (
     <div
-      className={cn("min-h-screen relative overflow-hidden", categoryConfig.bg)}
+      className={cn(
+        "min-h-screen relative overflow-hidden text-gray-800 dark:text-gray-100",
+        categoryConfig.bg,
+      )}
     >
-      <Header />
+      {/* ヘッダー */}
+      <header className="flex justify-between items-center px-4 py-2">
+        <h1 className="text-xl font-bold">My Blog</h1>
+        <ThemeToggle />
+      </header>
 
       {/* エフェクトレイヤー */}
       {renderSpiderLayer()}

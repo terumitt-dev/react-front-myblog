@@ -15,7 +15,6 @@ export const MemoizedHeader = memo(Header);
 
 // 記事カードのメモ化版
 interface ArticleCardProps {
-  id: number;
   title: string;
   category: string;
   content?: string;
@@ -25,7 +24,6 @@ interface ArticleCardProps {
 
 export const MemoizedArticleCard = memo(
   ({
-    id,
     title,
     category,
     content,
@@ -54,7 +52,6 @@ export const MemoizedArticleCard = memo(
 // 投稿リストのメモ化版
 interface PostListProps {
   posts: Array<{
-    id: number;
     title: string;
     category: string;
     content?: string;
@@ -66,12 +63,8 @@ interface PostListProps {
 export const MemoizedPostList = memo(
   ({ posts, showContent = false }: PostListProps) => (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {posts.map((post) => (
-        <MemoizedArticleCard
-          key={post.id}
-          {...post}
-          showContent={showContent}
-        />
+      {posts.map((post, index) => (
+        <MemoizedArticleCard key={index} {...post} showContent={showContent} />
       ))}
     </div>
   ),
