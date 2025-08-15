@@ -5,6 +5,11 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { FORM_STYLES } from "@/components/utils/styles";
 import { cn } from "@/components/utils/cn";
+import {
+  CONTAINER_SIZES,
+  RESPONSIVE_SPACING,
+  RESPONSIVE_TEXT,
+} from "@/constants/responsive";
 
 const Login = () => {
   const { login } = useAuth();
@@ -49,8 +54,19 @@ const Login = () => {
 
   return (
     <Layout>
-      <div className={cn("p-6 space-y-4 max-w-md mx-auto")}>
-        <h1 className={cn("text-xl font-bold text-gray-900 dark:text-white")}>
+      <div
+        className={cn(
+          CONTAINER_SIZES.narrow,
+          RESPONSIVE_SPACING.section,
+          "space-y-4",
+        )}
+      >
+        <h1
+          className={cn(
+            RESPONSIVE_TEXT.heading2,
+            "font-bold text-gray-900 dark:text-white",
+          )}
+        >
           ログイン
         </h1>
         <form
@@ -77,7 +93,12 @@ const Login = () => {
             disabled={isDisabled}
           />
           {error && (
-            <p className={cn("text-red-600 dark:text-red-400 text-sm")}>
+            <p
+              className={cn(
+                "text-red-600 dark:text-red-400",
+                RESPONSIVE_TEXT.small,
+              )}
+            >
               {error}
             </p>
           )}

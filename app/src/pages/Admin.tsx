@@ -17,6 +17,12 @@ import {
   safeJsonParse,
 } from "@/components/utils/errorHandler";
 import { cn } from "@/components/utils/cn";
+import {
+  LAYOUT_PATTERNS,
+  RESPONSIVE_SPACING,
+  RESPONSIVE_TEXT,
+  RESPONSIVE_FLEX,
+} from "@/constants/responsive";
 
 // 型定義
 type Post = {
@@ -200,16 +206,26 @@ const Admin = () => {
 
   return (
     <Layout>
-      <div className="p-6 space-y-6">
+      <div className={cn(LAYOUT_PATTERNS.formContainer, "space-y-6")}>
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1
+            className={cn(
+              RESPONSIVE_TEXT.heading2,
+              "font-bold text-gray-900 dark:text-white",
+            )}
+          >
             投稿管理（Admin）
           </h1>
           <LogoutButton onClick={handleLogout} />
         </div>
 
         {/* 投稿フォーム */}
-        <div className="bg-gray-200 dark:bg-gray-800 rounded-xl p-6">
+        <div
+          className={cn(
+            "bg-gray-200 dark:bg-gray-800 rounded-xl",
+            RESPONSIVE_SPACING.section,
+          )}
+        >
           <div className="space-y-4">
             {error && (
               <div
@@ -282,7 +298,9 @@ const Admin = () => {
               </select>
             </div>
 
-            <div className="flex gap-4">
+            <div
+              className={cn(RESPONSIVE_FLEX.start, RESPONSIVE_SPACING.gapSmall)}
+            >
               <button
                 type="button"
                 onClick={handleSubmit}
@@ -318,8 +336,18 @@ const Admin = () => {
         </div>
 
         {/* 投稿一覧 */}
-        <div className="bg-gray-200 dark:bg-gray-800 rounded-xl p-6">
-          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+        <div
+          className={cn(
+            "bg-gray-200 dark:bg-gray-800 rounded-xl",
+            RESPONSIVE_SPACING.section,
+          )}
+        >
+          <h2
+            className={cn(
+              RESPONSIVE_TEXT.heading3,
+              "font-semibold mb-4 text-gray-900 dark:text-white",
+            )}
+          >
             現在の投稿一覧（{posts.length}件）
           </h2>
           {posts.length === 0 ? (
@@ -362,7 +390,14 @@ const Admin = () => {
                           </span>
                         </div>
 
-                        <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
+                        <div
+                          className={cn(
+                            RESPONSIVE_FLEX.start,
+                            "flex-wrap",
+                            RESPONSIVE_SPACING.gapSmall,
+                            "text-sm text-gray-600 dark:text-gray-400",
+                          )}
+                        >
                           <span className="whitespace-nowrap">
                             カテゴリ: {post.category}
                           </span>
@@ -399,7 +434,11 @@ const Admin = () => {
                     {/* アクション部分 */}
                     <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-600 pt-3 mt-3">
                       <nav
-                        className="flex flex-wrap gap-4"
+                        className={cn(
+                          RESPONSIVE_FLEX.start,
+                          "flex-wrap",
+                          RESPONSIVE_SPACING.gapSmall,
+                        )}
                         aria-label="投稿操作"
                         role="toolbar"
                       >

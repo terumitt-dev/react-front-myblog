@@ -8,6 +8,13 @@ import CommentStartButton from "@/components/molecules/CommentStartButton";
 import { displayTextSafe } from "@/components/utils/sanitizer";
 import { safeJsonParse } from "@/components/utils/errorHandler";
 import { cn } from "@/components/utils/cn";
+import {
+  LAYOUT_PATTERNS,
+  RESPONSIVE_GRID,
+  RESPONSIVE_SPACING,
+  RESPONSIVE_TEXT,
+  RESPONSIVE_FLEX,
+} from "@/constants/responsive";
 
 // 型定義
 type Post = {
@@ -132,12 +139,18 @@ const PostDetail = () => {
     <Layout>
       <div
         className={cn(
-          "bg-gray-100 dark:bg-gray-800 max-w-5xl w-full mx-auto rounded-xl overflow-hidden",
-          "px-4 sm:px-6 py-8",
+          "bg-gray-100 dark:bg-gray-800 w-full rounded-xl overflow-hidden py-8",
+          LAYOUT_PATTERNS.mainContainer,
         )}
       >
         {/* 2カラム */}
-        <div className={cn("grid gap-8", "grid-cols-1 md:grid-cols-3")}>
+        <div
+          className={cn(
+            "grid",
+            "grid-cols-1 md:grid-cols-3",
+            RESPONSIVE_SPACING.gap,
+          )}
+        >
           {/* ===== 記事エリア ===== */}
           <article
             className={cn(
@@ -148,7 +161,7 @@ const PostDetail = () => {
             <header>
               <h1
                 className={cn(
-                  "text-3xl font-bold mb-3 break-words text-gray-900 dark:text-white",
+                  `${RESPONSIVE_TEXT.heading1} font-bold mb-3 break-words text-gray-900 dark:text-white`,
                 )}
               >
                 <span
@@ -183,7 +196,9 @@ const PostDetail = () => {
               "w-full bg-white dark:bg-gray-700 rounded-xl shadow p-6 space-y-4",
             )}
           >
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <h2
+              className={`${RESPONSIVE_TEXT.heading2} font-semibold text-gray-900 dark:text-white`}
+            >
               コメント一覧
             </h2>
 
@@ -222,7 +237,13 @@ const PostDetail = () => {
         </div>
 
         {/* ===== ボタン列 ===== */}
-        <div className={cn("flex gap-4 mt-8", "flex-col sm:flex-row")}>
+        <div
+          className={cn(
+            RESPONSIVE_FLEX.columnToRow,
+            RESPONSIVE_SPACING.gapSmall,
+            "mt-8",
+          )}
+        >
           <CommentStartButton
             onClick={() => setIsWriting(true)}
             className="w-full sm:basis-[60%]"
