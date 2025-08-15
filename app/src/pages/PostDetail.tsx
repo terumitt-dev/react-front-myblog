@@ -10,7 +10,6 @@ import { safeJsonParse } from "@/components/utils/errorHandler";
 import { cn } from "@/components/utils/cn";
 import {
   LAYOUT_PATTERNS,
-  RESPONSIVE_GRID,
   RESPONSIVE_SPACING,
   RESPONSIVE_TEXT,
   RESPONSIVE_FLEX,
@@ -97,17 +96,27 @@ const PostDetail = () => {
   // ========== 全ての早期リターンを最後に配置 ==========
   if (!isValidId) {
     return (
-      <div className="p-6 text-gray-900 dark:text-white">
-        不正な記事IDです。
-      </div>
+      <Layout>
+        <main role="main" aria-labelledby="error-title">
+          <div className="p-6 text-gray-900 dark:text-white">
+            <h1 id="error-title">エラー</h1>
+            <p role="alert">不正な記事IDです。</p>
+          </div>
+        </main>
+      </Layout>
     );
   }
 
   if (!post) {
     return (
-      <div className="p-6 text-gray-900 dark:text-white">
-        記事が見つかりませんでした。
-      </div>
+      <Layout>
+        <main role="main" aria-labelledby="not-found-title">
+          <div className="p-6 text-gray-900 dark:text-white">
+            <h1 id="not-found-title">記事が見つかりません</h1>
+            <p role="alert">記事が見つかりませんでした。</p>
+          </div>
+        </main>
+      </Layout>
     );
   }
 
@@ -137,7 +146,9 @@ const PostDetail = () => {
 
   return (
     <Layout>
-      <div
+      <main
+        role="main"
+        aria-labelledby="post-title"
         className={cn(
           "bg-gray-100 dark:bg-gray-800 w-full rounded-xl overflow-hidden py-8",
           LAYOUT_PATTERNS.mainContainer,
@@ -157,9 +168,11 @@ const PostDetail = () => {
               "w-full bg-white dark:bg-gray-700 rounded-xl shadow p-6 space-y-6",
               "md:col-span-2",
             )}
+            aria-labelledby="post-title"
           >
             <header>
               <h1
+                id="post-title"
                 className={cn(
                   `${RESPONSIVE_TEXT.heading1} font-bold mb-3 break-words text-gray-900 dark:text-white`,
                 )}
@@ -175,10 +188,14 @@ const PostDetail = () => {
                   "inline-block text-sm font-semibold",
                   "px-3 py-1 rounded bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200",
                 )}
+                aria-label={`カテゴリー: ${post.category}`}
               >
                 {post.category}
               </span>
-              <hr className="mt-4 border-gray-300 dark:border-gray-600" />
+              <hr
+                className="mt-4 border-gray-300 dark:border-gray-600"
+                role="separator"
+              />
             </header>
             <div
               className={cn(
@@ -187,84 +204,113 @@ const PostDetail = () => {
               dangerouslySetInnerHTML={{
                 __html: displayTextSafe(post.content),
               }}
+              role="main"
+              aria-label="記事本文"
             />
           </article>
 
           {/* ===== コメント一覧 ===== */}
-          <section
+          <aside
             className={cn(
               "w-full bg-white dark:bg-gray-700 rounded-xl shadow p-6 space-y-4",
             )}
+            aria-labelledby="comments-heading"
+            role="complementary"
           >
             <h2
+              id="comments-heading"
               className={`${RESPONSIVE_TEXT.heading2} font-semibold text-gray-900 dark:text-white`}
             >
-              コメント一覧
+              コメント一覧 ({comments.length})
             </h2>
 
             {comments.length === 0 ? (
-              <p className="text-gray-600 dark:text-gray-400">
+              <p
+                className="text-gray-600 dark:text-gray-400"
+                role="status"
+                aria-live="polite"
+              >
                 コメントはまだありません。
               </p>
             ) : (
-              <div className="space-y-3">
+              <ul
+                className="space-y-3"
+                role="list"
+                aria-label={`${comments.length}件のコメント`}
+              >
                 {processedComments.map((c) => {
                   const isOpen = openCommentIds.includes(c.id);
                   return (
-                    // biome-ignore lint/a11y/useSemanticElements: <explanation>
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => toggleComment(c.id)}
-                      className={cn(
-                        "cursor-pointer p-4 rounded shadow-sm text-sm w-full text-left",
-                        "bg-gray-50 dark:bg-gray-600 hover:bg-gray-100 dark:hover:bg-gray-500",
-                        "transition break-words",
-                      )}
-                    >
-                      <p className="font-semibold text-gray-900 dark:text-white">
-                        {c.user}
-                      </p>
-                      <p className="text-gray-700 dark:text-gray-300 mt-1">
-                        {isOpen ? c.content : c.displayContent}
-                      </p>
-                    </button>
+                    <li key={c.id} role="listitem">
+                      <button
+                        type="button"
+                        onClick={() => toggleComment(c.id)}
+                        className={cn(
+                          "cursor-pointer p-4 rounded shadow-sm text-sm w-full text-left",
+                          "bg-gray-50 dark:bg-gray-600 hover:bg-gray-100 dark:hover:bg-gray-500",
+                          "transition break-words focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1",
+                        )}
+                        aria-expanded={isOpen}
+                        aria-label={`${c.user}さんのコメント${isOpen ? "（展開中）" : "（クリックで展開）"}`}
+                      >
+                        <p className="font-semibold text-gray-900 dark:text-white">
+                          {c.user}
+                        </p>
+                        <p className="text-gray-700 dark:text-gray-300 mt-1">
+                          {isOpen ? c.content : c.displayContent}
+                        </p>
+                        {!isOpen && c.content.length > 30 && (
+                          <span className="sr-only">
+                            続きを読むにはクリックしてください
+                          </span>
+                        )}
+                      </button>
+                    </li>
                   );
                 })}
-              </div>
+              </ul>
             )}
-          </section>
+          </aside>
         </div>
 
         {/* ===== ボタン列 ===== */}
-        <div
+        <nav
           className={cn(
             RESPONSIVE_FLEX.columnToRow,
             RESPONSIVE_SPACING.gapSmall,
             "mt-8",
           )}
+          aria-label="記事関連アクション"
         >
           <CommentStartButton
             onClick={() => setIsWriting(true)}
             className="w-full sm:basis-[60%]"
+            aria-expanded={isWriting}
+            aria-controls={isWriting ? "comment-form" : undefined}
           />
           <BackToHomeButton className="w-full sm:basis-[40%]" />
-        </div>
+        </nav>
 
         {/* ===== コメントフォーム ===== */}
         {isWriting && (
-          <div
+          <section
+            id="comment-form"
             className={cn(
               "mt-3 bg-white dark:bg-gray-700 p-3 rounded-xl shadow",
             )}
+            aria-labelledby="comment-form-heading"
+            role="region"
           >
+            <h3 id="comment-form-heading" className="sr-only">
+              新しいコメントを投稿
+            </h3>
             <CommentForm
               onSubmit={handleCommentSubmit}
               onCancel={() => setIsWriting(false)}
             />
-          </div>
+          </section>
         )}
-      </div>
+      </main>
     </Layout>
   );
 };

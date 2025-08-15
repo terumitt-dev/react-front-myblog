@@ -8,6 +8,10 @@ type Props = {
   variant?: "primary" | "secondary" | "danger";
   disabled?: boolean;
   className?: string;
+  "aria-expanded"?: boolean;
+  "aria-controls"?: string;
+  "aria-label"?: string;
+  type?: "button" | "submit" | "reset";
 };
 
 const Button = ({
@@ -16,10 +20,14 @@ const Button = ({
   variant = "primary",
   disabled = false,
   className,
+  "aria-expanded": ariaExpanded,
+  "aria-controls": ariaControls,
+  "aria-label": ariaLabel,
+  type = "button",
 }: Props) => {
   return (
     <button
-      type="button"
+      type={type}
       onClick={onClick}
       disabled={disabled}
       className={cn(
@@ -35,6 +43,9 @@ const Button = ({
         className,
       )}
       aria-disabled={disabled || undefined}
+      aria-expanded={ariaExpanded}
+      aria-controls={ariaControls}
+      aria-label={ariaLabel}
     >
       {label}
     </button>
