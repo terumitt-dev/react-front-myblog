@@ -38,6 +38,7 @@ const PostDetail = () => {
   const postId = Number.isFinite(postIdRaw) ? postIdRaw : NaN;
   const isValidId = Number.isFinite(postId) && postId > 0;
 
+  // ========== 全てのHooksを最初に配置 ==========
   const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [isWriting, setIsWriting] = useState(false);
@@ -77,6 +78,16 @@ const PostDetail = () => {
     }
   }, [isValidId, postId, commentStorageKey]);
 
+  // コメント一覧の最適化
+  const processedComments = useMemo(() => {
+    return comments.map((c) => ({
+      ...c,
+      displayContent:
+        c.content.length > 30 ? `${c.content.slice(0, 30)}...` : c.content,
+    }));
+  }, [comments]);
+
+  // ========== 全ての早期リターンを最後に配置 ==========
   if (!isValidId) {
     return (
       <div className="p-6 text-gray-900 dark:text-white">
@@ -85,6 +96,15 @@ const PostDetail = () => {
     );
   }
 
+  if (!post) {
+    return (
+      <div className="p-6 text-gray-900 dark:text-white">
+        記事が見つかりませんでした。
+      </div>
+    );
+  }
+
+  // ========== イベントハンドラー関数の定義 ==========
   /* コメント送信 */
   const handleCommentSubmit = (user: string, content: string) => {
     if (!user.trim() || !content.trim()) return;
@@ -107,22 +127,6 @@ const PostDetail = () => {
         : [...prev, commentId],
     );
   };
-
-  // コメント一覧の最適化
-  const processedComments = useMemo(() => {
-    return comments.map((c) => ({
-      ...c,
-      displayContent:
-        c.content.length > 30 ? `${c.content.slice(0, 30)}...` : c.content,
-    }));
-  }, [comments]);
-
-  if (!post)
-    return (
-      <div className="p-6 text-gray-900 dark:text-white">
-        記事が見つかりませんでした。
-      </div>
-    );
 
   return (
     <Layout>
