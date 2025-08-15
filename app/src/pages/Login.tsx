@@ -3,6 +3,7 @@ import Layout from "@/components/layouts/Layout";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { FORM_STYLES } from "@/components/utils/styles";
 import { cn } from "@/components/utils/cn";
 
 const Login = () => {
@@ -64,13 +65,7 @@ const Login = () => {
             placeholder="メールアドレス"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className={cn(
-              "border border-gray-300 dark:border-gray-600 p-2 w-full rounded",
-              "bg-white dark:bg-gray-700 text-gray-900 dark:text-white",
-              "placeholder-gray-500 dark:placeholder-gray-400",
-              "focus:ring-2 focus:ring-blue-500 focus:border-blue-500",
-              "transition-colors",
-            )}
+            className={FORM_STYLES.input}
             disabled={isDisabled}
           />
           <input
@@ -78,13 +73,7 @@ const Login = () => {
             placeholder="パスワード"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className={cn(
-              "border border-gray-300 dark:border-gray-600 p-2 w-full rounded",
-              "bg-white dark:bg-gray-700 text-gray-900 dark:text-white",
-              "placeholder-gray-500 dark:placeholder-gray-400",
-              "focus:ring-2 focus:ring-blue-500 focus:border-blue-500",
-              "transition-colors",
-            )}
+            className={FORM_STYLES.input}
             disabled={isDisabled}
           />
           {error && (

@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import LogoutButton from "@/components/molecules/LogoutButton";
 import { TEXT_LIMITS, UI_CONFIG } from "@/constants/appConfig";
+import { FORM_STYLES } from "@/components/utils/styles";
 import {
   validateAndSanitize,
   validateCategory,
@@ -220,10 +221,7 @@ const Admin = () => {
             )}
 
             <div>
-              <label
-                htmlFor="title-input"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
+              <label htmlFor="title-input" className={FORM_STYLES.label}>
                 タイトル（最大100文字）
               </label>
               <input
@@ -231,7 +229,7 @@ const Admin = () => {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="記事のタイトルを入力してください"
-                className="border border-gray-300 dark:border-gray-600 rounded-md p-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors"
+                className={FORM_STYLES.input}
                 maxLength={TEXT_LIMITS.TITLE_MAX_LENGTH}
                 required
                 aria-describedby="title-help"
@@ -245,10 +243,7 @@ const Admin = () => {
             </div>
 
             <div>
-              <label
-                htmlFor="content-input"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
+              <label htmlFor="content-input" className={FORM_STYLES.label}>
                 本文（最大5000文字）
               </label>
               <textarea
@@ -256,7 +251,7 @@ const Admin = () => {
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="記事の本文を入力してください"
-                className="border border-gray-300 dark:border-gray-600 rounded-md p-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors"
+                className={FORM_STYLES.input}
                 maxLength={TEXT_LIMITS.CONTENT_MAX_LENGTH}
                 rows={UI_CONFIG.TEXTAREA_ROWS}
                 required
@@ -271,10 +266,7 @@ const Admin = () => {
             </div>
 
             <div>
-              <label
-                htmlFor="category-select"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
+              <label htmlFor="category-select" className={FORM_STYLES.label}>
                 カテゴリ
               </label>
               <select

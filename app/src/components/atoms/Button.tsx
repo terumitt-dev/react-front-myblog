@@ -1,5 +1,6 @@
 // app/src/components/atoms/Button.tsx
 import { cn } from "@/components/utils/cn";
+import { UI_COLORS } from "@/components/utils/colors";
 
 type Props = {
   label: string;
@@ -27,12 +28,10 @@ const Button = ({
         "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-900",
         "focus-visible:outline-2 focus-visible:outline-blue-500",
         disabled && "opacity-60 cursor-not-allowed",
-        variant === "primary" &&
-          "bg-blue-600 hover:bg-blue-700 focus-visible:ring-blue-500",
+        variant === "primary" && `${UI_COLORS.blue.bg} ${UI_COLORS.blue.focus}`,
         variant === "secondary" &&
           "bg-gray-500 hover:bg-gray-600 focus-visible:ring-gray-400",
-        variant === "danger" &&
-          "bg-red-600 hover:bg-red-700 focus-visible:ring-red-500",
+        variant === "danger" && `${UI_COLORS.red.bg} ${UI_COLORS.red.focus}`,
         className,
       )}
       aria-disabled={disabled || undefined}

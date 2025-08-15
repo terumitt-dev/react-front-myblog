@@ -1,6 +1,7 @@
 // src/components/organisms/CommentForm.tsx
 import { useState, useId } from "react";
 import Input from "@/components/atoms/Input";
+import { BACKGROUND_STYLES, TEXT_STYLES } from "@/components/utils/styles";
 import Textarea from "@/components/atoms/Textarea";
 import CommentButtons from "@/components/molecules/CommentButtons";
 
@@ -25,8 +26,10 @@ const CommentForm = ({ onSubmit, onCancel }: Props) => {
   };
 
   return (
-    <div className="flex flex-col gap-3 p-4 rounded bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-600">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+    <div
+      className={`flex flex-col gap-3 p-4 rounded ${BACKGROUND_STYLES.cardSecondary} border border-gray-200 dark:border-gray-600`}
+    >
+      <h3 className={`text-lg font-semibold ${TEXT_STYLES.primary} mb-2`}>
         コメントを投稿
       </h3>
       <Input
