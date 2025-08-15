@@ -2,6 +2,7 @@
 import { Link } from "react-router-dom";
 import { CATEGORY_COLORS } from "@/components/utils/colors";
 import { cn } from "@/components/utils/cn";
+import { RESPONSIVE_SPACING } from "@/constants/responsive";
 
 type Props = {
   fullWidth?: boolean;
@@ -10,14 +11,20 @@ type Props = {
 
 const CategoryButtons = ({ fullWidth = false, className }: Props) => {
   return (
-    <div className={cn("flex gap-4", fullWidth ? "w-full" : "", className)}>
+    <div
+      className={cn(
+        `flex flex-col sm:flex-row ${RESPONSIVE_SPACING.gapSmall}`,
+        fullWidth ? "w-full" : "",
+        className,
+      )}
+    >
       {/* しゅみ */}
       <Link
         to="/category/hobby"
         className={cn(
-          "py-2 rounded text-black shadow hover:opacity-90 transition-colors text-center block",
+          "py-2 sm:py-3 rounded text-black shadow hover:opacity-90 transition-colors text-center block",
           "focus:outline-none focus:ring-2 focus:ring-offset-2",
-          fullWidth ? "flex-1" : "px-6",
+          fullWidth ? "flex-1" : "px-4 sm:px-6",
           CATEGORY_COLORS.hobby.bg,
           CATEGORY_COLORS.hobby.focusRing,
         )}
@@ -30,9 +37,9 @@ const CategoryButtons = ({ fullWidth = false, className }: Props) => {
       <Link
         to="/category/tech"
         className={cn(
-          "py-2 rounded text-black shadow hover:opacity-90 transition-colors text-center block",
+          "py-2 sm:py-3 rounded text-black shadow hover:opacity-90 transition-colors text-center block",
           "focus:outline-none focus:ring-2 focus:ring-offset-2",
-          fullWidth ? "flex-1" : "px-6",
+          fullWidth ? "flex-1" : "px-4 sm:px-6",
           CATEGORY_COLORS.tech.bg,
           CATEGORY_COLORS.tech.focusRing,
         )}
@@ -45,9 +52,9 @@ const CategoryButtons = ({ fullWidth = false, className }: Props) => {
       <Link
         to="/category/other"
         className={cn(
-          "py-2 rounded text-black shadow hover:opacity-90 transition-colors text-center block",
+          "py-2 sm:py-3 rounded text-black shadow hover:opacity-90 transition-colors text-center block",
           "focus:outline-none focus:ring-2 focus:ring-offset-2",
-          fullWidth ? "flex-1" : "px-6",
+          fullWidth ? "flex-1" : "px-4 sm:px-6",
           CATEGORY_COLORS.other.bg,
           CATEGORY_COLORS.other.focusRing,
         )}

@@ -12,6 +12,12 @@ import { useStaticEffects } from "@/hooks/useStaticEffects";
 import { useBubbleGeneration } from "@/hooks/useBubbleGeneration";
 import { cn } from "@/components/utils/cn";
 import ThemeToggle from "@/components/molecules/ThemeToggle";
+import {
+  LAYOUT_PATTERNS,
+  RESPONSIVE_GRID,
+  RESPONSIVE_SPACING,
+  RESPONSIVE_TEXT,
+} from "@/constants/responsive";
 import "./Category.css";
 
 const Category = () => {
@@ -189,11 +195,13 @@ const Category = () => {
     return (
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
         <header className="absolute top-0 left-0 right-0 flex justify-between items-center px-4 py-2">
-          <h1 className="text-xl font-bold">My Blog</h1>
+          <h1 className={`${RESPONSIVE_TEXT.heading3} font-bold`}>My Blog</h1>
           <ThemeToggle />
         </header>
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200">
+          <h1
+            className={`${RESPONSIVE_TEXT.heading2} font-bold text-gray-800 dark:text-gray-200`}
+          >
             無効なカテゴリです
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
@@ -216,7 +224,7 @@ const Category = () => {
     >
       {/* ヘッダー */}
       <header className="flex justify-between items-center px-4 py-2">
-        <h1 className="text-xl font-bold">My Blog</h1>
+        <h1 className={`${RESPONSIVE_TEXT.heading3} font-bold`}>My Blog</h1>
         <ThemeToggle />
       </header>
 
@@ -225,9 +233,11 @@ const Category = () => {
       {renderBubbleLayer()}
       {renderSnailLayer()}
 
-      <main className="relative z-10 container mx-auto px-4 py-8">
+      <main className={`relative z-10 ${LAYOUT_PATTERNS.mainContainer} py-8`}>
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-200 mb-4">
+          <h1
+            className={`${RESPONSIVE_TEXT.heading1} font-bold text-gray-800 dark:text-gray-200 mb-4`}
+          >
             {categoryConfig.name}のページ
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
@@ -240,14 +250,18 @@ const Category = () => {
 
         {/* 投稿一覧 */}
         {posts.length > 0 && (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div
+            className={`grid ${RESPONSIVE_GRID.articles} ${RESPONSIVE_SPACING.gap}`}
+          >
             {posts.map((post) => (
               <article
                 key={post.id}
                 className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow"
               >
                 <div className="p-6">
-                  <h2 className="text-xl font-semibold break-words mb-2 text-gray-900 dark:text-white">
+                  <h2
+                    className={`${RESPONSIVE_TEXT.heading3} font-semibold break-words mb-2 text-gray-900 dark:text-white`}
+                  >
                     <span
                       dangerouslySetInnerHTML={{
                         __html: displayTextSafe(post.title),

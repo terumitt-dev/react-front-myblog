@@ -3,6 +3,12 @@ import Layout from "@/components/layouts/Layout";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import CategoryButtons from "@/components/organisms/CategoryButtons";
+import {
+  LAYOUT_PATTERNS,
+  RESPONSIVE_SPACING,
+  RESPONSIVE_GRID,
+  RESPONSIVE_TEXT,
+} from "@/constants/responsive";
 
 type Post = {
   id: number;
@@ -33,7 +39,7 @@ const Top = () => {
 
   return (
     <Layout>
-      <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 space-y-8">
+      <div className={`${LAYOUT_PATTERNS.sectionContainer} space-y-8`}>
         {/* ヒーロー画像 */}
         <div className="w-full overflow-hidden rounded-xl">
           <img
@@ -50,8 +56,12 @@ const Top = () => {
 
         {/* 最新記事 */}
         <section className="space-y-4">
-          <div className="bg-gray-200 dark:bg-gray-800 rounded-xl p-4 sm:p-6 overflow-hidden">
-            <h2 className="text-xl font-semibold text-center mb-4 text-gray-900 dark:text-white">
+          <div
+            className={`bg-gray-200 dark:bg-gray-800 rounded-xl ${RESPONSIVE_SPACING.section} overflow-hidden`}
+          >
+            <h2
+              className={`${RESPONSIVE_TEXT.heading2} font-semibold text-center mb-4 text-gray-900 dark:text-white`}
+            >
               最新記事
             </h2>
 
@@ -60,7 +70,7 @@ const Top = () => {
                 まだ投稿がありません。
               </p>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full">
+              <div className={`grid ${RESPONSIVE_GRID.articles} gap-6 w-full`}>
                 {latestArticles.map((article) => (
                   <div
                     key={article.id}

@@ -81,6 +81,21 @@ export const RESPONSIVE_GRID = {
   autoLarge: "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
 } as const;
 
+// ========== フレックスレイアウト統一 ==========
+export const RESPONSIVE_FLEX = {
+  // 基本
+  column: "flex flex-col",
+  columnToRow: "flex flex-col sm:flex-row",
+
+  // アライメント付き
+  center: "flex items-center justify-center",
+  between: "flex items-center justify-between",
+  start: "flex items-start",
+
+  // レスポンシブ対応
+  centerToStart: "flex flex-col items-center sm:flex-row sm:items-start",
+} as const;
+
 // ========== 統合レイアウトパターン ==========
 export const LAYOUT_PATTERNS = {
   // メインコンテナ（Layout.tsx用）
