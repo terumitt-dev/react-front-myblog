@@ -12,6 +12,7 @@ import { useStaticEffects } from "@/hooks/useStaticEffects";
 import { useBubbleGeneration } from "@/hooks/useBubbleGeneration";
 import { cn } from "@/components/utils/cn";
 import ThemeToggle from "@/components/molecules/ThemeToggle";
+import ArticleSkeleton from "@/components/molecules/ArticleSkeleton";
 import {
   LAYOUT_PATTERNS,
   RESPONSIVE_GRID,
@@ -32,6 +33,7 @@ const Category = () => {
   // カスタムフック使用
   const {
     posts,
+    isLoading,
     spiders,
     snails,
     reducedMotion,
@@ -241,15 +243,19 @@ const Category = () => {
             {categoryConfig.name}のページ
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            {posts.length > 0
-              ? `${posts.length}件の投稿があります`
-              : "まだ投稿がありません"}
+            {isLoading
+              ? "読み込み中..."
+              : posts.length > 0
+                ? `${posts.length}件の投稿があります`
+                : "まだ投稿がありません"}
           </p>
           <BackToHomeButton />
         </div>
 
         {/* 投稿一覧 */}
-        {posts.length > 0 && (
+        {isLoading ? (
+          <ArticleSkeleton count={6} />
+        ) : posts.length > 0 ? (
           <div
             className={`grid ${RESPONSIVE_GRID.articles} ${RESPONSIVE_SPACING.gap}`}
           >
@@ -292,7 +298,7 @@ const Category = () => {
               </article>
             ))}
           </div>
-        )}
+        ) : null}
       </main>
     </div>
   );

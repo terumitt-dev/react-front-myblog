@@ -3,6 +3,7 @@ import Layout from "@/components/layouts/Layout";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import CategoryButtons from "@/components/organisms/CategoryButtons";
+import ArticleSkeleton from "@/components/molecules/ArticleSkeleton";
 import {
   LAYOUT_PATTERNS,
   RESPONSIVE_SPACING,
@@ -18,21 +19,35 @@ type Post = {
 
 const Top = () => {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const saved = localStorage.getItem("myblog-posts");
-    if (saved) {
+    // ローディング開始
+    setIsLoading(true);
+
+    // 実際のアプリでは少し遅延を入れてローディング状態を見せる
+    const loadPosts = async () => {
       try {
-        const normalized = (JSON.parse(saved) as Post[]).map((p) => ({
-          ...p,
-          id: Number(p.id),
-        }));
-        setPosts(normalized);
+        // 少し遅延してローディング状態を確認しやすくする
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        const saved = localStorage.getItem("myblog-posts");
+        if (saved) {
+          const normalized = (JSON.parse(saved) as Post[]).map((p) => ({
+            ...p,
+            id: Number(p.id),
+          }));
+          setPosts(normalized);
+        }
       } catch (error) {
         console.error("Posts loading error:", error);
         setPosts([]);
+      } finally {
+        setIsLoading(false);
       }
-    }
+    };
+
+    loadPosts();
   }, []);
 
   const latestArticles = posts.slice(-3).reverse();
@@ -81,7 +96,9 @@ const Top = () => {
               最新記事
             </h2>
 
-            {latestArticles.length === 0 ? (
+            {isLoading ? (
+              <ArticleSkeleton count={3} />
+            ) : latestArticles.length === 0 ? (
               <p
                 className="text-center text-gray-500 dark:text-gray-400"
                 role="status"

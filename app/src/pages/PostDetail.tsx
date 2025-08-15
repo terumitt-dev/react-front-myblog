@@ -5,6 +5,8 @@ import { useParams } from "react-router-dom";
 import CommentForm from "@/components/organisms/CommentForm";
 import BackToHomeButton from "@/components/molecules/BackToHomeButton";
 import CommentStartButton from "@/components/molecules/CommentStartButton";
+import PostDetailSkeleton from "@/components/molecules/PostDetailSkeleton";
+import LoadingSpinner from "@/components/atoms/LoadingSpinner";
 import { displayTextSafe } from "@/components/utils/sanitizer";
 import { safeJsonParse } from "@/components/utils/errorHandler";
 import { cn } from "@/components/utils/cn";
@@ -49,39 +51,55 @@ const PostDetail = () => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [isWriting, setIsWriting] = useState(false);
   const [openCommentIds, setOpenCommentIds] = useState<number[]>([]);
+
+  // ローディング状態の追加
+  const [isLoadingPost, setIsLoadingPost] = useState(true);
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
   const commentStorageKey = `myblog-comments-${postId}`;
 
   useEffect(() => {
-    if (!isValidId) return;
+    if (!isValidId) {
+      setIsLoadingPost(false);
+      return;
+    }
 
-    const savedPosts = localStorage.getItem("myblog-posts");
-    if (savedPosts) {
+    // 記事読み込み処理の改善
+    const loadPostData = async () => {
+      setIsLoadingPost(true);
+
       try {
-        const rawPosts = safeJsonParse<RawPost[]>(savedPosts, []);
-        const posts: Post[] = rawPosts.map((p: RawPost) => ({
-          ...p,
-          id: Number(p.id),
-          createdAt: p.createdAt || new Date().toISOString(),
-        }));
-        setPost(posts.find((p) => p.id === postId) ?? null);
+        // 実際のアプリでは少し遅延を入れてローディング状態を見せる
+        await new Promise((resolve) => setTimeout(resolve, 300));
+
+        const savedPosts = localStorage.getItem("myblog-posts");
+        if (savedPosts) {
+          const rawPosts = safeJsonParse<RawPost[]>(savedPosts, []);
+          const posts: Post[] = rawPosts.map((p: RawPost) => ({
+            ...p,
+            id: Number(p.id),
+            createdAt: p.createdAt || new Date().toISOString(),
+          }));
+          setPost(posts.find((p) => p.id === postId) ?? null);
+        }
+
+        const storedComments = localStorage.getItem(commentStorageKey);
+        if (storedComments) {
+          const parsedComments = safeJsonParse<Comment[]>(storedComments, []);
+          setComments(parsedComments);
+        }
       } catch (e) {
-        console.error("Failed to parse posts from localStorage:", e);
+        console.error("Failed to load post data:", e);
         localStorage.removeItem("myblog-posts");
-        setPost(null);
-      }
-    }
-
-    const storedComments = localStorage.getItem(commentStorageKey);
-    if (storedComments) {
-      try {
-        const parsedComments = safeJsonParse<Comment[]>(storedComments, []);
-        setComments(parsedComments);
-      } catch (e) {
-        console.error("Failed to parse comments from localStorage:", e);
         localStorage.removeItem(commentStorageKey);
+        setPost(null);
         setComments([]);
+      } finally {
+        setIsLoadingPost(false);
       }
-    }
+    };
+
+    loadPostData();
   }, [isValidId, postId, commentStorageKey]);
 
   // コメント一覧の最適化
@@ -93,7 +111,7 @@ const PostDetail = () => {
     }));
   }, [comments]);
 
-  // ========== 全ての早期リターンを最後に配置 ==========
+  // ========== 早期リターン：不正なID ==========
   if (!isValidId) {
     return (
       <Layout>
@@ -107,6 +125,16 @@ const PostDetail = () => {
     );
   }
 
+  // ========== 早期リターン：ローディング中 ==========
+  if (isLoadingPost) {
+    return (
+      <Layout>
+        <PostDetailSkeleton />
+      </Layout>
+    );
+  }
+
+  // ========== 早期リターン：記事が見つからない ==========
   if (!post) {
     return (
       <Layout>
@@ -121,18 +149,31 @@ const PostDetail = () => {
   }
 
   // ========== イベントハンドラー関数の定義 ==========
-  /* コメント送信 */
-  const handleCommentSubmit = (user: string, content: string) => {
+  /* コメント送信（ローディング対応） */
+  const handleCommentSubmit = async (user: string, content: string) => {
     if (!user.trim() || !content.trim()) return;
-    const newComment: Comment = {
-      id: Date.now(),
-      user,
-      content,
-    };
-    const updated = [...comments, newComment];
-    setComments(updated);
-    localStorage.setItem(commentStorageKey, JSON.stringify(updated));
-    setIsWriting(false);
+
+    setIsSubmittingComment(true);
+
+    try {
+      // 実際のアプリでは API 通信の遅延をシミュレート
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const newComment: Comment = {
+        id: Date.now(),
+        user,
+        content,
+      };
+      const updated = [...comments, newComment];
+      setComments(updated);
+      localStorage.setItem(commentStorageKey, JSON.stringify(updated));
+      setIsWriting(false);
+    } catch (error) {
+      console.error("Failed to submit comment:", error);
+      // エラーハンドリング（トースト通知等）
+    } finally {
+      setIsSubmittingComment(false);
+    }
   };
 
   /* コメントの開閉トグル */
@@ -287,6 +328,7 @@ const PostDetail = () => {
             className="w-full sm:basis-[60%]"
             aria-expanded={isWriting}
             aria-controls={isWriting ? "comment-form" : undefined}
+            disabled={isSubmittingComment}
           />
           <BackToHomeButton className="w-full sm:basis-[40%]" />
         </nav>
@@ -297,6 +339,7 @@ const PostDetail = () => {
             id="comment-form"
             className={cn(
               "mt-3 bg-white dark:bg-gray-700 p-3 rounded-xl shadow",
+              isSubmittingComment && "opacity-50 pointer-events-none",
             )}
             aria-labelledby="comment-form-heading"
             role="region"
@@ -304,9 +347,21 @@ const PostDetail = () => {
             <h3 id="comment-form-heading" className="sr-only">
               新しいコメントを投稿
             </h3>
+
+            {/* 🆕 コメント送信中のローディング表示 */}
+            {isSubmittingComment && (
+              <div className="flex items-center justify-center p-4 mb-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <LoadingSpinner size="sm" className="mr-2" />
+                <span className="text-blue-700 dark:text-blue-300 text-sm">
+                  コメントを送信中...
+                </span>
+              </div>
+            )}
+
             <CommentForm
               onSubmit={handleCommentSubmit}
               onCancel={() => setIsWriting(false)}
+              disabled={isSubmittingComment}
             />
           </section>
         )}

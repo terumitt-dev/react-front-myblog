@@ -3,6 +3,7 @@ import Layout from "@/components/layouts/Layout";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import LoadingSpinner from "@/components/atoms/LoadingSpinner";
 import { FORM_STYLES } from "@/components/utils/styles";
 import { cn } from "@/components/utils/cn";
 import {
@@ -69,6 +70,17 @@ const Login = () => {
         >
           ログイン
         </h1>
+
+        {/* 🆕 ローディング状態の視覚的フィードバック */}
+        {loading && (
+          <div className="flex items-center justify-center p-4 mb-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <LoadingSpinner size="sm" className="mr-2" />
+            <span className="text-blue-700 dark:text-blue-300 text-sm">
+              認証中...
+            </span>
+          </div>
+        )}
+
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -81,7 +93,11 @@ const Login = () => {
             placeholder="メールアドレス"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className={FORM_STYLES.input}
+            className={cn(
+              FORM_STYLES.input,
+              isDisabled &&
+                "opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800",
+            )}
             disabled={isDisabled}
           />
           <input
@@ -89,7 +105,11 @@ const Login = () => {
             placeholder="パスワード"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className={FORM_STYLES.input}
+            className={cn(
+              FORM_STYLES.input,
+              isDisabled &&
+                "opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800",
+            )}
             disabled={isDisabled}
           />
           {error && (
@@ -98,6 +118,7 @@ const Login = () => {
                 "text-red-600 dark:text-red-400",
                 RESPONSIVE_TEXT.small,
               )}
+              role="alert"
             >
               {error}
             </p>
@@ -106,14 +127,21 @@ const Login = () => {
             type="submit"
             disabled={isDisabled}
             className={cn(
-              "w-full px-4 py-2 rounded text-white",
+              "w-full px-4 py-2 rounded text-white flex items-center justify-center",
               "bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800",
               "focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
               "transition duration-200",
               isDisabled && "opacity-50 cursor-not-allowed",
             )}
           >
-            {loading ? "ログイン中..." : "ログイン"}
+            {loading ? (
+              <>
+                <LoadingSpinner size="sm" className="mr-2" />
+                ログイン中...
+              </>
+            ) : (
+              "ログイン"
+            )}
           </button>
         </form>
       </div>

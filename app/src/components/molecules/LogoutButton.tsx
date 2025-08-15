@@ -1,15 +1,22 @@
 // src/components/molecules/LogoutButton.tsx
 import Button from "@/components/atoms/Button";
+import { useAuth } from "@/hooks/useAuth";
 
-const LogoutButton = ({ onClick }: { onClick?: () => void }) => {
-  const isDisabled = !onClick;
+const LogoutButton = () => {
+  const { logout } = useAuth();
+
+  const handleLogout = () => {
+    if (confirm("ログアウトしますか？")) {
+      logout();
+    }
+  };
+
   return (
     <Button
       label="ログアウト"
-      onClick={isDisabled ? undefined : onClick}
+      onClick={handleLogout}
       variant="danger"
       type="button"
-      disabled={isDisabled}
     />
   );
 };

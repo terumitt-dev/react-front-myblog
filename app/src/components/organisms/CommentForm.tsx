@@ -8,9 +8,10 @@ import CommentButtons from "@/components/molecules/CommentButtons";
 type Props = {
   onSubmit: (userName: string, comment: string) => void;
   onCancel: () => void;
+  disabled?: boolean;
 };
 
-const CommentForm = ({ onSubmit, onCancel }: Props) => {
+const CommentForm = ({ onSubmit, onCancel, disabled = false }: Props) => {
   const [userName, setUserName] = useState("");
   const [comment, setComment] = useState("");
 
@@ -18,7 +19,7 @@ const CommentForm = ({ onSubmit, onCancel }: Props) => {
   const commentId = useId();
 
   const handleSubmit = () => {
-    if (userName.trim() && comment.trim()) {
+    if (userName.trim() && comment.trim() && !disabled) {
       onSubmit(userName, comment);
       setUserName("");
       setComment("");
@@ -38,6 +39,7 @@ const CommentForm = ({ onSubmit, onCancel }: Props) => {
         value={userName}
         onChange={(e) => setUserName(e.target.value)}
         placeholder="ユーザ名"
+        disabled={disabled}
       />
       <Textarea
         id={`comment-${commentId}`}
@@ -45,8 +47,13 @@ const CommentForm = ({ onSubmit, onCancel }: Props) => {
         value={comment}
         onChange={(e) => setComment(e.target.value)}
         placeholder="コメントを入力"
+        disabled={disabled}
       />
-      <CommentButtons onSubmit={handleSubmit} onCancel={onCancel} />
+      <CommentButtons
+        onSubmit={handleSubmit}
+        onCancel={onCancel}
+        disabled={disabled}
+      />
     </div>
   );
 };

@@ -16,7 +16,7 @@ export type { Snail } from "@/hooks/useSnailEffects";
  */
 export const useStaticEffects = (category: string | undefined) => {
   const a11yState = useAccessibility();
-  const { posts } = usePosts(category);
+  const { posts, isLoading } = usePosts(category);
   const { isValidCategory } = useCategoryValidation();
   const { spiders, spiderDisappearingIds, handleSpiderClick } =
     useSpiderEffects(category, a11yState.reducedMotion);
@@ -25,12 +25,10 @@ export const useStaticEffects = (category: string | undefined) => {
 
   return {
     posts,
+    isLoading,
     spiders,
     snails,
     reducedMotion: a11yState.reducedMotion,
-    highContrast: a11yState.highContrast,
-    screenReader: a11yState.screenReader,
-    focusVisible: a11yState.focusVisible,
     spiderDisappearingIds,
     snailDisappearingIds,
     handleSpiderClick,
