@@ -1,4 +1,5 @@
 // app/src/components/molecules/ThemeToggle.tsx
+import { memo } from "react";
 import { useTheme } from "@/context/ThemeContext";
 import { Sun, Moon } from "lucide-react";
 import { useStaticEffects } from "@/hooks/useStaticEffects";
@@ -52,4 +53,4 @@ const ThemeToggle = () => {
   );
 };
 
-export default ThemeToggle;
+export default memo(ThemeToggle);

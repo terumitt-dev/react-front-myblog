@@ -1,6 +1,6 @@
 // app/src/pages/PostDetail.tsx
 import Layout from "@/components/layouts/Layout";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import CommentForm from "@/components/organisms/CommentForm";
 import BackToHomeButton from "@/components/molecules/BackToHomeButton";
@@ -108,6 +108,15 @@ const PostDetail = () => {
     );
   };
 
+  // コメント一覧の最適化
+  const processedComments = useMemo(() => {
+    return comments.map((c) => ({
+      ...c,
+      displayContent:
+        c.content.length > 30 ? `${c.content.slice(0, 30)}...` : c.content,
+    }));
+  }, [comments]);
+
   if (!post)
     return (
       <div className="p-6 text-gray-900 dark:text-white">
@@ -180,7 +189,7 @@ const PostDetail = () => {
               </p>
             ) : (
               <div className="space-y-3">
-                {comments.map((c) => {
+                {processedComments.map((c) => {
                   const isOpen = openCommentIds.includes(c.id);
                   return (
                     // biome-ignore lint/a11y/useSemanticElements: <explanation>
@@ -198,11 +207,7 @@ const PostDetail = () => {
                         {c.user}
                       </p>
                       <p className="text-gray-700 dark:text-gray-300 mt-1">
-                        {isOpen
-                          ? c.content
-                          : c.content.length > 30
-                            ? `${c.content.slice(0, 30)}...`
-                            : c.content}
+                        {isOpen ? c.content : c.displayContent}
                       </p>
                     </button>
                   );

@@ -22,7 +22,7 @@ const Button = ({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "block w-auto px-4 py-2 rounded text-white transition",
+        "block w-auto px-4 py-2 rounded text-white transition-colors",
         "outline-offset-2 focus:outline-none",
         "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-900",
         "focus-visible:outline-2 focus-visible:outline-blue-500",

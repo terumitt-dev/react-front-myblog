@@ -1,6 +1,6 @@
 // app/src/pages/Admin.tsx
 import Layout from "@/components/layouts/Layout";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import LogoutButton from "@/components/molecules/LogoutButton";
@@ -92,7 +92,7 @@ const Admin = () => {
     setError("");
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = useCallback(() => {
     // 包括的なバリデーション
     const titleValidation = validateAndSanitize(
       title,
@@ -142,34 +142,36 @@ const Admin = () => {
           category,
           createdAt: new Date().toISOString(),
         };
-        saveToLocalStorage([...posts, newPost]);
+        const updated = [...posts, newPost];
+        saveToLocalStorage(updated);
       }
-
       resetForm();
     } catch (error) {
-      console.error("Failed to submit post:", error);
-      setError("投稿の処理中にエラーが発生しました。");
+      console.error("Failed to save post:", error);
+      setError("投稿の保存に失敗しました。");
     }
-  };
+  }, [title, content, category, editingPostId, posts]);
 
-  const handleDelete = (id: number) => {
-    try {
-      const updated = posts.filter((p) => p.id !== id);
-      saveToLocalStorage(updated);
-    } catch (error) {
-      console.error("Failed to delete post:", error);
-      setError("投稿の削除に失敗しました。");
-    }
-  };
+  const handleDelete = useCallback(
+    (id: number) => {
+      try {
+        const updated = posts.filter((p) => p.id !== id);
+        saveToLocalStorage(updated);
+      } catch (error) {
+        console.error("Failed to delete post:", error);
+        setError("投稿の削除に失敗しました。");
+      }
+    },
+    [posts],
+  );
 
-  const handleEdit = (post: Post) => {
+  const handleEdit = useCallback((post: Post) => {
     // エスケープ済みデータを編集時にプレーンテキスト化
     setTitle(displayText(post.title, true));
     setContent(displayText(post.content, true));
     setCategory(post.category);
     setEditingPostId(post.id);
-    setError("");
-  };
+  }, []);
 
   const handleCancelEdit = () => {
     resetForm();
@@ -180,11 +182,20 @@ const Admin = () => {
     navigate("/login");
   };
 
-  const togglePost = (id: number) => {
+  const togglePost = useCallback((id: number) => {
     setOpenPostIds((prev) =>
       prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id],
     );
-  };
+  }, []);
+
+  // 文字数計算のメモ化
+  const titleRemaining = useMemo(() => {
+    return TEXT_LIMITS.TITLE_MAX_LENGTH - title.length;
+  }, [title.length]);
+
+  const contentRemaining = useMemo(() => {
+    return TEXT_LIMITS.CONTENT_MAX_LENGTH - content.length;
+  }, [content.length]);
 
   return (
     <Layout>
@@ -220,7 +231,7 @@ const Admin = () => {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="記事のタイトルを入力してください"
-                className="border border-gray-300 dark:border-gray-600 rounded-md p-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                className="border border-gray-300 dark:border-gray-600 rounded-md p-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors"
                 maxLength={TEXT_LIMITS.TITLE_MAX_LENGTH}
                 required
                 aria-describedby="title-help"
@@ -229,7 +240,7 @@ const Admin = () => {
                 id="title-help"
                 className="text-sm text-gray-500 dark:text-gray-400 mt-1"
               >
-                残り{TEXT_LIMITS.TITLE_MAX_LENGTH - title.length}文字
+                残り{titleRemaining}文字
               </div>
             </div>
 
@@ -245,7 +256,7 @@ const Admin = () => {
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="記事の本文を入力してください"
-                className="border border-gray-300 dark:border-gray-600 rounded-md p-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                className="border border-gray-300 dark:border-gray-600 rounded-md p-2 w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors"
                 maxLength={TEXT_LIMITS.CONTENT_MAX_LENGTH}
                 rows={UI_CONFIG.TEXTAREA_ROWS}
                 required
@@ -255,7 +266,7 @@ const Admin = () => {
                 id="content-help"
                 className="text-sm text-gray-500 dark:text-gray-400 mt-1"
               >
-                残り{TEXT_LIMITS.CONTENT_MAX_LENGTH - content.length}文字
+                残り{contentRemaining}文字
               </div>
             </div>
 
@@ -270,7 +281,7 @@ const Admin = () => {
                 id="category-select"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="border border-gray-300 dark:border-gray-600 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="border border-gray-300 dark:border-gray-600 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                 required
               >
                 <option value="tech">Tech</option>

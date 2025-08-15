@@ -15,7 +15,7 @@ const CategoryButtons = ({ fullWidth = false, className }: Props) => {
       <Link
         to="/category/hobby"
         className={cn(
-          "py-2 rounded text-black shadow hover:opacity-90 transition text-center block",
+          "py-2 rounded text-black shadow hover:opacity-90 transition-colors text-center block",
           "focus:outline-none focus:ring-2 focus:ring-offset-2",
           fullWidth ? "flex-1" : "px-6",
           CATEGORY_COLORS.hobby.bg,
@@ -30,7 +30,7 @@ const CategoryButtons = ({ fullWidth = false, className }: Props) => {
       <Link
         to="/category/tech"
         className={cn(
-          "py-2 rounded text-black shadow hover:opacity-90 transition text-center block",
+          "py-2 rounded text-black shadow hover:opacity-90 transition-colors text-center block",
           "focus:outline-none focus:ring-2 focus:ring-offset-2",
           fullWidth ? "flex-1" : "px-6",
           CATEGORY_COLORS.tech.bg,
@@ -45,7 +45,7 @@ const CategoryButtons = ({ fullWidth = false, className }: Props) => {
       <Link
         to="/category/other"
         className={cn(
-          "py-2 rounded text-black shadow hover:opacity-90 transition text-center block",
+          "py-2 rounded text-black shadow hover:opacity-90 transition-colors text-center block",
           "focus:outline-none focus:ring-2 focus:ring-offset-2",
           fullWidth ? "flex-1" : "px-6",
           CATEGORY_COLORS.other.bg,

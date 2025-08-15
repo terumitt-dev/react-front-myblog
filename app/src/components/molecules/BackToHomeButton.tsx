@@ -1,4 +1,5 @@
 // src/components/molecules/BackToHomeButton.tsx
+import { memo } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "@/components/atoms/Button";
 
@@ -23,4 +24,4 @@ const BackToHomeButton = ({ className }: Props) => {
   );
 };
 
-export default BackToHomeButton;
+export default memo(BackToHomeButton);
