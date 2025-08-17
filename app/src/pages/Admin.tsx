@@ -25,13 +25,13 @@ import {
   RESPONSIVE_FLEX,
 } from "@/constants/responsive";
 
-// 型定義
+// 型定義 - createdAtを必須に変更
 type Post = {
   id: number;
   title: string;
   content: string;
   category: string;
-  createdAt: string;
+  createdAt: string; // 必須に変更
   safeTitle?: string; // XSS対策用
   safeCategory?: string; // XSS対策用
   safeDisplayContent?: string; // XSS対策用
@@ -43,7 +43,7 @@ interface RawPost {
   title: string;
   content: string;
   category: string;
-  createdAt?: string;
+  createdAt?: string; // 読み込み時は任意、変換時に必須にする
 }
 
 const Admin = () => {
@@ -75,7 +75,7 @@ const Admin = () => {
             .map((p) => ({
               ...p,
               id: Number(p.id),
-              createdAt: p.createdAt || new Date().toISOString(),
+              createdAt: p.createdAt || new Date().toISOString(), // 確実にcreatedAtを設定
               // XSS対策: 安全な表示用データを生成
               safeTitle: displayTextPlain(p.title),
               safeCategory: displayTextPlain(p.category),
@@ -85,7 +85,10 @@ const Admin = () => {
           setPosts(validPosts);
         }
       } catch (error) {
-        console.error("Posts loading error:", error);
+        // 本番環境では詳細ログを抑制
+        if (process.env.NODE_ENV === "development") {
+          console.error("Posts loading error:", error);
+        }
         handleStorageError(error, "load");
         setPosts([]);
       } finally {
@@ -161,7 +164,10 @@ const Admin = () => {
       setCategory("tech");
       setEditingPostId(null);
     } catch (error) {
-      console.error("Save error:", error);
+      // 本番環境では詳細ログを抑制
+      if (process.env.NODE_ENV === "development") {
+        console.error("Save error:", error);
+      }
       setError("保存に失敗しました。もう一度お試しください。");
     } finally {
       setIsSaving(false);
@@ -196,7 +202,10 @@ const Admin = () => {
           setEditingPostId(null);
         }
       } catch (error) {
-        console.error("Delete error:", error);
+        // 本番環境では詳細ログを抑制
+        if (process.env.NODE_ENV === "development") {
+          console.error("Delete error:", error);
+        }
         setError("削除に失敗しました。もう一度お試しください。");
       } finally {
         setIsDeleting(false);

@@ -4,10 +4,27 @@
 .bubble,
 .spider,
 .snail {
-    will-change: transform, opacity;
+    /* ベンダープレフィックス付きwill-change */
+    -webkit-transform: translateZ(0);
+    -moz-transform: translateZ(0);
+    -ms-transform: translateZ(0);
     transform: translateZ(0);
+
+    will-change: transform, opacity;
+    -webkit-will-change: transform, opacity;
+
+    /* containプロパティのフォールバック */
     contain: layout style paint;
+    -webkit-contain: layout style paint;
+
+    /* backface-visibilityのベンダープレフィックス */
+    -webkit-backface-visibility: hidden;
+    -moz-backface-visibility: hidden;
     backface-visibility: hidden;
+
+    /* 古いブラウザ向けフォールバック */
+    -webkit-perspective: 1000px;
+    perspective: 1000px;
 }
 
 /* アニメーション無効化時の対応 */
@@ -18,15 +35,26 @@
     .spider-disappear,
     .snail-disappear,
     .snail-move {
+        -webkit-animation: none !important;
+        -moz-animation: none !important;
         animation: none !important;
+
+        -webkit-transition: none !important;
+        -moz-transition: none !important;
         transition: none !important;
     }
 
     .spider:hover {
+        -webkit-transform: translateY(-20px) translateZ(0) !important;
+        -moz-transform: translateY(-20px) translateZ(0) !important;
+        -ms-transform: translateY(-20px) translateZ(0) !important;
         transform: translateY(-20px) translateZ(0) !important;
     }
 
     .snail-move {
+        -webkit-transform: scaleX(1) translateZ(0) !important;
+        -moz-transform: scaleX(1) translateZ(0) !important;
+        -ms-transform: scaleX(1) translateZ(0) !important;
         transform: scaleX(1) translateZ(0) !important;
     }
 }
@@ -64,8 +92,16 @@
     width: 50px;
     height: 50px;
     opacity: 0.7;
+
+    -webkit-transition: -webkit-transform 0.3s ease;
+    -moz-transition: -moz-transform 0.3s ease;
     transition: transform 0.3s ease;
+
     cursor: pointer;
+
+    -webkit-transform: translateZ(0);
+    -moz-transform: translateZ(0);
+    -ms-transform: translateZ(0);
     transform: translateZ(0);
 }
 
@@ -74,22 +110,51 @@
     display: block;
     width: 100%;
     height: 100%;
+
+    /* CSS変数をサポートしないブラウザ向けフォールバック */
+    -webkit-transform: rotate(0deg) translateZ(0);
+    -moz-transform: rotate(0deg) translateZ(0);
+    -ms-transform: rotate(0deg) translateZ(0);
+    transform: rotate(0deg) translateZ(0);
+
+    /* CSS変数対応ブラウザ向け */
+    -webkit-transform: rotate(var(--rotation, 0deg)) translateZ(0);
+    -moz-transform: rotate(var(--rotation, 0deg)) translateZ(0);
     transform: rotate(var(--rotation, 0deg)) translateZ(0);
+
     will-change: transform;
+    -webkit-will-change: transform;
 }
 
 /* ホバー時：外側で移動、内側で回転維持（既存動作保持） */
 .spider:hover {
+    -webkit-transform: translateY(-20px) translateZ(0);
+    -moz-transform: translateY(-20px) translateZ(0);
+    -ms-transform: translateY(-20px) translateZ(0);
     transform: translateY(-20px) translateZ(0);
 }
 
 /* 消失時：外側でスケール・移動、内側で回転維持（既存動作保持） */
 .spider-disappear {
+    -webkit-transform: scale(0) translateY(-40px) translateZ(0);
+    -moz-transform: scale(0) translateY(-40px) translateZ(0);
+    -ms-transform: scale(0) translateY(-40px) translateZ(0);
     transform: scale(0) translateY(-40px) translateZ(0);
+
     opacity: 0;
+
+    -webkit-transition:
+        -webkit-transform 0.6s ease,
+        opacity 0.6s ease;
+    -moz-transition:
+        -moz-transform 0.6s ease,
+        opacity 0.6s ease;
     transition:
         transform 0.6s ease,
         opacity 0.6s ease;
+
+    -webkit-animation-fill-mode: forwards;
+    -moz-animation-fill-mode: forwards;
     animation-fill-mode: forwards;
 }
 
@@ -99,21 +164,76 @@
     width: 50px;
     height: 50px;
     opacity: 0.7;
+
+    -webkit-animation: grow-and-pop 3s ease-out forwards;
+    -moz-animation: grow-and-pop 3s ease-out forwards;
     animation: grow-and-pop 3s ease-out forwards;
+
     pointer-events: none;
+
+    -webkit-animation-fill-mode: forwards;
+    -moz-animation-fill-mode: forwards;
     animation-fill-mode: forwards;
 }
 
-@keyframes grow-and-pop {
+/* Webkit用キーフレーム */
+@-webkit-keyframes grow-and-pop {
     0% {
+        -webkit-transform: scale(0.8) translateZ(0);
         transform: scale(0.8) translateZ(0);
         opacity: 0.8;
     }
     80% {
+        -webkit-transform: scale(1.8) translateZ(0);
         transform: scale(1.8) translateZ(0);
         opacity: 1;
     }
     100% {
+        -webkit-transform: scale(0) translateZ(0);
+        transform: scale(0) translateZ(0);
+        opacity: 0;
+    }
+}
+
+/* Mozilla用キーフレーム */
+@-moz-keyframes grow-and-pop {
+    0% {
+        -moz-transform: scale(0.8) translateZ(0);
+        transform: scale(0.8) translateZ(0);
+        opacity: 0.8;
+    }
+    80% {
+        -moz-transform: scale(1.8) translateZ(0);
+        transform: scale(1.8) translateZ(0);
+        opacity: 1;
+    }
+    100% {
+        -moz-transform: scale(0) translateZ(0);
+        transform: scale(0) translateZ(0);
+        opacity: 0;
+    }
+}
+
+/* 標準キーフレーム */
+@keyframes grow-and-pop {
+    0% {
+        -webkit-transform: scale(0.8) translateZ(0);
+        -moz-transform: scale(0.8) translateZ(0);
+        -ms-transform: scale(0.8) translateZ(0);
+        transform: scale(0.8) translateZ(0);
+        opacity: 0.8;
+    }
+    80% {
+        -webkit-transform: scale(1.8) translateZ(0);
+        -moz-transform: scale(1.8) translateZ(0);
+        -ms-transform: scale(1.8) translateZ(0);
+        transform: scale(1.8) translateZ(0);
+        opacity: 1;
+    }
+    100% {
+        -webkit-transform: scale(0) translateZ(0);
+        -moz-transform: scale(0) translateZ(0);
+        -ms-transform: scale(0) translateZ(0);
         transform: scale(0) translateZ(0);
         opacity: 0;
     }
@@ -125,20 +245,45 @@
     width: 60px;
     height: 60px;
     opacity: 0.85;
+
+    -webkit-transition: -webkit-transform 15s linear;
+    -moz-transition: -moz-transform 15s linear;
     transition: transform 15s linear;
+
+    -webkit-transform: scaleX(1) translateZ(0);
+    -moz-transform: scaleX(1) translateZ(0);
+    -ms-transform: scaleX(1) translateZ(0);
     transform: scaleX(1) translateZ(0);
+
     cursor: pointer;
     --snail-shift-x: -80px; /* 既定の移動距離（必要に応じてJSで上書き） */
 }
 
 .snail-move {
+    /* CSS変数をサポートしないブラウザ向けフォールバック */
+    -webkit-transform: translateX(-80px) scaleX(1) translateZ(0);
+    -moz-transform: translateX(-80px) scaleX(1) translateZ(0);
+    -ms-transform: translateX(-80px) scaleX(1) translateZ(0);
+    transform: translateX(-80px) scaleX(1) translateZ(0);
+
+    /* CSS変数対応ブラウザ向け */
+    -webkit-transform: translateX(var(--snail-shift-x)) scaleX(1) translateZ(0);
+    -moz-transform: translateX(var(--snail-shift-x)) scaleX(1) translateZ(0);
     transform: translateX(var(--snail-shift-x)) scaleX(1) translateZ(0);
+
+    -webkit-transition: -webkit-transform 15s linear;
+    -moz-transition: -moz-transform 15s linear;
     transition: transform 15s linear;
 }
 
 .snail-disappear {
     opacity: 0;
+    -webkit-transition: opacity 0.6s ease;
+    -moz-transition: opacity 0.6s ease;
     transition: opacity 0.6s ease;
+
+    -webkit-animation-fill-mode: forwards;
+    -moz-animation-fill-mode: forwards;
     animation-fill-mode: forwards;
 }
 
@@ -146,32 +291,51 @@
 
 /* 低スペック端末向けアニメーション簡素化 */
 .performance-reduced.bubble {
+    -webkit-animation-duration: 2s !important;
+    -moz-animation-duration: 2s !important;
     animation-duration: 2s !important;
 }
 
 .performance-reduced.spider {
+    -webkit-transition: -webkit-transform 0.2s ease !important;
+    -moz-transition: -moz-transform 0.2s ease !important;
     transition: transform 0.2s ease !important;
 }
 
 .performance-reduced.spider:hover {
+    -webkit-transform: translateY(-10px) translateZ(0) !important;
+    -moz-transform: translateY(-10px) translateZ(0) !important;
+    -ms-transform: translateY(-10px) translateZ(0) !important;
     transform: translateY(-10px) translateZ(0) !important;
 }
 
 .performance-reduced.spider-disappear {
+    -webkit-transition:
+        -webkit-transform 0.3s ease,
+        opacity 0.3s ease !important;
+    -moz-transition:
+        -moz-transform 0.3s ease,
+        opacity 0.3s ease !important;
     transition:
         transform 0.3s ease,
         opacity 0.3s ease !important;
 }
 
 .performance-reduced.snail {
+    -webkit-transition: -webkit-transform 8s linear !important;
+    -moz-transition: -moz-transform 8s linear !important;
     transition: transform 8s linear !important;
 }
 
 .performance-reduced.snail-move {
+    -webkit-transition: -webkit-transform 8s linear !important;
+    -moz-transition: -moz-transform 8s linear !important;
     transition: transform 8s linear !important;
 }
 
 .performance-reduced.snail-disappear {
+    -webkit-transition: opacity 0.3s ease !important;
+    -moz-transition: opacity 0.3s ease !important;
     transition: opacity 0.3s ease !important;
 }
 
@@ -180,6 +344,8 @@
 /* モバイルデバイス向け最適化 */
 @media (max-width: 768px) {
     .bubble {
+        -webkit-animation-duration: 2s;
+        -moz-animation-duration: 2s;
         animation-duration: 2s;
         width: 40px;
         height: 40px;
@@ -198,10 +364,14 @@
     .snail {
         width: 50px;
         height: 50px;
+        -webkit-transition: -webkit-transform 10s linear;
+        -moz-transition: -moz-transform 10s linear;
         transition: transform 10s linear;
     }
 
     .snail-move {
+        -webkit-transition: -webkit-transform 10s linear;
+        -moz-transition: -moz-transform 10s linear;
         transition: transform 10s linear;
     }
 }
@@ -209,6 +379,9 @@
 /* 真のモバイルデバイス（タッチデバイス）でのみホバー無効化 */
 @media (max-width: 768px) and (hover: none) {
     .spider:hover {
+        -webkit-transform: translateZ(0);
+        -moz-transform: translateZ(0);
+        -ms-transform: translateZ(0);
         transform: translateZ(0);
     }
 }
@@ -216,6 +389,8 @@
 /* 小画面スマートフォン向け */
 @media (max-width: 480px) {
     .bubble {
+        -webkit-animation-duration: 1.5s;
+        -moz-animation-duration: 1.5s;
         animation-duration: 1.5s;
         width: 35px;
         height: 35px;
@@ -234,27 +409,72 @@
     .snail {
         width: 45px;
         height: 45px;
+        -webkit-transition: -webkit-transform 8s linear;
+        -moz-transition: -moz-transform 8s linear;
         transition: transform 8s linear;
     }
 
     .snail-move {
+        -webkit-transition: -webkit-transform 8s linear;
+        -moz-transition: -moz-transform 8s linear;
         transition: transform 8s linear;
     }
 }
 
 /* プリフェッチ最適化 */
 .bubble {
-    transform-origin: center center;
     -webkit-transform-origin: center center;
+    -moz-transform-origin: center center;
+    -ms-transform-origin: center center;
+    transform-origin: center center;
 }
 
 .snail {
-    transform-origin: center center;
     -webkit-transform-origin: center center;
+    -moz-transform-origin: center center;
+    -ms-transform-origin: center center;
+    transform-origin: center center;
 }
 
 /* 回転対象のみ基点を指定 */
 .spider .spider-rotator {
-    transform-origin: center center;
     -webkit-transform-origin: center center;
+    -moz-transform-origin: center center;
+    -ms-transform-origin: center center;
+    transform-origin: center center;
+}
+
+/* ==================== 古いブラウザ向け追加フォールバック ==================== */
+
+/* IE11以前向けのフォールバック */
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+    .bubble,
+    .spider,
+    .snail {
+        /* containプロパティ非対応時のフォールバック */
+        position: relative;
+        z-index: 0;
+    }
+
+    .spider .spider-rotator {
+        /* CSS変数非対応時の静的回転 */
+        -ms-transform: rotate(0deg) translateZ(0);
+        transform: rotate(0deg) translateZ(0);
+    }
+
+    .snail-move {
+        /* CSS変数非対応時の静的移動 */
+        -ms-transform: translateX(-80px) scaleX(1) translateZ(0);
+        transform: translateX(-80px) scaleX(1) translateZ(0);
+    }
+}
+
+/* Safari古いバージョン向け */
+@supports not (contain: layout) {
+    .bubble,
+    .spider,
+    .snail {
+        /* containプロパティ非対応ブラウザ向け最適化 */
+        isolation: isolate;
+    }
 }

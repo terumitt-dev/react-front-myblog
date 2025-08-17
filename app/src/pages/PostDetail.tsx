@@ -7,7 +7,10 @@ import BackToHomeButton from "@/components/molecules/BackToHomeButton";
 import CommentStartButton from "@/components/molecules/CommentStartButton";
 import PostDetailSkeleton from "@/components/molecules/PostDetailSkeleton";
 import LoadingSpinner from "@/components/atoms/LoadingSpinner";
-import { displayTextSafe } from "@/components/utils/sanitizer";
+import {
+  displayTextSafe,
+  displayTextPlain,
+} from "@/components/utils/sanitizer";
 import { safeJsonParse } from "@/components/utils/errorHandler";
 import { cn } from "@/components/utils/cn";
 import {
@@ -17,12 +20,13 @@ import {
   RESPONSIVE_FLEX,
 } from "@/constants/responsive";
 
-// 型定義
+// 型定義 - createdAtを必須に変更
 type Post = {
   id: number;
   title: string;
   content: string;
   category: string;
+  createdAt: string; // 必須に変更
 };
 
 // JSONから読み込む際の型（idが文字列の場合もある）
@@ -31,7 +35,7 @@ interface RawPost {
   title: string;
   content: string;
   category: string;
-  createdAt?: string;
+  createdAt?: string; // 読み込み時は任意、変換時に必須にする
 }
 
 type Comment = {
@@ -78,7 +82,7 @@ const PostDetail = () => {
           const posts: Post[] = rawPosts.map((p: RawPost) => ({
             ...p,
             id: Number(p.id),
-            createdAt: p.createdAt || new Date().toISOString(),
+            createdAt: p.createdAt || new Date().toISOString(), // 確実にcreatedAtを設定
           }));
           setPost(posts.find((p) => p.id === postId) ?? null);
         }
@@ -89,7 +93,10 @@ const PostDetail = () => {
           setComments(parsedComments);
         }
       } catch (e) {
-        console.error("Failed to load post data:", e);
+        // 本番環境では詳細ログを抑制
+        if (process.env.NODE_ENV === "development") {
+          console.error("Failed to load post data:", e);
+        }
         localStorage.removeItem("myblog-posts");
         localStorage.removeItem(commentStorageKey);
         setPost(null);
@@ -169,7 +176,10 @@ const PostDetail = () => {
       localStorage.setItem(commentStorageKey, JSON.stringify(updated));
       setIsWriting(false);
     } catch (error) {
-      console.error("Failed to submit comment:", error);
+      // 本番環境では詳細ログを抑制
+      if (process.env.NODE_ENV === "development") {
+        console.error("Failed to submit comment:", error);
+      }
       // エラーハンドリング（トースト通知等）
     } finally {
       setIsSubmittingComment(false);
@@ -229,9 +239,9 @@ const PostDetail = () => {
                   "inline-block text-sm font-semibold",
                   "px-3 py-1 rounded bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200",
                 )}
-                aria-label={`カテゴリー: ${post.category}`}
+                aria-label={`カテゴリー: ${displayTextPlain(post.category)}`}
               >
-                {post.category}
+                {displayTextPlain(post.category)}
               </span>
               <hr
                 className="mt-4 border-gray-300 dark:border-gray-600"
@@ -292,13 +302,15 @@ const PostDetail = () => {
                           "transition break-words focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1",
                         )}
                         aria-expanded={isOpen}
-                        aria-label={`${c.user}さんのコメント${isOpen ? "（展開中）" : "（クリックで展開）"}`}
+                        aria-label={`${displayTextPlain(c.user)}さんのコメント${isOpen ? "（展開中）" : "（クリックで展開）"}`}
                       >
                         <p className="font-semibold text-gray-900 dark:text-white">
-                          {c.user}
+                          {displayTextPlain(c.user)}
                         </p>
                         <p className="text-gray-700 dark:text-gray-300 mt-1">
-                          {isOpen ? c.content : c.displayContent}
+                          {isOpen
+                            ? displayTextPlain(c.content)
+                            : displayTextPlain(c.displayContent)}
                         </p>
                         {!isOpen && c.content.length > 30 && (
                           <span className="sr-only">
@@ -348,7 +360,7 @@ const PostDetail = () => {
               新しいコメントを投稿
             </h3>
 
-            {/* 🆕 コメント送信中のローディング表示 */}
+            {/* コメント送信中のローディング表示 */}
             {isSubmittingComment && (
               <div className="flex items-center justify-center p-4 mb-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <LoadingSpinner size="sm" className="mr-2" />

@@ -45,8 +45,10 @@ const initializeAuthSecurity = () => {
   const isDev = checkDevelopmentMode();
 
   if (!isDev) {
-    // 本番環境: 最小限の警告のみ
-    console.warn("🚫 Auth: Production mode - Authentication disabled");
+    // 本番環境: 最小限の警告のみ（セキュリティ上必要な場合のみ）
+    if (process.env.NODE_ENV === "development") {
+      console.warn("🚫 Auth: Production mode - Authentication disabled");
+    }
 
     // ストレージクリア
     try {
@@ -130,6 +132,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const isDev = checkDevelopmentMode();
 
     if (!isDev && isLoggedIn) {
+      // セキュリティ違反のログは本番でも必要
       console.error("🚨 Security violation: Unauthorized auth state detected");
       setIsLoggedIn(false);
 
@@ -156,6 +159,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // 本番環境ガード
     if (!isDev) {
+      // セキュリティ上重要なログは本番でも出力
       console.error("🚫 Production: Development authentication is disabled");
       return { success: false, error: "production_disabled" };
     }
@@ -166,6 +170,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const additionalHosts =
         import.meta.env.VITE_ALLOWED_DEV_HOSTS?.split(",") || [];
       if (!additionalHosts.includes(hostname)) {
+        // セキュリティ違反のログは本番でも必要
         console.error(
           "🚨 Security violation: Unauthorized host access:",
           hostname,
@@ -180,17 +185,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // ビルド時置換エラーチェック
     if (devEmail === "undefined" || devPassword === "undefined") {
-      console.error(
-        "❌ Build replacement error: Environment variables not properly configured",
-      );
+      // 開発環境でのみ詳細ログ
+      if (process.env.NODE_ENV === "development") {
+        console.error(
+          "❌ Build replacement error: Environment variables not properly configured",
+        );
+      }
       return { success: false, error: "build_error" };
     }
 
     if (!devEmail || !devPassword) {
-      console.error("❌ Development environment variables not configured");
-      console.warn(
-        "Please set VITE_DEV_ADMIN_EMAIL and VITE_DEV_ADMIN_PASSWORD",
-      );
+      // 開発環境でのみ詳細ログ
+      if (process.env.NODE_ENV === "development") {
+        console.error("❌ Development environment variables not configured");
+        console.warn(
+          "Please set VITE_DEV_ADMIN_EMAIL and VITE_DEV_ADMIN_PASSWORD",
+        );
+      }
       return { success: false, error: "invalid_config" };
     }
 
@@ -205,11 +216,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         handleStorageError(error, "save auth state");
       }
 
-      console.log("✅ Development login successful");
+      // 開発環境でのみ成功ログ
+      if (process.env.NODE_ENV === "development") {
+        console.log("✅ Development login successful");
+      }
       return { success: true };
     }
 
-    console.warn("❌ Development login failed");
+    // 開発環境でのみ失敗ログ
+    if (process.env.NODE_ENV === "development") {
+      console.warn("❌ Development login failed");
+    }
     return {
       success: false,
       error: "invalid_credentials",
@@ -230,7 +247,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     const isDev = checkDevelopmentMode();
-    if (isDev) {
+    // 開発環境でのみログアウトログ
+    if (isDev && process.env.NODE_ENV === "development") {
       console.log("🚪 Logout completed");
     }
   };
