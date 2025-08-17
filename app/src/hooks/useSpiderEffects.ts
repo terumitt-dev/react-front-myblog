@@ -35,6 +35,7 @@ export const useSpiderEffects = (
   useEffect(() => {
     if (category !== "hobby") {
       setSpiders([]);
+      setSpiderDisappearingIds(new Set());
       return;
     }
 

@@ -1,5 +1,5 @@
 // app/src/hooks/useSnailEffects.ts
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   generateRandomPosition,
   getEffectCount,
@@ -29,11 +29,13 @@ export const useSnailEffects = (
   const [snailDisappearingIds, setSnailDisappearingIds] = useState<Set<number>>(
     () => new Set(),
   );
+  const timeoutRef = useRef<number | null>(null);
 
   // カタツムリ生成
   useEffect(() => {
     if (category !== "other") {
       setSnails([]);
+      setSnailDisappearingIds(new Set());
       return;
     }
 
@@ -69,7 +71,7 @@ export const useSnailEffects = (
     (snailId: number) => {
       setSnailDisappearingIds((prev) => new Set([...prev, snailId]));
 
-      setTimeout(
+      timeoutRef.current = window.setTimeout(
         () => {
           setSnails((prev) => prev.filter((snail) => snail.id !== snailId));
           setSnailDisappearingIds((prev) => {
@@ -85,6 +87,15 @@ export const useSnailEffects = (
     },
     [reducedMotion],
   );
+
+  // アンマウント時にタイマーをクリア
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current !== null) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   // カタツムリホバーハンドラー
   const handleSnailHover = useCallback((snailId: number) => {

@@ -222,7 +222,9 @@ const Admin = () => {
     );
   }, []);
 
-  const isFormValid = title.trim() && content.trim() && category.trim();
+  const isFormValid = Boolean(
+    title.trim() && content.trim() && category.trim(),
+  );
 
   return (
     <Layout>
