@@ -8,6 +8,26 @@ const IS_DEV_BUILD = import.meta.env.DEV;
 const FORCE_DISABLE_AUTH = import.meta.env.VITE_FORCE_DISABLE_AUTH === "true";
 const IS_PRODUCTION = import.meta.env.PROD;
 
+// 共通: 許可ホストリストを取得する関数
+const getAllowedHosts = (): string[] => {
+  const defaultHosts = ["localhost", "127.0.0.1", "0.0.0.0"];
+  const additionalDevHosts =
+    import.meta.env.VITE_ALLOWED_DEV_HOSTS?.split(",")
+      .map((host) => host.trim())
+      .filter((host) => host) || [];
+
+  return [...defaultHosts, ...additionalDevHosts];
+};
+
+// 共通: ホスト検証を行う関数
+const isHostAllowed = (): boolean => {
+  if (typeof window === "undefined") return false;
+
+  const hostname = window.location.hostname;
+  const allowedHosts = getAllowedHosts();
+  return allowedHosts.includes(hostname);
+};
+
 // 本番動作ガード強化 - 厳格なホスト制御
 const checkDevelopmentMode = (): boolean => {
   // SSR時は false
@@ -20,19 +40,8 @@ const checkDevelopmentMode = (): boolean => {
     !IS_PRODUCTION &&
     !FORCE_DISABLE_AUTH;
 
-  // 🔧 修正: 厳格なホスト制御（明示リスト化）
-  const hostname = window.location.hostname;
-  const allowedHosts = ["localhost", "127.0.0.1", "0.0.0.0"];
-
-  // 環境変数で追加の開発ホストを許可（セキュアな方法）
-  const additionalDevHosts =
-    import.meta.env.VITE_ALLOWED_DEV_HOSTS?.split(",") || [];
-  const allAllowedHosts = [
-    ...allowedHosts,
-    ...additionalDevHosts.filter((host) => host.trim()),
-  ];
-
-  const isValidHost = allAllowedHosts.includes(hostname);
+  // 共通のホスト検証を使用
+  const isValidHost = isHostAllowed();
 
   return basicConditions && isValidHost;
 };
@@ -60,7 +69,9 @@ const initializeAuthSecurity = () => {
     }
   } else {
     // 開発環境: 詳細ログ
+    const allowedHosts = getAllowedHosts();
     console.warn("⚠️ 開発用認証システムが有効 - 本番では自動無効化されます");
+    console.log("📍 Allowed hosts:", allowedHosts);
     console.log(
       `🔍 Build Info: MODE=${NODE_ENV}, DEV=${IS_DEV_BUILD}, PROD=${IS_PRODUCTION}, AUTH_DISABLED=${FORCE_DISABLE_AUTH}`,
     );
@@ -164,19 +175,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return { success: false, error: "production_disabled" };
     }
 
-    // 追加のセキュリティチェック
-    const hostname = window.location.hostname;
-    if (!["localhost", "127.0.0.1", "0.0.0.0"].includes(hostname)) {
-      const additionalHosts =
-        import.meta.env.VITE_ALLOWED_DEV_HOSTS?.split(",") || [];
-      if (!additionalHosts.includes(hostname)) {
-        // セキュリティ違反のログは本番でも必要
-        console.error(
-          "🚨 Security violation: Unauthorized host access:",
-          hostname,
-        );
-        return { success: false, error: "security_violation" };
-      }
+    // 共通のホスト検証を使用
+    if (!isHostAllowed()) {
+      const hostname = window.location.hostname;
+      const allowedHosts = getAllowedHosts();
+      console.error(
+        "🚨 Security violation: Unauthorized host access:",
+        hostname,
+        "Allowed hosts:",
+        allowedHosts,
+      );
+      return { success: false, error: "security_violation" };
     }
 
     // 環境変数チェック

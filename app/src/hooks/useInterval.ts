@@ -14,7 +14,7 @@ export function useInterval(
   deps: readonly (string | number | boolean | null | undefined)[] = [],
 ) {
   const savedCallback = useRef<() => void>(callback);
-  const intervalRef = useRef<number | null>(null); // ブラウザ環境に合わせてnumber型に修正
+  const intervalRef = useRef<number | null>(null);
 
   // 最新のコールバックを保存
   useEffect(() => {
@@ -38,7 +38,7 @@ export function useInterval(
       return;
     }
 
-    // 新しいインターバルを設定（ブラウザのsetIntervalは number を返す）
+    // 新しいインターバルを設定
     intervalRef.current = window.setInterval(() => {
       if (savedCallback.current) {
         savedCallback.current();
@@ -47,7 +47,7 @@ export function useInterval(
 
     // クリーンアップ関数
     return clearCurrentInterval;
-  }, [delay, clearCurrentInterval, deps]);
+  }, [delay, clearCurrentInterval, ...deps]); // ここが重要な修正点
 
   // コンポーネントアンマウント時の強制クリーンアップ
   useEffect(() => {

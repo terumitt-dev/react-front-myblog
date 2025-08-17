@@ -8,6 +8,9 @@ interface PerformanceMetrics {
   memoryUsage?: number;
   renderTime: number;
   interactionLatency: number;
+  isSlowRender: boolean;
+  startTiming: () => void;
+  endTiming: () => void;
 }
 
 interface PerformanceMemory {
@@ -21,7 +24,7 @@ interface ExtendedPerformance extends Performance {
 }
 
 export const usePerformanceMonitor = (enabled = true): PerformanceMetrics => {
-  const [metrics, setMetrics] = useState<PerformanceMetrics>({
+  const [metrics, setMetrics] = useState({
     isUnderStress: false,
     frameRate: 60,
     renderTime: 0,
@@ -31,6 +34,7 @@ export const usePerformanceMonitor = (enabled = true): PerformanceMetrics => {
   const frameCountRef = useRef(0);
   const lastTimeRef = useRef(performance.now());
   const rafIdRef = useRef<number | null>(null);
+  const startTimeRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!enabled) return;
@@ -39,7 +43,6 @@ export const usePerformanceMonitor = (enabled = true): PerformanceMetrics => {
       const now = performance.now();
       frameCountRef.current++;
 
-      // 1秒ごとにフレームレートを計算
       // 1秒ごとにフレームレートを計算
       if (
         now - lastTimeRef.current >=
@@ -112,5 +115,30 @@ export const usePerformanceMonitor = (enabled = true): PerformanceMetrics => {
     return () => clearInterval(interval);
   }, [enabled]);
 
-  return metrics;
+  // タイミング計測用関数
+  const startTiming = () => {
+    if (typeof performance !== "undefined") {
+      startTimeRef.current = performance.now();
+    }
+  };
+
+  const endTiming = () => {
+    if (typeof performance !== "undefined" && startTimeRef.current !== null) {
+      const now = performance.now();
+      const renderTime = now - startTimeRef.current;
+      setMetrics((prev) => ({
+        ...prev,
+        renderTime,
+        isUnderStress: renderTime > PERFORMANCE_CONFIG.SLOW_RENDER_THRESHOLD,
+      }));
+      startTimeRef.current = null; // リセット
+    }
+  };
+
+  return {
+    ...metrics,
+    isSlowRender: metrics.isUnderStress,
+    startTiming,
+    endTiming,
+  };
 };

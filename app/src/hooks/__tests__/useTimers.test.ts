@@ -13,24 +13,25 @@ describe("useTimers", () => {
     vi.clearAllMocks();
   });
 
-  it("初期状態が正しく設定される", () => {
+  it("初期状態で必要な関数が提供される", () => {
     const { result } = renderHook(() => useTimers());
 
-    expect(result.current.timers.size).toBe(0);
-    expect(typeof result.current.addTimer).toBe("function");
-    expect(typeof result.current.clearTimer).toBe("function");
-    expect(typeof result.current.clearAllTimers).toBe("function");
+    expect(typeof result.current.setTimeout).toBe("function");
+    expect(typeof result.current.clearMyTimeout).toBe("function");
+    expect(typeof result.current.setInterval).toBe("function");
+    expect(typeof result.current.clearInterval).toBe("function");
   });
 
-  it("タイマーが正常に追加される", () => {
+  it("setTimeoutが正常に動作する", () => {
     const { result } = renderHook(() => useTimers());
     const callback = vi.fn();
 
+    let timerId: number;
     act(() => {
-      result.current.addTimer("test-timer", callback, 1000);
+      timerId = result.current.setTimeout(callback, 1000);
     });
 
-    expect(result.current.timers.has("test-timer")).toBe(true);
+    expect(typeof timerId).toBe("number");
     expect(callback).not.toHaveBeenCalled();
 
     // 1秒進める
@@ -41,36 +42,17 @@ describe("useTimers", () => {
     expect(callback).toHaveBeenCalledTimes(1);
   });
 
-  it("同じキーのタイマーを追加すると前のものがクリアされる", () => {
-    const { result } = renderHook(() => useTimers());
-    const callback1 = vi.fn();
-    const callback2 = vi.fn();
-
-    act(() => {
-      result.current.addTimer("test-timer", callback1, 1000);
-      result.current.addTimer("test-timer", callback2, 500);
-    });
-
-    // 500ms進める
-    act(() => {
-      vi.advanceTimersByTime(500);
-    });
-
-    expect(callback1).not.toHaveBeenCalled();
-    expect(callback2).toHaveBeenCalledTimes(1);
-  });
-
-  it("タイマーが正常にクリアされる", () => {
+  it("clearMyTimeoutが正常に動作する", () => {
     const { result } = renderHook(() => useTimers());
     const callback = vi.fn();
 
+    let timerId: number;
     act(() => {
-      result.current.addTimer("test-timer", callback, 1000);
-      result.current.clearTimer("test-timer");
+      timerId = result.current.setTimeout(callback, 1000);
+      result.current.clearMyTimeout(timerId);
     });
 
-    expect(result.current.timers.has("test-timer")).toBe(false);
-
+    // 1秒進めてもコールバックは実行されない
     act(() => {
       vi.advanceTimersByTime(1000);
     });
@@ -78,24 +60,145 @@ describe("useTimers", () => {
     expect(callback).not.toHaveBeenCalled();
   });
 
-  it("全てのタイマーがクリアされる", () => {
+  it("setIntervalが正常に動作する", () => {
+    const { result } = renderHook(() => useTimers());
+    const callback = vi.fn();
+
+    let intervalId: number;
+    act(() => {
+      intervalId = result.current.setInterval(callback, 500);
+    });
+
+    expect(typeof intervalId).toBe("number");
+    expect(callback).not.toHaveBeenCalled();
+
+    // 500ms進める
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+
+    expect(callback).toHaveBeenCalledTimes(1);
+
+    // さらに500ms進める
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+
+    expect(callback).toHaveBeenCalledTimes(2);
+
+    // インターバルをクリア
+    act(() => {
+      result.current.clearInterval(intervalId);
+    });
+
+    // さらに500ms進めてもコールバックは実行されない
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+
+    expect(callback).toHaveBeenCalledTimes(2);
+  });
+
+  it("複数のタイマーを同時に管理できる", () => {
     const { result } = renderHook(() => useTimers());
     const callback1 = vi.fn();
     const callback2 = vi.fn();
+    const callback3 = vi.fn();
+
+    let timerId1: number;
+    let timerId2: number;
+    let intervalId: number;
 
     act(() => {
-      result.current.addTimer("timer1", callback1, 1000);
-      result.current.addTimer("timer2", callback2, 2000);
-      result.current.clearAllTimers();
+      timerId1 = result.current.setTimeout(callback1, 1000);
+      timerId2 = result.current.setTimeout(callback2, 2000);
+      intervalId = result.current.setInterval(callback3, 500);
     });
 
-    expect(result.current.timers.size).toBe(0);
-
+    // 500ms進める（インターバルが1回実行）
     act(() => {
-      vi.advanceTimersByTime(3000);
+      vi.advanceTimersByTime(500);
     });
 
     expect(callback1).not.toHaveBeenCalled();
     expect(callback2).not.toHaveBeenCalled();
+    expect(callback3).toHaveBeenCalledTimes(1);
+
+    // 1000ms時点（タイマー1が実行、インターバルが2回実行）
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+
+    expect(callback1).toHaveBeenCalledTimes(1);
+    expect(callback2).not.toHaveBeenCalled();
+    expect(callback3).toHaveBeenCalledTimes(2);
+
+    // 2000ms時点（タイマー2が実行、インターバルが4回実行）
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    expect(callback1).toHaveBeenCalledTimes(1);
+    expect(callback2).toHaveBeenCalledTimes(1);
+    expect(callback3).toHaveBeenCalledTimes(4);
+
+    // インターバルをクリア
+    act(() => {
+      result.current.clearInterval(intervalId);
+    });
+  });
+
+  it("コンポーネントのアンマウント時に全てのタイマーがクリアされる", () => {
+    const { result, unmount } = renderHook(() => useTimers());
+    const callback1 = vi.fn();
+    const callback2 = vi.fn();
+
+    act(() => {
+      result.current.setTimeout(callback1, 1000);
+      result.current.setInterval(callback2, 500);
+    });
+
+    // アンマウント
+    unmount();
+
+    // タイマーが動作しないことを確認
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+
+    expect(callback1).not.toHaveBeenCalled();
+    expect(callback2).not.toHaveBeenCalled();
+  });
+
+  it("タイムアウト実行後に自動的にIDが管理リストから削除される", () => {
+    const { result } = renderHook(() => useTimers());
+    const callback = vi.fn();
+
+    act(() => {
+      result.current.setTimeout(callback, 1000);
+    });
+
+    // スパイを使ってclearTimeoutが呼ばれないことを確認
+    const clearTimeoutSpy = vi.spyOn(window, "clearTimeout");
+
+    // 1秒進める（タイムアウト実行）
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    expect(callback).toHaveBeenCalledTimes(1);
+
+    // コンポーネントをアンマウントしても、すでに実行済みのタイマーに対して
+    // clearTimeoutは呼ばれない（IDがリストから削除されているため）
+    const initialClearCount = clearTimeoutSpy.mock.calls.length;
+
+    act(() => {
+      result.current.setTimeout(() => {}, 1000); // 新しいタイマーを追加
+    });
+
+    const { unmount } = renderHook(() => useTimers());
+    unmount();
+
+    clearTimeoutSpy.mockRestore();
   });
 });
