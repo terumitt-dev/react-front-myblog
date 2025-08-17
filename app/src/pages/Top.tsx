@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import CategoryButtons from "@/components/organisms/CategoryButtons";
 import ArticleSkeleton from "@/components/molecules/ArticleSkeleton";
+import { safeJsonParse } from "@/components/utils/errorHandler"; // 🔧 追加
+import { displayTextPlain } from "@/components/utils/sanitizer"; // 🔧 追加
 import {
   LAYOUT_PATTERNS,
   RESPONSIVE_SPACING,
@@ -22,10 +24,8 @@ const Top = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // ローディング開始
     setIsLoading(true);
 
-    // 実際のアプリでは少し遅延を入れてローディング状態を見せる
     const loadPosts = async () => {
       try {
         // 少し遅延してローディング状態を確認しやすくする
@@ -33,7 +33,9 @@ const Top = () => {
 
         const saved = localStorage.getItem("myblog-posts");
         if (saved) {
-          const normalized = (JSON.parse(saved) as Post[]).map((p) => ({
+          // JSONパースの安全性 - safeJsonParse使用
+          const rawPosts = safeJsonParse<any[]>(saved, []);
+          const normalized = rawPosts.map((p) => ({
             ...p,
             id: Number(p.id),
           }));
@@ -120,10 +122,11 @@ const Top = () => {
                   >
                     <div className="min-w-0">
                       <h3 className="font-bold text-gray-900 dark:text-white break-words">
-                        {article.title}
+                        {/* 安全な表示 */}
+                        {displayTextPlain(article.title)}
                       </h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 break-words">
-                        カテゴリー: {article.category}
+                        カテゴリー: {displayTextPlain(article.category)}
                       </p>
                     </div>
                     <Link

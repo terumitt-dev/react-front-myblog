@@ -1,20 +1,12 @@
 // app/src/components/utils/sanitizer.tsx
 import DOMPurify from "dompurify";
 
-// シンプル化されたエスケープ判定（誤判定リスク排除）
-const isAlreadyEscaped = (text: string): boolean => {
-  if (!text) return false;
-
-  // シンプルな基本エンティティチェックのみ
-  return /&(?:amp|lt|gt|quot|#39|#x27);/.test(text);
-};
-
-// プレーンテキスト専用表示関数（シンプル化）
+// プレーンテキスト専用表示関数（XSS完全防止）
 export const displayTextPlain = (text: string): string => {
   if (!text) return "";
 
   try {
-    // 常にDOMPurifyでタグ除去 → プレーンテキスト化
+    // HTMLタグを完全除去してプレーンテキスト化
     const cleanText = DOMPurify.sanitize(text, {
       ALLOWED_TAGS: [],
       ALLOWED_ATTR: [],
@@ -42,35 +34,31 @@ export const displayTextPlain = (text: string): string => {
   }
 };
 
-// 一貫したエスケープ→DOMPurify処理（シンプル化）
+// XSSサニタイズ仕様統一 - DOMPurifyのみ使用
 export const displayTextSafe = (text: string): string => {
   if (!text) return "";
 
   try {
-    // 常に一貫した処理: エスケープ → DOMPurify
-    const escaped = text
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
-
-    return DOMPurify.sanitize(escaped, {
-      ALLOWED_TAGS: ["br", "p", "strong", "em", "u", "s"],
+    // DOMPurifyのみでサニタイズ（二重エスケープ防止）
+    return DOMPurify.sanitize(text, {
+      ALLOWED_TAGS: [
+        "br",
+        "p",
+        "strong",
+        "em",
+        "u",
+        "s",
+        "blockquote",
+        "code",
+        "pre",
+      ],
       ALLOWED_ATTR: [],
+      KEEP_CONTENT: true,
     });
   } catch (error) {
     console.error("Safe display error:", error);
-    return String(text).replace(/[<>&"']/g, (match) => {
-      const escapeMap: Record<string, string> = {
-        "<": "&lt;",
-        ">": "&gt;",
-        "&": "&amp;",
-        '"': "&quot;",
-        "'": "&#39;",
-      };
-      return escapeMap[match] || match;
-    });
+    // フォールバック: プレーンテキスト化
+    return displayTextPlain(text);
   }
 };
 
@@ -93,7 +81,7 @@ export const sanitizeInput = (input: string): string => {
   }
 };
 
-// 🔧 修正: 互換性バグ修正 - 古いシグネチャ維持
+// バリデーション関数（互換性維持）
 export const validateAndSanitize = (
   input: string,
   maxLength: number,
@@ -124,11 +112,10 @@ export const validateAndSanitize = (
   return { isValid: true, sanitized };
 };
 
-// 仕様不整合修正 - カテゴリ統一
+// カテゴリバリデーション（仕様統一）
 export const validateCategory = (
   category: string,
 ): { isValid: boolean; sanitized: string; error?: string } => {
-  // "other"を追加してUI/他コードと整合
   const allowedCategories = ["tech", "hobby", "other"];
   const sanitized = sanitizeInput(category);
 

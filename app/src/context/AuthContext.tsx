@@ -8,7 +8,7 @@ const IS_DEV_BUILD = import.meta.env.DEV;
 const FORCE_DISABLE_AUTH = import.meta.env.VITE_FORCE_DISABLE_AUTH === "true";
 const IS_PRODUCTION = import.meta.env.PROD;
 
-// 🔧 修正: より柔軟な開発環境判定（ログイン可能にする）
+// 本番動作ガード強化 - 厳格なホスト制御
 const checkDevelopmentMode = (): boolean => {
   // SSR時は false
   if (typeof window === "undefined") return false;
@@ -20,19 +20,24 @@ const checkDevelopmentMode = (): boolean => {
     !IS_PRODUCTION &&
     !FORCE_DISABLE_AUTH;
 
-  // ホスト条件（より柔軟に）
+  // 🔧 修正: 厳格なホスト制御（明示リスト化）
   const hostname = window.location.hostname;
-  const isValidHost =
-    hostname === "localhost" ||
-    hostname === "127.0.0.1" ||
-    hostname === "0.0.0.0" ||
-    hostname.includes("dev") ||
-    hostname.includes("local");
+  const allowedHosts = ["localhost", "127.0.0.1", "0.0.0.0"];
+
+  // 環境変数で追加の開発ホストを許可（セキュアな方法）
+  const additionalDevHosts =
+    import.meta.env.VITE_ALLOWED_DEV_HOSTS?.split(",") || [];
+  const allAllowedHosts = [
+    ...allowedHosts,
+    ...additionalDevHosts.filter((host) => host.trim()),
+  ];
+
+  const isValidHost = allAllowedHosts.includes(hostname);
 
   return basicConditions && isValidHost;
 };
 
-// 🔧 修正: 初期化処理を関数内で実行（SSR安全）
+// 初期化処理
 const initializeAuthSecurity = () => {
   // SSR時はスキップ
   if (typeof window === "undefined") return;
@@ -84,7 +89,7 @@ const SESSION_KEY = "myblog-auth-session";
 const STORAGE_KEY = "myblog-auth";
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  // 🔧 修正: 初期化をuseEffect内で実行
+  // 初期化をuseEffect内で実行
   useEffect(() => {
     initializeAuthSecurity();
   }, []);
@@ -155,7 +160,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return { success: false, error: "production_disabled" };
     }
 
-    // 🔧 修正: ホスト名チェックは既に checkDevelopmentMode() で実行済み
+    // 追加のセキュリティチェック
+    const hostname = window.location.hostname;
+    if (!["localhost", "127.0.0.1", "0.0.0.0"].includes(hostname)) {
+      const additionalHosts =
+        import.meta.env.VITE_ALLOWED_DEV_HOSTS?.split(",") || [];
+      if (!additionalHosts.includes(hostname)) {
+        console.error(
+          "🚨 Security violation: Unauthorized host access:",
+          hostname,
+        );
+        return { success: false, error: "security_violation" };
+      }
+    }
 
     // 環境変数チェック
     const devEmail = import.meta.env.VITE_DEV_ADMIN_EMAIL;
@@ -218,7 +235,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // 🔧 修正: 動的にdevelopmentModeを判定
+  // 動的にdevelopmentModeを判定
   const isDevelopmentMode =
     typeof window !== "undefined" ? checkDevelopmentMode() : false;
 
