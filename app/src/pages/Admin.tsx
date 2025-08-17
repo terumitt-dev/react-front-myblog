@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import LogoutButton from "@/components/molecules/LogoutButton";
 import LoadingSpinner from "@/components/atoms/LoadingSpinner";
 import { TEXT_LIMITS } from "@/constants/appConfig";
-import { FORM_STYLES } from "@/components/utils/styles";
+import { FORM_STYLES, BACKGROUND_STYLES } from "@/components/utils/styles";
 import {
   validateAndSanitize,
   validateCategory,
@@ -226,9 +226,9 @@ const Admin = () => {
         {/* ヘッダー */}
         <header
           className={cn(
-            RESPONSIVE_FLEX.columnToRowReverse,
+            "flex flex-col sm:flex-row sm:items-center sm:justify-between",
             RESPONSIVE_SPACING.gapSmall,
-            "items-start sm:items-center mb-8",
+            "mb-8",
           )}
         >
           <h1
@@ -244,7 +244,10 @@ const Admin = () => {
 
         {/* 投稿フォーム */}
         <section
-          className={cn("mb-8 space-y-6")}
+          className={cn(
+            "mb-8 space-y-6 p-6 rounded-xl",
+            BACKGROUND_STYLES.cardSecondary,
+          )}
           aria-labelledby="post-form-heading"
         >
           <h2
@@ -293,8 +296,8 @@ const Admin = () => {
                 disabled={isSaving}
                 required
               >
-                <option value="tech">技術</option>
-                <option value="hobby">趣味</option>
+                <option value="tech">テック</option>
+                <option value="hobby">しゅみ</option>
                 <option value="other">その他</option>
               </select>
             </div>
@@ -376,7 +379,10 @@ const Admin = () => {
         </section>
 
         {/* 投稿一覧 */}
-        <section aria-labelledby="posts-heading">
+        <section
+          className={cn("p-6 rounded-xl", BACKGROUND_STYLES.cardSecondary)}
+          aria-labelledby="posts-heading"
+        >
           <h2
             id="posts-heading"
             className={`${RESPONSIVE_TEXT.heading2} font-semibold mb-4`}
