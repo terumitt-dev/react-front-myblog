@@ -1,196 +1,183 @@
 // app/src/components/utils/sanitizer.tsx
-import { TEXT_LIMITS, VALIDATION } from "@/constants/appConfig";
+import DOMPurify from "dompurify";
 
-/**
- * 統一されたサニタイズ・表示戦略
- *
- * 方針:
- * 1. 保存時: 必ずエスケープして保存（escapeHtml）
- * 2. 表示時: エスケープ済みデータはそのまま表示（dangerouslySetInnerHTML使用）
- * 3. 入力時: リアルタイムバリデーション
- */
-
-// エスケープ済みかどうかを判定（より精密）
+// 強化されたエスケープ判定 - 複数パターン対応
 const isAlreadyEscaped = (text: string): boolean => {
   if (!text) return false;
 
-  // HTMLエンティティパターンをチェック
-  const entityPattern = /&(?:[a-z\d]+|#\d+|#x[a-f\d]+);/gi;
-  const hasEntities = entityPattern.test(text);
+  // 複数パターンでエスケープ検証 - 誤判定防止
+  const patterns = {
+    // 基本HTMLエンティティ
+    basic: /&(?:amp|lt|gt|quot|#39|#x27);/g,
+    // 数値文字参照
+    numeric: /&#(?:\d+|x[a-f0-9]+);/gi,
+    // 名前付きエンティティ
+    named: /&(?:[a-z]+|#\d+|#x[a-f\d]+);/gi,
+  };
 
-  // エスケープ前後で長さが変わるかチェック
+  const hasBasicEntities = patterns.basic.test(text);
+  const hasNumericEntities = patterns.numeric.test(text);
+  const hasNamedEntities = patterns.named.test(text);
+
+  // ブラウザ環境でのダブルチェック - 網羅性向上
   if (typeof document !== "undefined") {
-    const tempDiv = document.createElement("div");
-    tempDiv.textContent = text;
-    const escaped = tempDiv.innerHTML;
-    return hasEntities && text !== escaped;
-  }
+    try {
+      const tempDiv = document.createElement("div");
+      tempDiv.textContent = text;
+      const reEscaped = tempDiv.innerHTML;
 
-  return hasEntities;
-};
+      // 既にエスケープされている場合、再エスケープで変化しない
+      const isDoubleEscaped = text === reEscaped;
 
-// HTMLエスケープ（二重エスケープ防止強化）
-export const escapeHtml = (text: string): string => {
-  if (!text) return "";
-
-  if (isAlreadyEscaped(text)) {
-    console.warn("⚠️ 既にエスケープ済みの可能性:", text.slice(0, 50));
-    return text;
-  }
-
-  if (typeof document !== "undefined") {
-    const div = document.createElement("div");
-    div.textContent = text;
-    return div.innerHTML;
-  }
-
-  // フォールバック（サーバーサイド対応）
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#x27;");
-};
-
-// プレーンテキスト化（表示用）
-export const toPlainText = (text: string): string => {
-  if (!text) return "";
-
-  if (typeof document !== "undefined") {
-    const div = document.createElement("div");
-    div.innerHTML = text;
-    return div.textContent || div.innerText || "";
-  }
-
-  // フォールバック: 基本的なHTMLタグを除去
-  return text.replace(/<[^>]*>/g, "");
-};
-
-// 安全な表示用テキスト（エスケープ済みデータ用）- 既存互換性のため残す
-export const displayText = (text: string, isEscaped = false): string => {
-  if (isEscaped) {
-    return toPlainText(text); // エスケープ済みデータはプレーンテキスト化
-  }
-  return escapeHtml(text); // 生データはエスケープ
-};
-
-// より安全な表示関数
-export const displayTextSafe = (text: string): string => {
-  if (!text) return "";
-
-  // 追加セキュリティチェック
-  const securityCheck = checkDisplayStrategy(text);
-  if (securityCheck.warning) {
-    console.warn("Security warning:", securityCheck.warning);
-  }
-
-  // 許可されていないHTMLタグを除去（strong, em, u, br, pのみ許可）
-  const cleaned = text.replace(
-    /<(?!\/?(?:strong|em|u|br|p)(?:\s[^>]*)?\/?>)[^>]*>/gi,
-    "",
-  );
-
-  return cleaned;
-};
-
-// プレーンテキストとして表示（検索結果など）
-export const displayTextPlain = (text: string): string => {
-  if (!text) return "";
-  return toPlainText(text);
-};
-
-// バリデーション強化
-export const validateAndSanitize = (
-  text: string,
-  maxLength: number = TEXT_LIMITS.DEFAULT_MAX_LENGTH,
-  fieldName: string = "フィールド",
-): { isValid: boolean; sanitized: string; error?: string } => {
-  if (!text?.trim()) {
-    return { isValid: false, sanitized: "", error: `${fieldName}は必須です` };
-  }
-
-  const trimmed = text.trim();
-
-  if (trimmed.length > maxLength) {
-    return {
-      isValid: false,
-      sanitized: "",
-      error: `${fieldName}は${maxLength}文字以内で入力してください`,
-    };
-  }
-
-  // 危険なパターンチェック（強化版）
-  const dangerousPatterns = [
-    // スクリプトタグ
-    /<script[^>]*>.*?<\/script>/gis,
-    /<iframe[^>]*>.*?<\/iframe>/gis,
-    /<object[^>]*>.*?<\/object>/gis,
-    /<embed[^>]*>/gi,
-    /<applet[^>]*>.*?<\/applet>/gis,
-
-    // JavaScript プロトコル
-    /javascript\s*:/gi,
-    /vbscript\s*:/gi,
-    /data\s*:/gi,
-
-    // イベントハンドラ
-    /on\w+\s*=/gi,
-
-    // メタタグ（リダイレクトなど）
-    /<meta[^>]*>/gi,
-
-    // リンクタグ（外部リソース読み込み）
-    /<link[^>]*>/gi,
-
-    // スタイルタグ
-    /<style[^>]*>.*?<\/style>/gis,
-  ];
-
-  for (const pattern of dangerousPatterns) {
-    if (pattern.test(trimmed)) {
-      console.warn(`⚠️ 危険なパターンを検出: ${fieldName}`, pattern);
-      return {
-        isValid: false,
-        sanitized: "",
-        error: `${fieldName}に使用できない文字が含まれています`,
-      };
+      return (
+        (hasBasicEntities || hasNumericEntities || hasNamedEntities) &&
+        !isDoubleEscaped
+      );
+    } catch {
+      // DOM操作エラー時はパターンマッチングに依存
+      return hasBasicEntities || hasNumericEntities;
     }
   }
 
-  // 正常な場合はエスケープして返す
-  return {
-    isValid: true,
-    sanitized: escapeHtml(trimmed),
-  };
+  return hasBasicEntities || hasNumericEntities;
 };
 
-// カテゴリバリデーション（型安全版）
-export const validateCategory = (category: string): string | null => {
-  const allowedCategories = VALIDATION.ALLOWED_CATEGORIES;
-  type AllowedCategory = (typeof allowedCategories)[number];
+// プレーンテキスト専用表示関数 - XSS完全防止
+export const displayTextPlain = (text: string): string => {
+  if (!text) return "";
 
-  if (!allowedCategories.includes(category as AllowedCategory)) {
-    return "無効なカテゴリが選択されています";
+  try {
+    // HTMLタグを完全除去してプレーンテキスト化
+    const cleanText = DOMPurify.sanitize(text, {
+      ALLOWED_TAGS: [],
+      ALLOWED_ATTR: [],
+      KEEP_CONTENT: true,
+    });
+
+    // HTMLエンティティをデコード
+    if (typeof document !== "undefined") {
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = cleanText;
+      return tempDiv.textContent || tempDiv.innerText || "";
+    }
+
+    // サーバーサイド用フォールバック
+    return cleanText
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&#x27;/g, "'");
+  } catch (error) {
+    console.error("Plain text conversion error:", error);
+    return String(text).replace(/<[^>]*>/g, ""); // 最低限のタグ除去
   }
-  return null;
 };
 
-// 表示方針チェッカー（開発用）
-export const checkDisplayStrategy = (
-  text: string,
-): {
-  isEscaped: boolean;
-  recommendedDisplay: "safe" | "plain";
-  warning?: string;
-} => {
-  const isEscaped = isAlreadyEscaped(text);
+// 安全表示関数 - 改良版
+export const displayTextSafe = (text: string): string => {
+  if (!text) return "";
 
-  return {
-    isEscaped,
-    recommendedDisplay: isEscaped ? "safe" : "plain",
-    warning: isEscaped
-      ? undefined
-      : "生テキストです。表示前にエスケープを確認してください",
-  };
+  try {
+    // 既にエスケープされているかチェック（強化版）
+    if (isAlreadyEscaped(text)) {
+      return DOMPurify.sanitize(text, {
+        ALLOWED_TAGS: ["br", "p", "strong", "em", "u", "s"],
+        ALLOWED_ATTR: [],
+      });
+    }
+
+    // 未エスケープの場合はエスケープしてからサニタイズ
+    const escaped = text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+
+    return DOMPurify.sanitize(escaped, {
+      ALLOWED_TAGS: ["br", "p", "strong", "em", "u", "s"],
+      ALLOWED_ATTR: [],
+    });
+  } catch (error) {
+    console.error("Safe display error:", error);
+    return String(text).replace(/[<>&"']/g, (match) => {
+      const escapeMap: Record<string, string> = {
+        "<": "&lt;",
+        ">": "&gt;",
+        "&": "&amp;",
+        '"': "&quot;",
+        "'": "&#39;",
+      };
+      return escapeMap[match] || match;
+    });
+  }
+};
+
+// 入力サニタイズ（改良版）
+export const sanitizeInput = (input: string): string => {
+  if (!input) return "";
+
+  try {
+    // 入力値の基本サニタイズ
+    return DOMPurify.sanitize(input, {
+      ALLOWED_TAGS: [],
+      ALLOWED_ATTR: [],
+      KEEP_CONTENT: true,
+    }).trim();
+  } catch (error) {
+    console.error("Input sanitization error:", error);
+    return String(input)
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+      .replace(/<[^>]*>/g, "")
+      .trim();
+  }
+};
+
+// バリデーション関数（既存）
+export const validateAndSanitize = (
+  input: string,
+  limits: { min: number; max: number },
+): { isValid: boolean; sanitized: string; error?: string } => {
+  if (!input || typeof input !== "string") {
+    return { isValid: false, sanitized: "", error: "入力が必要です" };
+  }
+
+  const sanitized = sanitizeInput(input);
+
+  if (sanitized.length < limits.min) {
+    return {
+      isValid: false,
+      sanitized,
+      error: `最低${limits.min}文字以上入力してください`,
+    };
+  }
+
+  if (sanitized.length > limits.max) {
+    return {
+      isValid: false,
+      sanitized,
+      error: `${limits.max}文字以内で入力してください`,
+    };
+  }
+
+  return { isValid: true, sanitized };
+};
+
+export const validateCategory = (
+  category: string,
+): { isValid: boolean; sanitized: string; error?: string } => {
+  const allowedCategories = ["tech", "life", "hobby"];
+  const sanitized = sanitizeInput(category);
+
+  if (!allowedCategories.includes(sanitized)) {
+    return {
+      isValid: false,
+      sanitized,
+      error: "無効なカテゴリです",
+    };
+  }
+
+  return { isValid: true, sanitized };
 };
