@@ -1,53 +1,20 @@
 // app/src/components/utils/sanitizer.tsx
 import DOMPurify from "dompurify";
 
-// 強化されたエスケープ判定 - 複数パターン対応
+// シンプル化されたエスケープ判定（誤判定リスク排除）
 const isAlreadyEscaped = (text: string): boolean => {
   if (!text) return false;
 
-  // 複数パターンでエスケープ検証 - 誤判定防止
-  const patterns = {
-    // 基本HTMLエンティティ
-    basic: /&(?:amp|lt|gt|quot|#39|#x27);/g,
-    // 数値文字参照
-    numeric: /&#(?:\d+|x[a-f0-9]+);/gi,
-    // 名前付きエンティティ
-    named: /&(?:[a-z]+|#\d+|#x[a-f\d]+);/gi,
-  };
-
-  const hasBasicEntities = patterns.basic.test(text);
-  const hasNumericEntities = patterns.numeric.test(text);
-  const hasNamedEntities = patterns.named.test(text);
-
-  // ブラウザ環境でのダブルチェック - 網羅性向上
-  if (typeof document !== "undefined") {
-    try {
-      const tempDiv = document.createElement("div");
-      tempDiv.textContent = text;
-      const reEscaped = tempDiv.innerHTML;
-
-      // 既にエスケープされている場合、再エスケープで変化しない
-      const isDoubleEscaped = text === reEscaped;
-
-      return (
-        (hasBasicEntities || hasNumericEntities || hasNamedEntities) &&
-        !isDoubleEscaped
-      );
-    } catch {
-      // DOM操作エラー時はパターンマッチングに依存
-      return hasBasicEntities || hasNumericEntities;
-    }
-  }
-
-  return hasBasicEntities || hasNumericEntities;
+  // シンプルな基本エンティティチェックのみ
+  return /&(?:amp|lt|gt|quot|#39|#x27);/.test(text);
 };
 
-// プレーンテキスト専用表示関数 - XSS完全防止
+// プレーンテキスト専用表示関数（シンプル化）
 export const displayTextPlain = (text: string): string => {
   if (!text) return "";
 
   try {
-    // HTMLタグを完全除去してプレーンテキスト化
+    // 常にDOMPurifyでタグ除去 → プレーンテキスト化
     const cleanText = DOMPurify.sanitize(text, {
       ALLOWED_TAGS: [],
       ALLOWED_ATTR: [],
@@ -71,24 +38,16 @@ export const displayTextPlain = (text: string): string => {
       .replace(/&#x27;/g, "'");
   } catch (error) {
     console.error("Plain text conversion error:", error);
-    return String(text).replace(/<[^>]*>/g, ""); // 最低限のタグ除去
+    return String(text).replace(/<[^>]*>/g, "");
   }
 };
 
-// 安全表示関数 - 改良版
+// 一貫したエスケープ→DOMPurify処理（シンプル化）
 export const displayTextSafe = (text: string): string => {
   if (!text) return "";
 
   try {
-    // 既にエスケープされているかチェック（強化版）
-    if (isAlreadyEscaped(text)) {
-      return DOMPurify.sanitize(text, {
-        ALLOWED_TAGS: ["br", "p", "strong", "em", "u", "s"],
-        ALLOWED_ATTR: [],
-      });
-    }
-
-    // 未エスケープの場合はエスケープしてからサニタイズ
+    // 常に一貫した処理: エスケープ → DOMPurify
     const escaped = text
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
@@ -115,12 +74,11 @@ export const displayTextSafe = (text: string): string => {
   }
 };
 
-// 入力サニタイズ（改良版）
+// 入力サニタイズ
 export const sanitizeInput = (input: string): string => {
   if (!input) return "";
 
   try {
-    // 入力値の基本サニタイズ
     return DOMPurify.sanitize(input, {
       ALLOWED_TAGS: [],
       ALLOWED_ATTR: [],
@@ -135,13 +93,64 @@ export const sanitizeInput = (input: string): string => {
   }
 };
 
-// バリデーション関数（既存）
+// 🔧 修正: 互換性バグ修正 - 古いシグネチャ維持
 export const validateAndSanitize = (
   input: string,
-  limits: { min: number; max: number },
+  maxLength: number,
+  fieldName: string = "入力値",
 ): { isValid: boolean; sanitized: string; error?: string } => {
   if (!input || typeof input !== "string") {
-    return { isValid: false, sanitized: "", error: "入力が必要です" };
+    return { isValid: false, sanitized: "", error: `${fieldName}が必要です` };
+  }
+
+  const sanitized = sanitizeInput(input);
+
+  if (sanitized.length === 0) {
+    return {
+      isValid: false,
+      sanitized,
+      error: `${fieldName}を入力してください`,
+    };
+  }
+
+  if (sanitized.length > maxLength) {
+    return {
+      isValid: false,
+      sanitized,
+      error: `${fieldName}は${maxLength}文字以内で入力してください`,
+    };
+  }
+
+  return { isValid: true, sanitized };
+};
+
+// 仕様不整合修正 - カテゴリ統一
+export const validateCategory = (
+  category: string,
+): { isValid: boolean; sanitized: string; error?: string } => {
+  // "other"を追加してUI/他コードと整合
+  const allowedCategories = ["tech", "hobby", "other"];
+  const sanitized = sanitizeInput(category);
+
+  if (!allowedCategories.includes(sanitized)) {
+    return {
+      isValid: false,
+      sanitized,
+      error: "無効なカテゴリです",
+    };
+  }
+
+  return { isValid: true, sanitized };
+};
+
+// 新しいバリデーション関数（limits形式対応）
+export const validateWithLimits = (
+  input: string,
+  limits: { min: number; max: number },
+  fieldName: string = "入力値",
+): { isValid: boolean; sanitized: string; error?: string } => {
+  if (!input || typeof input !== "string") {
+    return { isValid: false, sanitized: "", error: `${fieldName}が必要です` };
   }
 
   const sanitized = sanitizeInput(input);
@@ -150,7 +159,7 @@ export const validateAndSanitize = (
     return {
       isValid: false,
       sanitized,
-      error: `最低${limits.min}文字以上入力してください`,
+      error: `${fieldName}は最低${limits.min}文字以上入力してください`,
     };
   }
 
@@ -158,24 +167,7 @@ export const validateAndSanitize = (
     return {
       isValid: false,
       sanitized,
-      error: `${limits.max}文字以内で入力してください`,
-    };
-  }
-
-  return { isValid: true, sanitized };
-};
-
-export const validateCategory = (
-  category: string,
-): { isValid: boolean; sanitized: string; error?: string } => {
-  const allowedCategories = ["tech", "life", "hobby"];
-  const sanitized = sanitizeInput(category);
-
-  if (!allowedCategories.includes(sanitized)) {
-    return {
-      isValid: false,
-      sanitized,
-      error: "無効なカテゴリです",
+      error: `${fieldName}は${limits.max}文字以内で入力してください`,
     };
   }
 

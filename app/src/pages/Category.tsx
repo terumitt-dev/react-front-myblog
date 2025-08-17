@@ -78,15 +78,19 @@ const Category = () => {
     if (category !== "hobby" || spiders.length === 0) return null;
 
     return (
-      <div className="absolute inset-0 z-0 pointer-events-none">
+      <div
+        className="absolute inset-0 z-0 pointer-events-none"
+        aria-hidden="true"
+      >
         {spiders.map((spider) => (
           <button
             key={spider.id}
             type="button"
             onClick={() => handleSpiderClick(spider.id)}
-            aria-label="蜘蛛を消す"
+            aria-label={`蜘蛛 ${spider.id} を消す`}
             className={cn(
               "spider pointer-events-auto",
+              "focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 rounded-sm",
               spiderDisappearingIds.has(spider.id) && "spider-disappear",
             )}
             style={
@@ -108,6 +112,7 @@ const Category = () => {
                 alt=""
                 role="presentation"
                 draggable={false}
+                aria-hidden="true"
                 style={{ pointerEvents: "none", width: "50px", height: "50px" }}
               />
             </span>
@@ -122,7 +127,10 @@ const Category = () => {
     if (category !== "tech" || bubbles.length === 0) return null;
 
     return (
-      <div className="absolute inset-0 z-0 pointer-events-none">
+      <div
+        className="absolute inset-0 z-0 pointer-events-none"
+        aria-hidden="true"
+      >
         {bubbles.map((bubble) => (
           <img
             key={bubble.id}
@@ -130,6 +138,7 @@ const Category = () => {
             alt=""
             role="presentation"
             draggable={false}
+            aria-hidden="true"
             className="bubble"
             style={{
               top: bubble.top,
@@ -150,16 +159,20 @@ const Category = () => {
     if (category !== "other" || snails.length === 0) return null;
 
     return (
-      <div className="absolute inset-0 z-0 pointer-events-none">
+      <div
+        className="absolute inset-0 z-0 pointer-events-none"
+        aria-hidden="true"
+      >
         {snails.map((snail) => (
           <button
             key={snail.id}
             type="button"
             onClick={() => handleSnailClick(snail.id)}
             onMouseEnter={() => handleSnailHover(snail.id)}
-            aria-label="カタツムリを消す"
+            aria-label={`カタツムリ ${snail.id} を消す`}
             className={cn(
               "snail pointer-events-auto",
+              "focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 rounded-sm",
               snail.isMoved && "snail-move",
               snailDisappearingIds.has(snail.id) && "snail-disappear",
             )}
@@ -178,6 +191,7 @@ const Category = () => {
               alt=""
               role="presentation"
               draggable={false}
+              aria-hidden="true"
               style={{ pointerEvents: "none", width: "60px", height: "60px" }}
             />
           </button>
