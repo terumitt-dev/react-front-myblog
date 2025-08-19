@@ -1,6 +1,6 @@
 // app/src/pages/Admin.tsx
 import Layout from "@/components/layouts/Layout";
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import LogoutButton from "@/components/molecules/LogoutButton";
 import LoadingSpinner from "@/components/atoms/LoadingSpinner";
@@ -157,7 +157,11 @@ const Admin = () => {
       }
 
       setPosts(updatedPosts);
-      localStorage.setItem("myblog-posts", JSON.stringify(updatedPosts));
+      try {
+        localStorage.setItem("myblog-posts", JSON.stringify(updatedPosts));
+      } catch (e) {
+        handleStorageError(e, "save");
+      }
 
       setTitle("");
       setContent("");
@@ -193,7 +197,11 @@ const Admin = () => {
 
         const updated = posts.filter((post) => post.id !== id);
         setPosts(updated);
-        localStorage.setItem("myblog-posts", JSON.stringify(updated));
+        try {
+          localStorage.setItem("myblog-posts", JSON.stringify(updated));
+        } catch (e) {
+          handleStorageError(e, "delete");
+        }
 
         if (editingPostId === id) {
           setTitle("");

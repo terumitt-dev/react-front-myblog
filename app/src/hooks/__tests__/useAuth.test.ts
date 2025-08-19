@@ -29,7 +29,7 @@ describe("useAuth", () => {
 
     const { result } = renderHook(() => useAuth());
 
-    expect(result.current.isAuthenticated).toBe(false);
+    expect(result.current.isLoggedIn).toBe(false);
   });
 
   it("localStorageに認証情報がある場合は認証済み", () => {
@@ -37,7 +37,7 @@ describe("useAuth", () => {
 
     const { result } = renderHook(() => useAuth());
 
-    expect(result.current.isAuthenticated).toBe(true);
+    expect(result.current.isLoggedIn).toBe(true);
   });
 
   it("ログイン処理が正常に動作する", () => {
@@ -49,7 +49,7 @@ describe("useAuth", () => {
       result.current.login("admin", "password");
     });
 
-    expect(result.current.isAuthenticated).toBe(true);
+    expect(result.current.isLoggedIn).toBe(true);
     expect(mockLocalStorage.setItem).toHaveBeenCalledWith("auth", "true");
   });
 
@@ -62,7 +62,7 @@ describe("useAuth", () => {
       result.current.login("wrong", "credentials");
     });
 
-    expect(result.current.isAuthenticated).toBe(false);
+    expect(result.current.isLoggedIn).toBe(false);
     expect(mockLocalStorage.setItem).not.toHaveBeenCalled();
   });
 
@@ -75,7 +75,7 @@ describe("useAuth", () => {
       result.current.logout();
     });
 
-    expect(result.current.isAuthenticated).toBe(false);
+    expect(result.current.isLoggedIn).toBe(false);
     expect(mockLocalStorage.removeItem).toHaveBeenCalledWith("auth");
   });
 });

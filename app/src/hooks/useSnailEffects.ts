@@ -29,7 +29,9 @@ export const useSnailEffects = (
   const [snailDisappearingIds, setSnailDisappearingIds] = useState<Set<number>>(
     () => new Set(),
   );
-  const timeoutRef = useRef<number | null>(null);
+
+  // 複数のタイマーIDを管理
+  const timeoutIdsRef = useRef<number[]>([]);
 
   // カタツムリ生成
   useEffect(() => {
@@ -71,7 +73,7 @@ export const useSnailEffects = (
     (snailId: number) => {
       setSnailDisappearingIds((prev) => new Set([...prev, snailId]));
 
-      timeoutRef.current = window.setTimeout(
+      const id = window.setTimeout(
         () => {
           setSnails((prev) => prev.filter((snail) => snail.id !== snailId));
           setSnailDisappearingIds((prev) => {
@@ -84,18 +86,20 @@ export const useSnailEffects = (
           ? ANIMATION_CONFIG.disappearDuration.reduced
           : ANIMATION_CONFIG.disappearDuration.normal,
       );
+
+      // タイマーIDを配列に追加
+      timeoutIdsRef.current.push(id);
     },
     [reducedMotion],
   );
 
-  // アンマウント時にタイマーをクリア
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current !== null) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
+  // アンマウント時にすべてのタイマーをクリア
+  useEffect(
+    () => () => {
+      timeoutIdsRef.current.forEach(clearTimeout);
+    },
+    [],
+  );
 
   // カタツムリホバーハンドラー
   const handleSnailHover = useCallback((snailId: number) => {

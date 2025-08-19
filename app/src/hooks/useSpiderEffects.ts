@@ -1,5 +1,5 @@
 // app/src/hooks/useSpiderEffects.ts
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   generateRandomPosition,
   generateRandomRotation,
@@ -30,6 +30,9 @@ export const useSpiderEffects = (
   const [spiderDisappearingIds, setSpiderDisappearingIds] = useState<
     Set<number>
   >(() => new Set());
+
+  // 複数のタイマーIDを管理
+  const timeoutIdsRef = useRef<number[]>([]);
 
   // スパイダー生成
   useEffect(() => {
@@ -71,7 +74,7 @@ export const useSpiderEffects = (
     (spiderId: number) => {
       setSpiderDisappearingIds((prev) => new Set([...prev, spiderId]));
 
-      setTimeout(
+      const id = window.setTimeout(
         () => {
           setSpiders((prev) => prev.filter((spider) => spider.id !== spiderId));
           setSpiderDisappearingIds((prev) => {
@@ -84,8 +87,19 @@ export const useSpiderEffects = (
           ? ANIMATION_CONFIG.disappearDuration.reduced
           : ANIMATION_CONFIG.disappearDuration.normal,
       );
+
+      // タイマーIDを配列に追加
+      timeoutIdsRef.current.push(id);
     },
     [reducedMotion],
+  );
+
+  // アンマウント時にすべてのタイマーをクリア
+  useEffect(
+    () => () => {
+      timeoutIdsRef.current.forEach(clearTimeout);
+    },
+    [],
   );
 
   return {

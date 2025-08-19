@@ -1,4 +1,4 @@
-/*app/src/pages/Category.css*/
+/* app/src/pages/Category.css */
 
 /* パフォーマンス最適化のためのベーススタイル */
 .bubble,
@@ -45,17 +45,17 @@
     }
 
     .spider:hover {
-        -webkit-transform: translateY(-20px) translateZ(0) !important;
-        -moz-transform: translateY(-20px) translateZ(0) !important;
-        -ms-transform: translateY(-20px) translateZ(0) !important;
-        transform: translateY(-20px) translateZ(0) !important;
+        -webkit-transform: translateZ(0) !important;
+        -moz-transform: translateZ(0) !important;
+        -ms-transform: translateZ(0) !important;
+        transform: translateZ(0) !important;
     }
 
     .snail-move {
-        -webkit-transform: scaleX(1) translateZ(0) !important;
-        -moz-transform: scaleX(1) translateZ(0) !important;
-        -ms-transform: scaleX(1) translateZ(0) !important;
-        transform: scaleX(1) translateZ(0) !important;
+        -webkit-transform: translateZ(0) !important;
+        -moz-transform: translateZ(0) !important;
+        -ms-transform: translateZ(0) !important;
+        transform: translateZ(0) !important;
     }
 }
 

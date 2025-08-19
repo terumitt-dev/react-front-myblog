@@ -24,6 +24,7 @@ const Top = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
     setIsLoading(true);
 
     const loadPosts = async () => {
@@ -32,7 +33,7 @@ const Top = () => {
         await new Promise((resolve) => setTimeout(resolve, 500));
 
         const saved = localStorage.getItem("myblog-posts");
-        if (saved) {
+        if (saved && isMounted) {
           // JSONパースの安全性 - safeJsonParse使用
           const rawPosts = safeJsonParse<any[]>(saved, []);
           const normalized = rawPosts.map((p) => ({
@@ -43,13 +44,17 @@ const Top = () => {
         }
       } catch (error) {
         console.error("Posts loading error:", error);
-        setPosts([]);
+        if (isMounted) setPosts([]);
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
 
     loadPosts();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const latestArticles = posts.slice(-3).reverse();

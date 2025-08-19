@@ -28,12 +28,17 @@ import "./index.css";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <AuthProvider>
-      <ThemeProvider>
-        <App />
-      </ThemeProvider>
-    </AuthProvider>
-  </React.StrictMode>,
-);
+const rootElement = document.getElementById("root");
+if (rootElement) {
+  ReactDOM.createRoot(rootElement).render(
+    <React.StrictMode>
+      <AuthProvider>
+        <ThemeProvider>
+          <App />
+        </ThemeProvider>
+      </AuthProvider>
+    </React.StrictMode>,
+  );
+} else {
+  console.error("Root element not found");
+}
