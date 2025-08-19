@@ -25,7 +25,7 @@ interface ArticleCardProps {
 
 export const MemoizedArticleCard = memo(
   ({
-    id, // idを受け取るが使用しない（キー用）
+    id: _id, // idを受け取るが使用しない（キー用）
     title,
     category,
     content,

@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import CategoryButtons from "@/components/organisms/CategoryButtons";
 import ArticleSkeleton from "@/components/molecules/ArticleSkeleton";
-import { safeJsonParse } from "@/components/utils/errorHandler"; // 🔧 追加
-import { displayTextPlain } from "@/components/utils/sanitizer"; // 🔧 追加
+import { safeJsonParse } from "@/components/utils/errorHandler";
+import { displayTextPlain } from "@/components/utils/sanitizer";
 import {
   LAYOUT_PATTERNS,
   RESPONSIVE_SPACING,
@@ -35,12 +35,17 @@ const Top = () => {
         const saved = localStorage.getItem("myblog-posts");
         if (saved && isMounted) {
           // JSONパースの安全性 - safeJsonParse使用
-          const rawPosts = safeJsonParse<any[]>(saved, []);
-          const normalized = rawPosts.map((p) => ({
-            ...p,
-            id: Number(p.id),
-          }));
-          setPosts(normalized);
+          const rawPosts = safeJsonParse<any[] | null>(saved, null);
+          if (rawPosts === null) {
+            localStorage.removeItem("myblog-posts");
+            if (isMounted) setPosts([]);
+          } else {
+            const normalized = rawPosts.map((p) => ({
+              ...p,
+              id: Number(p.id),
+            }));
+            setPosts(normalized);
+          }
         }
       } catch (error) {
         console.error("Posts loading error:", error);

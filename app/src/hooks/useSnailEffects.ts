@@ -35,6 +35,10 @@ export const useSnailEffects = (
 
   // カタツムリ生成
   useEffect(() => {
+    // カテゴリ変更時に既存タイマーをクリア
+    timeoutIdsRef.current.forEach(clearTimeout);
+    timeoutIdsRef.current = [];
+
     if (category !== "other") {
       setSnails([]);
       setSnailDisappearingIds(new Set());

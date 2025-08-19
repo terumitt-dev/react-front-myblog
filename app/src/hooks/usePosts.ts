@@ -41,26 +41,23 @@ export const usePosts = (category: string | undefined) => {
         const saved = localStorage.getItem("myblog-posts");
         if (saved) {
           const rawPosts = safeJsonParse<RawPost[]>(saved, []);
-          if (
-            category &&
-            (category === "hobby" ||
-              category === "tech" ||
-              category === "other")
-          ) {
-            const validPosts: Post[] = rawPosts
-              .filter((p): p is RawPost => p && typeof p === "object")
-              .map((p: RawPost) => ({
-                ...p,
-                id: Number(p.id),
-                title: String(p.title || ""),
-                content: String(p.content || ""),
-                category: String(p.category || ""),
-                createdAt: p.createdAt || new Date().toISOString(),
-              }))
-              .filter((p) => p.category === category);
-
-            setPosts(validPosts);
-          }
+          const mapped = rawPosts
+            .filter((p): p is RawPost => p && typeof p === "object")
+            .map((p: RawPost) => ({
+              ...p,
+              id: Number(p.id),
+              title: String(p.title || ""),
+              content: String(p.content || ""),
+              category: String(p.category || ""),
+              createdAt: p.createdAt || new Date().toISOString(),
+            }));
+          const filtered =
+            category && ["hobby", "tech", "other"].includes(category)
+              ? mapped.filter((p) => p.category === category)
+              : mapped;
+          setPosts(filtered);
+        } else {
+          setPosts([]);
         }
       } catch (e) {
         console.error("JSON parse error:", e);
