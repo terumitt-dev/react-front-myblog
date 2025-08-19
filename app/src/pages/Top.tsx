@@ -1,11 +1,10 @@
 // app/src/pages/Top.tsx
 import Layout from "@/components/layouts/Layout";
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import CategoryButtons from "@/components/organisms/CategoryButtons";
 import ArticleSkeleton from "@/components/molecules/ArticleSkeleton";
-import { safeJsonParse } from "@/components/utils/errorHandler";
 import { displayTextPlain } from "@/components/utils/sanitizer";
+import { usePosts } from "@/hooks/usePosts";
 import {
   LAYOUT_PATTERNS,
   RESPONSIVE_SPACING,
@@ -13,56 +12,18 @@ import {
   RESPONSIVE_TEXT,
 } from "@/constants/responsive";
 
-type Post = {
-  id: number;
-  title: string;
-  category: string;
-};
-
 const Top = () => {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // usePostsフックを使用（categoryを未指定で全投稿取得）
+  const { posts, isLoading } = usePosts(undefined);
 
-  useEffect(() => {
-    let isMounted = true;
-    setIsLoading(true);
-
-    const loadPosts = async () => {
-      try {
-        // 少し遅延してローディング状態を確認しやすくする
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        const saved = localStorage.getItem("myblog-posts");
-        if (saved && isMounted) {
-          // JSONパースの安全性 - safeJsonParse使用
-          const rawPosts = safeJsonParse<any[] | null>(saved, null);
-          if (rawPosts === null) {
-            localStorage.removeItem("myblog-posts");
-            if (isMounted) setPosts([]);
-          } else {
-            const normalized = rawPosts.map((p) => ({
-              ...p,
-              id: Number(p.id),
-            }));
-            setPosts(normalized);
-          }
-        }
-      } catch (error) {
-        console.error("Posts loading error:", error);
-        if (isMounted) setPosts([]);
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    };
-
-    loadPosts();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const latestArticles = posts.slice(-3).reverse();
+  // 投稿日時でソートして最新6件を取得
+  const latestArticles = posts
+    .sort((a, b) => {
+      const dateA = new Date(a.createdAt || 0).getTime();
+      const dateB = new Date(b.createdAt || 0).getTime();
+      return dateB - dateA; // 新しい順
+    })
+    .slice(0, 6);
 
   return (
     <Layout>
@@ -109,7 +70,7 @@ const Top = () => {
             </h2>
 
             {isLoading ? (
-              <ArticleSkeleton count={3} />
+              <ArticleSkeleton count={6} />
             ) : latestArticles.length === 0 ? (
               <p
                 className="text-center text-gray-500 dark:text-gray-400"
