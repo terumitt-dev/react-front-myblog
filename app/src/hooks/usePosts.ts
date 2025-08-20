@@ -29,7 +29,7 @@ export const usePosts = (category: string | undefined) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // ローディング開始
+    let isMounted = true;
     setIsLoading(true);
 
     const loadPosts = async () => {
@@ -39,37 +39,47 @@ export const usePosts = (category: string | undefined) => {
 
         // 投稿読み込み
         const saved = localStorage.getItem("myblog-posts");
-        if (saved) {
-          const rawPosts = safeJsonParse<RawPost[]>(saved, []);
-          const mapped = rawPosts
-            .filter((p): p is RawPost => p && typeof p === "object")
-            .map((p: RawPost) => ({
-              ...p,
-              id: Number(p.id),
-              title: String(p.title || ""),
-              content: String(p.content || ""),
-              category: String(p.category || ""),
-              createdAt: p.createdAt || new Date().toISOString(),
-            }));
-          const filtered =
-            category && ["hobby", "tech", "other"].includes(category)
-              ? mapped.filter((p) => p.category === category)
-              : mapped;
-          setPosts(filtered);
-        } else {
-          setPosts([]);
+        if (isMounted) {
+          if (saved) {
+            const rawPosts = safeJsonParse<RawPost[]>(saved, []);
+            const mapped = rawPosts
+              .filter((p): p is RawPost => p && typeof p === "object")
+              .map((p: RawPost) => ({
+                ...p,
+                id: Number(p.id),
+                title: String(p.title || ""),
+                content: String(p.content || ""),
+                category: String(p.category || ""),
+                createdAt: p.createdAt || new Date().toISOString(),
+              }));
+            const filtered =
+              category && ["hobby", "tech", "other"].includes(category)
+                ? mapped.filter((p) => p.category === category)
+                : mapped;
+            setPosts(filtered);
+          } else {
+            setPosts([]);
+          }
         }
       } catch (e) {
-        console.error("JSON parse error:", e);
-        handleStorageError(e, "load category posts");
-        localStorage.removeItem("myblog-posts");
-        setPosts([]);
+        if (isMounted) {
+          console.error("JSON parse error:", e);
+          handleStorageError(e, "load category posts");
+          localStorage.removeItem("myblog-posts");
+          setPosts([]);
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     loadPosts();
+
+    return () => {
+      isMounted = false;
+    };
   }, [category]);
 
   return { posts, isLoading };

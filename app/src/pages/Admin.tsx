@@ -148,7 +148,7 @@ const Admin = () => {
       };
 
       let updatedPosts: Post[];
-      if (editingPostId) {
+      if (editingPostId !== null) {
         updatedPosts = posts.map((post) =>
           post.id === editingPostId ? newPost : post,
         );
@@ -276,7 +276,7 @@ const Admin = () => {
               "font-semibold text-gray-900 dark:text-white",
             )}
           >
-            {editingPostId ? "投稿を編集" : "新しい投稿"}
+            {editingPostId !== null ? "投稿を編集" : "新しい投稿"}
           </h2>
 
           <form
@@ -367,11 +367,11 @@ const Admin = () => {
                   />
                 )}
                 <span className={isSaving ? "ml-6" : ""}>
-                  {editingPostId ? "更新" : "投稿"}
+                  {editingPostId !== null ? "更新" : "投稿"}
                 </span>
               </button>
 
-              {editingPostId && (
+              {editingPostId !== null && (
                 <button
                   type="button"
                   onClick={() => {

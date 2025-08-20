@@ -14,12 +14,14 @@ const mockPosts = [
 
 describe("usePosts", () => {
   // localStorageのモック
-  let mockLocalStorage: Record<string, any> = {};
+  let mockLocalStorage: Record<string, string> = {};
 
   // errorHandlerのモック
   const mockHandleStorageError = vi.fn();
 
   beforeEach(() => {
+    vi.clearAllMocks();
+
     // localStorageのモック設定
     mockLocalStorage = {};
     Object.defineProperty(window, "localStorage", {
@@ -41,7 +43,7 @@ describe("usePosts", () => {
         if (typeof json !== "string") return fallback;
         try {
           return JSON.parse(json);
-        } catch (e) {
+        } catch {
           return fallback;
         }
       },
@@ -49,8 +51,6 @@ describe("usePosts", () => {
     vi.spyOn(errorHandler, "handleStorageError").mockImplementation(
       mockHandleStorageError,
     );
-
-    vi.clearAllMocks();
   });
 
   it("空のlocalStorageの場合、空の投稿配列を返す", async () => {

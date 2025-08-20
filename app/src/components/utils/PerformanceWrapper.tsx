@@ -1,5 +1,5 @@
 // app/src/components/utils/PerformanceWrapper.tsx
-import { memo, ReactNode, useEffect } from "react";
+import { memo, type ReactNode, useEffect, useRef } from "react";
 import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
 
 interface PerformanceWrapperProps {
@@ -12,10 +12,19 @@ const PerformanceWrapper = memo(
   ({
     children,
     componentName = "Unknown Component",
-    enableMonitoring = process.env.NODE_ENV === "development",
+    enableMonitoring = typeof process !== "undefined" &&
+      process.env.NODE_ENV === "development",
   }: PerformanceWrapperProps) => {
     const { startTiming, endTiming, renderTime, isSlowRender } =
       usePerformanceMonitor();
+
+    // 最新値への参照を保持
+    const renderTimeRef = useRef(renderTime);
+    const isSlowRenderRef = useRef(isSlowRender);
+
+    // 値を更新
+    renderTimeRef.current = renderTime;
+    isSlowRenderRef.current = isSlowRender;
 
     useEffect(() => {
       if (!enableMonitoring) return;
@@ -25,22 +34,20 @@ const PerformanceWrapper = memo(
       return () => {
         endTiming();
 
-        if (isSlowRender) {
+        if (isSlowRenderRef.current) {
           console.warn(
-            `🐌 Slow render detected in ${componentName}: ${renderTime}ms`,
+            `🐌 Slow render detected in ${componentName}: ${renderTimeRef.current}ms`,
           );
-        } else if (process.env.NODE_ENV === "development") {
-          console.log(`⚡ ${componentName} rendered in ${renderTime}ms`);
+        } else if (
+          typeof process !== "undefined" &&
+          process.env.NODE_ENV === "development"
+        ) {
+          console.log(
+            `⚡ ${componentName} rendered in ${renderTimeRef.current}ms`,
+          );
         }
       };
-    }, [
-      enableMonitoring,
-      componentName,
-      startTiming,
-      endTiming,
-      renderTime,
-      isSlowRender,
-    ]);
+    }, [enableMonitoring, componentName, startTiming, endTiming]);
 
     return <>{children}</>;
   },

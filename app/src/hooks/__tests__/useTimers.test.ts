@@ -171,34 +171,29 @@ describe("useTimers", () => {
   });
 
   it("タイムアウト実行後に自動的にIDが管理リストから削除される", () => {
-    const { result } = renderHook(() => useTimers());
+    const { result, unmount } = renderHook(() => useTimers());
     const callback = vi.fn();
 
     act(() => {
       result.current.setTimeout(callback, 1000);
     });
 
-    // スパイを使ってclearTimeoutが呼ばれないことを確認
     const clearTimeoutSpy = vi.spyOn(window, "clearTimeout");
 
-    // 1秒進める（タイムアウト実行）
     act(() => {
       vi.advanceTimersByTime(1000);
     });
-
     expect(callback).toHaveBeenCalledTimes(1);
 
-    // コンポーネントをアンマウントしても、すでに実行済みのタイマーに対して
-    // clearTimeoutは呼ばれない（IDがリストから削除されているため）
     const initialClearCount = clearTimeoutSpy.mock.calls.length;
 
     act(() => {
-      result.current.setTimeout(() => {}, 1000); // 新しいタイマーを追加
+      result.current.setTimeout(() => {}, 1000);
     });
-
-    const { unmount } = renderHook(() => useTimers());
     unmount();
 
+    // 実行済みタイマーに対して clearTimeout が呼ばれていないことを検証
+    expect(clearTimeoutSpy.mock.calls.length).toBe(initialClearCount);
     clearTimeoutSpy.mockRestore();
   });
 });
