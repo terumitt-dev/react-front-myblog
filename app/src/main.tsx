@@ -28,17 +28,30 @@ import "./index.css";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
 
-const rootElement = document.getElementById("root");
-if (rootElement) {
-  ReactDOM.createRoot(rootElement).render(
-    <React.StrictMode>
-      <AuthProvider>
-        <ThemeProvider>
-          <App />
-        </ThemeProvider>
-      </AuthProvider>
-    </React.StrictMode>,
-  );
-} else {
-  console.error("Root element not found");
+// 開発環境でMSWを起動
+async function enableMocking() {
+  if (import.meta.env.DEV) {
+    const { worker } = await import("./mocks/browser");
+
+    return worker.start({
+      onUnhandledRequest: "warn",
+    });
+  }
 }
+
+enableMocking().then(() => {
+  const rootElement = document.getElementById("root");
+  if (rootElement) {
+    ReactDOM.createRoot(rootElement).render(
+      <React.StrictMode>
+        <AuthProvider>
+          <ThemeProvider>
+            <App />
+          </ThemeProvider>
+        </AuthProvider>
+      </React.StrictMode>,
+    );
+  } else {
+    console.error("Root element not found");
+  }
+});
