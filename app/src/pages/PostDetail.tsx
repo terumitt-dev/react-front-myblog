@@ -11,7 +11,6 @@ import {
   displayTextSafe,
   displayTextPlain,
 } from "@/components/utils/sanitizer";
-import { safeJsonParse } from "@/components/utils/errorHandler";
 import { cn } from "@/components/utils/cn";
 import {
   LAYOUT_PATTERNS,
@@ -20,28 +19,24 @@ import {
   RESPONSIVE_FLEX,
 } from "@/constants/responsive";
 
-// 型定義 - createdAtを必須に変更
-type Post = {
+// Rails Blog モデルに基づく型定義
+type Blog = {
   id: number;
   title: string;
   content: string;
-  category: string;
-  createdAt: string; // 必須に変更
+  category: number;
+  category_name: string;
+  created_at: string;
+  updated_at: string;
 };
-
-// JSONから読み込む際の型（idが文字列の場合もある）
-interface RawPost {
-  id: string | number;
-  title: string;
-  content: string;
-  category: string;
-  createdAt?: string; // 読み込み時は任意、変換時に必須にする
-}
 
 type Comment = {
   id: number;
-  user: string;
-  content: string;
+  blog_id: number;
+  user_name: string;
+  comment: string;
+  created_at: string;
+  updated_at: string;
 };
 
 const PostDetail = () => {
@@ -51,16 +46,15 @@ const PostDetail = () => {
   const isValidId = Number.isFinite(postId) && postId > 0;
 
   // ========== 全てのHooksを最初に配置 ==========
-  const [post, setPost] = useState<Post | null>(null);
+  const [blog, setBlog] = useState<Blog | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [isWriting, setIsWriting] = useState(false);
   const [openCommentIds, setOpenCommentIds] = useState<number[]>([]);
 
-  // ローディング状態の追加
+  // ローディング状態
   const [isLoadingPost, setIsLoadingPost] = useState(true);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
-
-  const commentStorageKey = `myblog-comments-${postId}`;
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isValidId) {
@@ -68,53 +62,45 @@ const PostDetail = () => {
       return;
     }
 
-    // 記事読み込み処理の改善
-    const loadPostData = async () => {
+    // MSWからブログデータを読み込み
+    const loadBlogData = async () => {
       setIsLoadingPost(true);
+      setError(null);
 
       try {
-        // 実際のアプリでは少し遅延を入れてローディング状態を見せる
-        await new Promise((resolve) => setTimeout(resolve, 300));
-
-        const savedPosts = localStorage.getItem("myblog-posts");
-        if (savedPosts) {
-          const rawPosts = safeJsonParse<RawPost[]>(savedPosts, []);
-          const posts: Post[] = rawPosts.map((p: RawPost) => ({
-            ...p,
-            id: Number(p.id),
-            createdAt: p.createdAt || new Date().toISOString(), // 確実にcreatedAtを設定
-          }));
-          setPost(posts.find((p) => p.id === postId) ?? null);
+        // ブログ記事取得
+        const blogResponse = await fetch(`/api/blogs/${postId}`);
+        if (!blogResponse.ok) {
+          throw new Error(`HTTP error! status: ${blogResponse.status}`);
         }
+        const blogData = await blogResponse.json();
+        setBlog(blogData.blog);
 
-        const storedComments = localStorage.getItem(commentStorageKey);
-        if (storedComments) {
-          const parsedComments = safeJsonParse<Comment[]>(storedComments, []);
-          setComments(parsedComments);
+        // コメント取得
+        const commentsResponse = await fetch(`/api/blogs/${postId}/comments`);
+        if (commentsResponse.ok) {
+          const commentsData = await commentsResponse.json();
+          setComments(commentsData.comments);
         }
       } catch (e) {
-        // 本番環境では詳細ログを抑制
-        if (process.env.NODE_ENV === "development") {
-          console.error("Failed to load post data:", e);
-        }
-        localStorage.removeItem("myblog-posts");
-        localStorage.removeItem(commentStorageKey);
-        setPost(null);
+        console.error("Failed to load blog data:", e);
+        setError(e instanceof Error ? e.message : "Unknown error");
+        setBlog(null);
         setComments([]);
       } finally {
         setIsLoadingPost(false);
       }
     };
 
-    loadPostData();
-  }, [isValidId, postId, commentStorageKey]);
+    loadBlogData();
+  }, [isValidId, postId]);
 
   // コメント一覧の最適化
   const processedComments = useMemo(() => {
     return comments.map((c) => ({
       ...c,
       displayContent:
-        c.content.length > 30 ? `${c.content.slice(0, 30)}...` : c.content,
+        c.comment.length > 30 ? `${c.comment.slice(0, 30)}...` : c.comment,
     }));
   }, [comments]);
 
@@ -141,8 +127,22 @@ const PostDetail = () => {
     );
   }
 
+  // ========== 早期リターン：エラー ==========
+  if (error) {
+    return (
+      <Layout>
+        <main role="main" aria-labelledby="error-title">
+          <div className="p-6 text-gray-900 dark:text-white">
+            <h1 id="error-title">エラー</h1>
+            <p role="alert">記事の読み込みに失敗しました: {error}</p>
+          </div>
+        </main>
+      </Layout>
+    );
+  }
+
   // ========== 早期リターン：記事が見つからない ==========
-  if (!post) {
+  if (!blog) {
     return (
       <Layout>
         <main role="main" aria-labelledby="not-found-title">
@@ -156,30 +156,40 @@ const PostDetail = () => {
   }
 
   // ========== イベントハンドラー関数の定義 ==========
-  /* コメント送信（ローディング対応） */
+  /* コメント送信 */
   const handleCommentSubmit = async (user: string, content: string) => {
     if (!user.trim() || !content.trim()) return;
 
     setIsSubmittingComment(true);
 
     try {
-      // 実際のアプリでは API 通信の遅延をシミュレート
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const response = await fetch(`/api/blogs/${postId}/comments`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_name: user,
+          comment: content,
+        }),
+      });
 
-      const newComment: Comment = {
-        id: Date.now(),
-        user,
-        content,
-      };
-      const updated = [...comments, newComment];
-      setComments(updated);
-      localStorage.setItem(commentStorageKey, JSON.stringify(updated));
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      // コメント一覧を再読み込み
+      const commentsResponse = await fetch(`/api/blogs/${postId}/comments`);
+      if (commentsResponse.ok) {
+        const commentsData = await commentsResponse.json();
+        setComments(commentsData.comments);
+      }
+
       setIsWriting(false);
     } catch (error) {
-      // 本番環境では詳細ログを抑制
-      if (process.env.NODE_ENV === "development") {
-        console.error("Failed to submit comment:", error);
-      }
+      console.error("Failed to submit comment:", error);
       // エラーハンドリング（トースト通知等）
     } finally {
       setIsSubmittingComment(false);
@@ -230,7 +240,7 @@ const PostDetail = () => {
               >
                 <span
                   dangerouslySetInnerHTML={{
-                    __html: displayTextSafe(post.title),
+                    __html: displayTextSafe(blog.title),
                   }}
                 />
               </h1>
@@ -239,10 +249,22 @@ const PostDetail = () => {
                   "inline-block text-sm font-semibold",
                   "px-3 py-1 rounded bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200",
                 )}
-                aria-label={`カテゴリー: ${displayTextPlain(post.category)}`}
+                aria-label={`カテゴリー: ${displayTextPlain(blog.category_name)}`}
               >
-                {displayTextPlain(post.category)}
+                {displayTextPlain(blog.category_name)}
               </span>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                <p>
+                  投稿日:{" "}
+                  {new Date(blog.created_at).toLocaleDateString("ja-JP")}
+                </p>
+                {blog.updated_at !== blog.created_at && (
+                  <p>
+                    更新日:{" "}
+                    {new Date(blog.updated_at).toLocaleDateString("ja-JP")}
+                  </p>
+                )}
+              </div>
               <hr
                 className="mt-4 border-gray-300 dark:border-gray-600"
                 role="separator"
@@ -253,7 +275,7 @@ const PostDetail = () => {
                 "leading-relaxed whitespace-pre-line break-words text-gray-900 dark:text-gray-100",
               )}
               dangerouslySetInnerHTML={{
-                __html: displayTextSafe(post.content),
+                __html: displayTextSafe(blog.content),
               }}
               role="main"
               aria-label="記事本文"
@@ -302,17 +324,20 @@ const PostDetail = () => {
                           "transition break-words focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1",
                         )}
                         aria-expanded={isOpen}
-                        aria-label={`${displayTextPlain(c.user)}さんのコメント${isOpen ? "（展開中）" : "（クリックで展開）"}`}
+                        aria-label={`${displayTextPlain(c.user_name)}さんのコメント${isOpen ? "（展開中）" : "（クリックで展開）"}`}
                       >
                         <p className="font-semibold text-gray-900 dark:text-white">
-                          {displayTextPlain(c.user)}
+                          {displayTextPlain(c.user_name)}
                         </p>
                         <p className="text-gray-700 dark:text-gray-300 mt-1">
                           {isOpen
-                            ? displayTextPlain(c.content)
+                            ? displayTextPlain(c.comment)
                             : displayTextPlain(c.displayContent)}
                         </p>
-                        {!isOpen && c.content.length > 30 && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {new Date(c.created_at).toLocaleDateString("ja-JP")}
+                        </p>
+                        {!isOpen && c.comment.length > 30 && (
                           <span className="sr-only">
                             続きを読むにはクリックしてください
                           </span>

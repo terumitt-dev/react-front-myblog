@@ -1,71 +1,85 @@
 // app/src/hooks/usePosts.ts
 import { useState, useEffect } from "react";
-import {
-  handleStorageError,
-  safeJsonParse,
-} from "@/components/utils/errorHandler";
 
 export type Post = {
   id: number;
   title: string;
   content: string;
-  category: string;
-  createdAt?: string;
-};
-
-type RawPost = {
-  id: number;
-  title: string;
-  content: string;
-  category: string;
-  createdAt?: string;
+  excerpt?: string;
+  slug: string;
+  category: number;
+  category_name: string;
+  tags: string[];
+  author: string;
+  authorId: number;
+  featuredImage?: string;
+  published: boolean;
+  publishedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  commentsCount: number;
 };
 
 /**
- * 投稿データ管理フック
+ * 投稿データ管理フック - Rails Blog モデル対応版
  */
-export const usePosts = (category: string | undefined) => {
+export const usePosts = (category?: string) => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
     setIsLoading(true);
+    setError(null);
 
     const loadPosts = async () => {
       try {
-        // 少し遅延してローディング状態を確認しやすくする
-        await new Promise((resolve) => setTimeout(resolve, 300));
+        // APIパラメータの構築
+        const params = new URLSearchParams();
+        if (category) {
+          params.set("category", category);
+        }
+        params.set("limit", "20"); // 最大20件取得
 
-        // 投稿読み込み
-        const saved = localStorage.getItem("myblog-posts");
+        const queryString = params.toString();
+        const url = `/api/blogs${queryString ? `?${queryString}` : ""}`;
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
         if (isMounted) {
-          if (saved) {
-            const rawPosts = safeJsonParse<RawPost[]>(saved, []);
-            const mapped = rawPosts
-              .filter((p): p is RawPost => p && typeof p === "object")
-              .map((p: RawPost) => ({
-                ...p,
-                id: Number(p.id),
-                title: String(p.title || ""),
-                content: String(p.content || ""),
-                category: String(p.category || ""),
-                createdAt: p.createdAt || new Date().toISOString(),
-              }));
-            const filtered =
-              category && ["hobby", "tech", "other"].includes(category)
-                ? mapped.filter((p) => p.category === category)
-                : mapped;
-            setPosts(filtered);
-          } else {
-            setPosts([]);
-          }
+          // MSWからのレスポンス（Blog）をPost型に変換
+          const mappedPosts: Post[] = data.blogs.map((blog: any) => ({
+            id: blog.id,
+            title: blog.title,
+            content: blog.content,
+            excerpt: blog.content.substring(0, 150) + "...", // contentの最初の150文字を抜粋として使用
+            slug: blog.id.toString(), // Rails側にslugがないのでidを使用
+            category: blog.category,
+            category_name: blog.category_name,
+            tags: [], // Rails側にtagsがないので空配列
+            author: "Admin", // Rails側にauthorがないので固定値
+            authorId: 1,
+            featuredImage: undefined, // Rails側にfeatured_imageがないのでundefined
+            published: true, // 全て公開済みとして扱う
+            publishedAt: blog.created_at,
+            createdAt: blog.created_at,
+            updatedAt: blog.updated_at,
+            commentsCount: 0, // 後でコメント数を取得するか、0で初期化
+          }));
+
+          setPosts(mappedPosts);
         }
       } catch (e) {
         if (isMounted) {
-          console.error("JSON parse error:", e);
-          handleStorageError(e, "load category posts");
-          localStorage.removeItem("myblog-posts");
+          console.error("Failed to load posts:", e);
+          setError(e instanceof Error ? e.message : "Unknown error");
           setPosts([]);
         }
       } finally {
@@ -82,5 +96,5 @@ export const usePosts = (category: string | undefined) => {
     };
   }, [category]);
 
-  return { posts, isLoading };
+  return { posts, isLoading, error };
 };

@@ -13,14 +13,15 @@ import {
 } from "@/constants/responsive";
 
 const Top = () => {
-  // usePostsフックを使用（categoryを未指定で全投稿取得）
-  const { posts, isLoading } = usePosts(undefined);
+  // usePostsフック（MSWからデータ取得）
+  const { posts, isLoading, error } = usePosts();
 
   // 投稿日時でソートして最新6件を取得
   const latestArticles = posts
+    .filter((post) => post.published) // 公開済みのみ
     .sort((a, b) => {
-      const dateA = new Date(a.createdAt || 0).getTime();
-      const dateB = new Date(b.createdAt || 0).getTime();
+      const dateA = new Date(a.publishedAt || a.createdAt).getTime();
+      const dateB = new Date(b.publishedAt || b.createdAt).getTime();
       return dateB - dateA; // 新しい順
     })
     .slice(0, 6);
@@ -69,7 +70,16 @@ const Top = () => {
               最新記事
             </h2>
 
-            {isLoading ? (
+            {error ? (
+              <div
+                className="text-center text-red-500 dark:text-red-400 p-4"
+                role="alert"
+                aria-live="assertive"
+              >
+                <p>記事の読み込みに失敗しました。</p>
+                <p className="text-sm mt-2">{error}</p>
+              </div>
+            ) : isLoading ? (
               <ArticleSkeleton count={6} />
             ) : latestArticles.length === 0 ? (
               <p
@@ -91,18 +101,59 @@ const Top = () => {
                     className="bg-white dark:bg-gray-700 rounded-xl shadow p-4 flex flex-col justify-between w-full min-w-0"
                     role="listitem"
                   >
-                    <div className="min-w-0">
-                      <h3 className="font-bold text-gray-900 dark:text-white break-words">
-                        {/* 安全な表示 */}
+                    {/* 記事画像 */}
+                    {article.featuredImage && (
+                      <div className="mb-3 overflow-hidden rounded-lg">
+                        <img
+                          src={article.featuredImage}
+                          alt={`${article.title}のサムネイル`}
+                          className="w-full h-32 object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
+
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-gray-900 dark:text-white break-words mb-2">
                         {displayTextPlain(article.title)}
                       </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 break-words">
-                        カテゴリー: {displayTextPlain(article.category)}
-                      </p>
+
+                      {article.excerpt && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-2 break-words">
+                          {displayTextPlain(article.excerpt)}
+                        </p>
+                      )}
+
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
+                          {displayTextPlain(article.category_name)}
+                        </span>
+                        {article.tags.slice(0, 2).map((tag) => (
+                          <span
+                            key={tag}
+                            className="text-xs bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 px-2 py-1 rounded"
+                          >
+                            #{displayTextPlain(tag)}
+                          </span>
+                        ))}
+                      </div>
+
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                        <p>by {displayTextPlain(article.author)}</p>
+                        <p>
+                          {new Date(
+                            article.publishedAt || article.createdAt,
+                          ).toLocaleDateString("ja-JP")}
+                        </p>
+                        {article.commentsCount > 0 && (
+                          <p>{article.commentsCount}件のコメント</p>
+                        )}
+                      </div>
                     </div>
+
                     <Link
                       to={`/posts/${article.id}`}
-                      className="mt-4 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline self-start focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded transition"
+                      className="mt-auto text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline self-start focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded transition"
                       aria-label={`記事「${article.title}」を読む`}
                     >
                       記事を読む →
