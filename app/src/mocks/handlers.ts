@@ -6,6 +6,33 @@ import { CATEGORY_NAMES } from "../dummy/types";
 // APIのベースURL
 const API_BASE = "/api";
 
+// 認証用のヘルパー関数
+const getAuthToken = (request: Request) => {
+  return request.headers.get("Authorization")?.replace("Bearer ", "");
+};
+
+// 認証済みかチェックするミドルウェア的な関数
+const requireAuth = (request: Request) => {
+  const token = getAuthToken(request);
+  if (!token || token !== "mock-jwt-token") {
+    return new HttpResponse(null, { status: 401 });
+  }
+  return null;
+};
+
+// 管理者情報の検証
+const validateAdmin = (email: string, password: string) => {
+  const adminEmail = import.meta.env.VITE_DEV_ADMIN_EMAIL;
+  const adminPassword = import.meta.env.VITE_DEV_ADMIN_PASSWORD;
+
+  if (!adminEmail || !adminPassword) {
+    console.warn("Admin credentials not configured in environment variables");
+    return false;
+  }
+
+  return email === adminEmail && password === adminPassword;
+};
+
 export const handlers = [
   // ブログ記事一覧取得
   http.get(`${API_BASE}/blogs`, ({ request }) => {
@@ -117,15 +144,31 @@ export const handlers = [
   }),
 
   // 管理者ログイン
-  http.post(`${API_BASE}/admin/login`, async ({ request }) => {
+  http.post(`${API_BASE}/auth/login`, async ({ request }) => {
     const body = (await request.json()) as { email: string; password: string };
 
-    // 簡易的な認証チェック
-    const admin = admins.find((a) => a.email === body.email);
-
-    if (!admin || body.password !== "password") {
-      return new HttpResponse(null, { status: 401 });
+    // 認証情報の検証
+    if (!validateAdmin(body.email, body.password)) {
+      return new HttpResponse(
+        JSON.stringify({
+          message: "メールアドレスまたはパスワードが正しくありません",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
     }
+
+    // 認証成功時は管理者情報を返す
+    const admin = admins.find((a) => a.email === body.email) || {
+      id: 1,
+      email: body.email,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
 
     return HttpResponse.json({
       admin,
@@ -135,13 +178,63 @@ export const handlers = [
   }),
 
   // 管理者ログアウト
-  http.post(`${API_BASE}/admin/logout`, () => {
-    return HttpResponse.json({ message: "ログアウトしました" });
+  http.post(`${API_BASE}/auth/logout`, async ({ request }) => {
+    const authError = requireAuth(request);
+    if (authError) return authError;
+
+    return HttpResponse.json({
+      message: "ログアウトしました",
+    });
+  }),
+
+  // 認証状態チェック
+  http.get(`${API_BASE}/auth/me`, async ({ request }) => {
+    const authError = requireAuth(request);
+    if (authError) return authError;
+
+    const adminEmail = import.meta.env.VITE_DEV_ADMIN_EMAIL;
+    const admin = admins.find((a) => a.email === adminEmail) || admins[0];
+
+    return HttpResponse.json({ admin });
+  }),
+
+  // 管理者用のブログ操作API
+  http.post(`${API_BASE}/admin/blogs`, async ({ request }) => {
+    const authError = requireAuth(request);
+    if (authError) return authError;
+
+    const body = await request.json();
+
+    return HttpResponse.json(
+      {
+        message: "ブログを作成しました",
+      },
+      { status: 201 },
+    );
+  }),
+
+  http.put(`${API_BASE}/admin/blogs/:id`, async ({ request, params }) => {
+    const authError = requireAuth(request);
+    if (authError) return authError;
+
+    const body = await request.json();
+
+    return HttpResponse.json({
+      message: "ブログを更新しました",
+    });
+  }),
+
+  http.delete(`${API_BASE}/admin/blogs/:id`, async ({ request, params }) => {
+    const authError = requireAuth(request);
+    if (authError) return authError;
+
+    return HttpResponse.json({
+      message: "ブログを削除しました",
+    });
   }),
 
   // 後方互換性のため、古いAPI endpoints
   http.get(`${API_BASE}/articles`, ({ request }) => {
-    // /api/blogs にリダイレクト
     const url = new URL(request.url);
     const blogsUrl = url.toString().replace("/articles", "/blogs");
     return fetch(blogsUrl)
