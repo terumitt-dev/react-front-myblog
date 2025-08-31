@@ -2,9 +2,26 @@
 import { http, HttpResponse } from "msw";
 import { blogs, comments, admins } from "../dummy";
 import { CATEGORY_NAMES } from "../dummy/types";
+import type { Admin, AuthResponse } from "../dummy/types";
 
 // APIのベースURL
 const API_BASE = "/api";
+
+// エラーレスポンス用のヘルパー関数
+const createErrorResponse = (message: string, status: number = 400) => {
+  return new HttpResponse(
+    JSON.stringify({
+      message,
+      status,
+    }),
+    {
+      status,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    },
+  );
+};
 
 // 認証用のヘルパー関数
 const getAuthToken = (request: Request) => {
@@ -15,7 +32,7 @@ const getAuthToken = (request: Request) => {
 const requireAuth = (request: Request) => {
   const token = getAuthToken(request);
   if (!token || token !== "mock-jwt-token") {
-    return new HttpResponse(null, { status: 401 });
+    return createErrorResponse("認証が必要です", 401);
   }
   return null;
 };
@@ -82,7 +99,7 @@ export const handlers = [
     const blog = blogs.find((b) => b.id === id);
 
     if (!blog) {
-      return new HttpResponse(null, { status: 404 });
+      return createErrorResponse("ブログ記事が見つかりません", 404);
     }
 
     const blogWithCategoryName = {
@@ -99,7 +116,7 @@ export const handlers = [
     const blog = blogs.find((b) => b.id === blogId);
 
     if (!blog) {
-      return new HttpResponse(null, { status: 404 });
+      return createErrorResponse("ブログ記事が見つかりません", 404);
     }
 
     const blogComments = comments.filter((c) => c.blog_id === blogId);
@@ -122,7 +139,7 @@ export const handlers = [
 
     const blog = blogs.find((b) => b.id === blogId);
     if (!blog) {
-      return new HttpResponse(null, { status: 404 });
+      return createErrorResponse("ブログ記事が見つかりません", 404);
     }
 
     const newComment = {
@@ -149,31 +166,32 @@ export const handlers = [
 
     // 認証情報の検証
     if (!validateAdmin(body.email, body.password)) {
-      return new HttpResponse(
-        JSON.stringify({
-          message: "メールアドレスまたはパスワードが正しくありません",
-        }),
-        {
-          status: 401,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        },
+      return createErrorResponse(
+        "メールアドレスまたはパスワードが正しくありません",
+        401,
       );
     }
 
     // 認証成功時は管理者情報を返す
-    const admin = admins.find((a) => a.email === body.email) || {
-      id: 1,
-      email: body.email,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
+    const admin =
+      admins.find((a) => a.email === body.email) ||
+      ({
+        id: 1,
+        email: body.email,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      } as Admin);
 
-    return HttpResponse.json({
+    const response: AuthResponse = {
       admin,
       token: "mock-jwt-token",
       message: "ログインしました",
+    };
+
+    return HttpResponse.json(response, {
+      headers: {
+        "Content-Type": "application/json",
+      },
     });
   }),
 
@@ -203,7 +221,7 @@ export const handlers = [
     const authError = requireAuth(request);
     if (authError) return authError;
 
-    const body = await request.json();
+    await request.json();
 
     return HttpResponse.json(
       {
@@ -213,18 +231,18 @@ export const handlers = [
     );
   }),
 
-  http.put(`${API_BASE}/admin/blogs/:id`, async ({ request, params }) => {
+  http.put(`${API_BASE}/admin/blogs/:id`, async ({ request }) => {
     const authError = requireAuth(request);
     if (authError) return authError;
 
-    const body = await request.json();
+    await request.json();
 
     return HttpResponse.json({
       message: "ブログを更新しました",
     });
   }),
 
-  http.delete(`${API_BASE}/admin/blogs/:id`, async ({ request, params }) => {
+  http.delete(`${API_BASE}/admin/blogs/:id`, async ({ request }) => {
     const authError = requireAuth(request);
     if (authError) return authError;
 

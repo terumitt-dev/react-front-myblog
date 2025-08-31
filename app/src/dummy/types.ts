@@ -9,6 +9,19 @@ export interface Admin {
   updated_at: string;
 }
 
+// 認証関連のレスポンス型
+export interface AuthResponse {
+  admin: Admin;
+  token: string;
+  message: string;
+}
+
+// エラーレスポンス型
+export interface ErrorResponse {
+  message: string;
+  status: number;
+}
+
 // カテゴリ（enumの値）
 export enum BlogCategory {
   HOBBY = 0,
