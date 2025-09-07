@@ -1,5 +1,6 @@
 // app/src/components/utils/sanitizer.tsx
 import DOMPurify from "dompurify";
+import { decode } from "html-entities"; // html-entities をインポート
 
 // プレーンテキスト専用表示関数（XSS完全防止）
 export const displayTextPlain = (text: string): string => {
@@ -15,19 +16,14 @@ export const displayTextPlain = (text: string): string => {
 
     // HTMLエンティティをデコード
     if (typeof document !== "undefined") {
+      // クライアントサイドの場合
       const tempDiv = document.createElement("div");
       tempDiv.innerHTML = cleanText;
       return tempDiv.textContent || tempDiv.innerText || "";
+    } else {
+      // サーバーサイド用フォールバック（html-entitiesを使用）
+      return decode(cleanText);
     }
-
-    // サーバーサイド用フォールバック
-    return cleanText
-      .replace(/&amp;/g, "&")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/&#x27;/g, "'");
   } catch (error) {
     console.error("Plain text conversion error:", error);
     return String(text).replace(/<[^>]*>/g, "");
@@ -75,7 +71,7 @@ export const sanitizeInput = (input: string): string => {
   } catch (error) {
     console.error("Input sanitization error:", error);
     return String(input)
-      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "") // ここを修正
       .replace(/<[^>]*>/g, "")
       .trim();
   }
