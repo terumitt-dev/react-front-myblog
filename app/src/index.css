@@ -2,122 +2,76 @@
 @tailwind components;
 @tailwind utilities;
 
+/* カスタムCSS変数 */
+:root {
+    /* カテゴリーカラー */
+    --color-category-hobby-bg: #e1c6f9;
+    --color-category-tech-bg: #afebff;
+    --color-category-other-bg: #ccf5b1;
+
+    /* UIカラー - Primary (Blue) */
+    --color-ui-primary-500: #3b82f6; /* blue-500 */
+    --color-ui-primary-600: #2563eb; /* blue-600 */
+    --color-ui-primary-700: #1d4ed8; /* blue-700 */
+    --color-ui-primary-800: #1e40af; /* blue-800 */
+    --color-ui-primary-text-light: #60a5fa; /* blue-400 */
+    --color-ui-primary-text-dark: #bfdbfe; /* blue-300 */
+
+    /* UIカラー - Danger (Red) */
+    --color-ui-danger-100: #fee2e2; /* red-100 */
+    --color-ui-danger-400: #f87171; /* red-400 */
+    --color-ui-danger-600: #dc2626; /* red-600 */
+    --color-ui-danger-700: #b91c1c; /* red-700 */
+    --color-ui-danger-text-light: #fca5a5; /* red-400 */
+    --color-ui-danger-text-dark: #fecaca; /* red-300 */
+    --color-ui-danger-border: #f87171; /* red-400 */
+    --color-ui-danger-900: #7f1d1d; /* red-900 */
+    --color-ui-danger-text-200: #fee2e2; /* red-200 */
+    --color-ui-danger-600-dark: #dc2626; /* dark:border-red-600 */
+
+    /* UIカラー - Success (Green) */
+    --color-ui-success-600: #16a34a; /* green-600 */
+    --color-ui-success-700: #15803d; /* green-700 */
+    --color-ui-success-text-light: #4ade80; /* green-400 */
+    --color-ui-success-text-dark: #86efac; /* green-300 */
+
+    /* Layout カラー */
+    --color-layout-gradient-from-light: #4161ec;
+    --color-layout-gradient-to-light: #bc7af2;
+    --color-layout-gradient-from-dark: #1d2a7a;
+    --color-layout-gradient-to-dark: #6b3aa8;
+    --color-layout-text-light: #2d3748; /* gray-800 */
+    --color-layout-text-dark: #f7fafc; /* gray-100 */
+}
+
+/* ダークモード対応 */
+.dark {
+    /* UIカラー - Primary (Blue) */
+    --color-ui-primary-600: #1d4ed8; /* dark:bg-blue-700 */
+    --color-ui-primary-700: #1e40af; /* dark:hover:bg-blue-800 */
+    --color-ui-primary-text-light: #60a5fa; /* text-blue-400 */
+    --color-ui-primary-text-dark: #93c5fd; /* hover:text-blue-300 */
+
+    /* UIカラー - Danger (Red) */
+    --color-ui-danger-100: #7f1d1d; /* dark:bg-red-900 */
+    --color-ui-danger-text-light: #fca5a5; /* text-red-400 */
+    --color-ui-danger-text-dark: #fecaca; /* hover:text-red-300 */
+    --color-ui-danger-border: #dc2626; /* dark:border-red-600 */
+    --color-ui-danger-text-200: #fee2e2; /* text-red-200 */
+
+    /* UIカラー - Success (Green) */
+    --color-ui-success-text-light: #4ade80; /* text-green-400 */
+    --color-ui-success-text-dark: #86efac; /* hover:text-green-300 */
+
+    /* Layout カラー */
+    --color-layout-gradient-from-light: #1d2a7a;
+    --color-layout-gradient-to-light: #6b3aa8;
+    --color-layout-text-light: #f7fafc; /* dark:text-gray-100 */
+}
+
 html,
 body {
     height: 100%;
     margin: 0;
     padding: 0;
-}
-
-#root {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-}
-
-/* 統合されたフォーカススタイル */
-a:focus,
-button:focus,
-input:focus,
-textarea:focus,
-select:focus,
-[tabindex]:focus {
-    outline: 2px solid #3b82f6; /* blue-500 */
-    outline-offset: 2px;
-    transition: outline-offset 0.2s ease;
-}
-
-/* モダンブラウザでのフォーカス最適化（統合済み） */
-@supports selector(:focus-visible) {
-    /* 共通フォーカススタイル */
-    :focus:not(:focus-visible),
-    button:focus:not(:focus-visible),
-    a:focus:not(:focus-visible),
-    input:focus:not(:focus-visible),
-    textarea:focus:not(:focus-visible),
-    select:focus:not(:focus-visible),
-    [tabindex]:focus:not(:focus-visible) {
-        outline: none;
-    }
-
-    :focus-visible,
-    button:focus-visible,
-    a:focus-visible,
-    input:focus-visible,
-    textarea:focus-visible,
-    select:focus-visible,
-    [tabindex]:focus-visible {
-        outline: 2px solid #3b82f6; /* blue-500 */
-        outline-offset: 2px;
-        transition: outline-offset 0.2s ease;
-    }
-}
-
-/* 古いブラウザ向けフォールバック */
-@supports not selector(:focus-visible) {
-    :focus {
-        outline: 2px solid #3b82f6; /* blue-500 */
-        outline-offset: 2px;
-    }
-
-    /* マウスクリック時のフォーカス表示を抑制（可能な場合） */
-    .js-focus-visible :focus:not(.focus-visible) {
-        outline: none;
-    }
-}
-
-/* 高コントラストモード対応 */
-@media (prefers-contrast: high) {
-    :focus,
-    :focus-visible {
-        outline: 3px solid;
-        outline-offset: 2px;
-    }
-}
-
-/* reduced-motion対応 */
-@media (prefers-reduced-motion: reduce) {
-    :focus,
-    :focus-visible {
-        transition: none;
-    }
-}
-
-/* 重複ブロック削除：既に上部で@supports selector(:focus-visible)として統合済み */
-
-/* スキップリンク（アクセシビリティ） */
-.skip-link {
-    position: absolute;
-    top: -40px;
-    left: 6px;
-    background: #000;
-    color: #fff;
-    padding: 8px;
-    text-decoration: none;
-    z-index: 9999;
-    border-radius: 4px;
-}
-
-.skip-link:focus {
-    top: 6px;
-}
-
-/* フォーカス可視性フラグに基づく強化スタイル */
-[data-focus-visible="true"] *:focus {
-    outline: 3px solid #3b82f6 !important; /* blue-500、既存と統一 */
-    outline-offset: 3px !important;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3) !important;
-}
-
-/* スクリーンリーダー用の追加クラス */
-.sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border-width: 0;
 }
