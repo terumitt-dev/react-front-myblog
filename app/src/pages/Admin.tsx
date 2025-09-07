@@ -5,7 +5,6 @@ import { Link } from "react-router-dom";
 import LogoutButton from "@/components/molecules/LogoutButton";
 import LoadingSpinner from "@/components/atoms/LoadingSpinner";
 import { TEXT_LIMITS } from "@/constants/appConfig";
-import { FORM_STYLES, BACKGROUND_STYLES } from "@/components/utils/styles";
 import {
   validateAndSanitize,
   validateCategory,

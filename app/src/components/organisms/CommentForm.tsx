@@ -1,7 +1,6 @@
 // src/components/organisms/CommentForm.tsx
 import { useState, useId } from "react";
 import Input from "@/components/atoms/Input";
-import { BACKGROUND_STYLES, TEXT_STYLES } from "@/components/utils/styles";
 import Textarea from "@/components/atoms/Textarea";
 import CommentButtons from "@/components/molecules/CommentButtons";
 
