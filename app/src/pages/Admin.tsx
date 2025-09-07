@@ -17,12 +17,6 @@ import {
   safeJsonParse,
 } from "@/components/utils/errorHandler";
 import { cn } from "@/components/utils/cn";
-import {
-  LAYOUT_PATTERNS,
-  RESPONSIVE_SPACING,
-  RESPONSIVE_TEXT,
-  RESPONSIVE_FLEX,
-} from "@/constants/responsive";
 
 // 型定義 - createdAtを必須に変更
 type Post = {

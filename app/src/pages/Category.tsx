@@ -13,12 +13,6 @@ import { useBubbleGeneration } from "@/hooks/useBubbleGeneration";
 import { cn } from "@/components/utils/cn";
 import ThemeToggle from "@/components/molecules/ThemeToggle";
 import ArticleSkeleton from "@/components/molecules/ArticleSkeleton";
-import {
-  LAYOUT_PATTERNS,
-  RESPONSIVE_GRID,
-  RESPONSIVE_SPACING,
-  RESPONSIVE_TEXT,
-} from "@/constants/responsive";
 import "./Category.css";
 
 const Category = () => {

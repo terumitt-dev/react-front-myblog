@@ -12,12 +12,6 @@ import {
   displayTextPlain,
 } from "@/components/utils/sanitizer";
 import { cn } from "@/components/utils/cn";
-import {
-  LAYOUT_PATTERNS,
-  RESPONSIVE_SPACING,
-  RESPONSIVE_TEXT,
-  RESPONSIVE_FLEX,
-} from "@/constants/responsive";
 
 // Rails Blog モデルに基づく型定義
 type Blog = {

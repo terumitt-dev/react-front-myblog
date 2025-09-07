@@ -5,11 +5,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import LoadingSpinner from "@/components/atoms/LoadingSpinner";
 import { cn } from "@/components/utils/cn";
-import {
-  CONTAINER_SIZES,
-  RESPONSIVE_SPACING,
-  RESPONSIVE_TEXT,
-} from "@/constants/responsive";
 
 const Login = () => {
   const { login } = useAuth();

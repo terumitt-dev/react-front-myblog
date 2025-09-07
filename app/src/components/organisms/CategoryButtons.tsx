@@ -2,7 +2,6 @@
 import { Link } from "react-router-dom";
 import { CATEGORY_COLORS } from "@/components/utils/colors";
 import { cn } from "@/components/utils/cn";
-import { RESPONSIVE_SPACING } from "@/constants/responsive";
 
 type Props = {
   fullWidth?: boolean;

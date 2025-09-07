@@ -1,11 +1,6 @@
 // app/src/components/molecules/PostDetailSkeleton.tsx
 import Skeleton from "@/components/atoms/Skeleton";
 import { cn } from "@/components/utils/cn";
-import {
-  LAYOUT_PATTERNS,
-  RESPONSIVE_SPACING,
-  RESPONSIVE_FLEX,
-} from "@/constants/responsive";
 
 type Props = {
   className?: string;

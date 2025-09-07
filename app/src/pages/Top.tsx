@@ -5,12 +5,8 @@ import CategoryButtons from "@/components/organisms/CategoryButtons";
 import ArticleSkeleton from "@/components/molecules/ArticleSkeleton";
 import { displayTextPlain } from "@/components/utils/sanitizer";
 import { usePosts } from "@/hooks/usePosts";
-import {
-  LAYOUT_PATTERNS,
-  RESPONSIVE_SPACING,
-  RESPONSIVE_GRID,
-  RESPONSIVE_TEXT,
-} from "@/constants/responsive";
+import Container from "@/components/layouts/Container";
+import { cn } from "@/components/utils/cn";
 
 const Top = () => {
   // usePostsフック（MSWからデータ取得）
@@ -28,8 +24,9 @@ const Top = () => {
 
   return (
     <Layout>
-      <main
-        className={`${LAYOUT_PATTERNS.sectionContainer} space-y-8`}
+      <Container
+        as="main"
+        className="space-y-8"
         role="main"
         aria-labelledby="page-title"
       >
@@ -61,11 +58,18 @@ const Top = () => {
           aria-labelledby="latest-articles-heading"
         >
           <div
-            className={`bg-gray-200 dark:bg-gray-800 rounded-xl ${RESPONSIVE_SPACING.section} overflow-hidden`}
+            className={cn(
+              "bg-gray-200 dark:bg-gray-800 rounded-xl",
+              "p-4 sm:p-6",
+              "overflow-hidden",
+            )}
           >
             <h2
               id="latest-articles-heading"
-              className={`${RESPONSIVE_TEXT.heading2} font-semibold text-center mb-4 text-gray-900 dark:text-white`}
+              className={cn(
+                "text-xl sm:text-2xl lg:text-3xl",
+                "font-semibold text-center mb-4 text-gray-900 dark:text-white",
+              )}
             >
               最新記事
             </h2>
@@ -91,7 +95,11 @@ const Top = () => {
               </p>
             ) : (
               <div
-                className={`grid ${RESPONSIVE_GRID.articles} gap-6 w-full`}
+                className={cn(
+                  "grid",
+                  "grid-cols-1 sm:grid-cols-2 md:grid-cols-3",
+                  "gap-6 w-full",
+                )}
                 role="list"
                 aria-label="最新記事一覧"
               >
@@ -164,7 +172,7 @@ const Top = () => {
             )}
           </div>
         </section>
-      </main>
+      </Container>
     </Layout>
   );
 };
