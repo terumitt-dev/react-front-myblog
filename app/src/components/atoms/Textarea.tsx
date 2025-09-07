@@ -1,6 +1,5 @@
 // app/src/components/atoms/Textarea.tsx
 import React from "react";
-import { FORM_STYLES } from "@/components/utils/styles";
 import { cn } from "@/components/utils/cn";
 
 type Props = {
@@ -10,6 +9,7 @@ type Props = {
   id: string; // 必須
   label: string; // 必須
   disabled?: boolean; // 無効化プロパティ追加
+  rows?: number; // rows プロパティを追加
 };
 
 const Textarea = ({
@@ -19,19 +19,27 @@ const Textarea = ({
   id,
   label,
   disabled = false,
+  rows = 4, // デフォルト値を設定
 }: Props) => (
-  <div className={FORM_STYLES.container}>
-    <label htmlFor={id} className={FORM_STYLES.label}>
+  <div className="w-full">
+    {" "}
+    {/* FORM_STYLES.container を直接記述 */}
+    <label
+      htmlFor={id}
+      className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300"
+    >
+      {" "}
+      {/* FORM_STYLES.label を直接記述 */}
       {label}
     </label>
     <textarea
       id={id}
       className={cn(
-        FORM_STYLES.input,
+        "border border-gray-300 dark:border-gray-600 rounded px-2 py-1 w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors", // FORM_STYLES.input に相当するクラスを直接記述
         disabled &&
           "opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800",
       )}
-      rows={4}
+      rows={rows} // props から受け取るように変更
       value={value}
       onChange={onChange}
       placeholder={placeholder}
