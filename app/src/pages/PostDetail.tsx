@@ -18,7 +18,7 @@ const PostDetail = () => {
   const { id } = useParams<{ id: string }>();
   const postId = id ? parseInt(id, 10) : null;
 
-  // 状態管理
+  // ========== localStorage削除：純粋な状態管理のみ ==========
   const [blog, setBlog] = useState<BlogWithCategoryName | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,7 +26,7 @@ const PostDetail = () => {
   const [isWriting, setIsWriting] = useState(false);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
-  // APIからデータを読み込み
+  // 既存のダミーデータからAPIで読み込み
   useEffect(() => {
     const loadBlogData = async () => {
       if (!postId) {
@@ -39,16 +39,13 @@ const PostDetail = () => {
         setIsLoading(true);
         setError(null);
 
-        console.log("PostDetail: データ読み込み開始, postId:", postId);
-
-        // ブログ詳細を取得
-        const blogResponse = await fetch(`/api/blogs/${postId}`);
         console.log(
-          "PostDetail: ブログレスポンス:",
-          blogResponse.status,
-          blogResponse.statusText,
+          "PostDetail: ダミーデータから読み込み開始, postId:",
+          postId,
         );
 
+        // 既存のMSW APIからブログ詳細を取得
+        const blogResponse = await fetch(`/api/blogs/${postId}`);
         if (!blogResponse.ok) {
           throw new Error(
             `ブログの取得に失敗しました。Status: ${blogResponse.status}`,
@@ -56,24 +53,22 @@ const PostDetail = () => {
         }
 
         const blogData = await blogResponse.json();
-        console.log("PostDetail: ブログデータ:", blogData);
         setBlog(blogData.blog);
+        console.log("✅ ブログデータ取得成功:", blogData.blog.title);
 
-        // コメントを取得
+        // 既存のMSW APIからコメントを取得
         const commentsResponse = await fetch(`/api/blogs/${postId}/comments`);
-        console.log(
-          "PostDetail: コメントレスポンス:",
-          commentsResponse.status,
-          commentsResponse.statusText,
-        );
-
         if (!commentsResponse.ok) {
           console.warn("コメントの取得に失敗しましたが、記事は表示します");
           setComments([]);
         } else {
           const commentsData = await commentsResponse.json();
-          console.log("PostDetail: コメントデータ:", commentsData);
           setComments(commentsData.comments || []);
+          console.log(
+            "✅ コメントデータ取得成功:",
+            commentsData.comments?.length || 0,
+            "件",
+          );
         }
       } catch (err) {
         console.error("PostDetail: データ読み込みエラー:", err);
@@ -90,16 +85,16 @@ const PostDetail = () => {
     loadBlogData();
   }, [postId]);
 
-  // コメント投稿処理
+  // コメント投稿処理（MSWのダミーデータに追加、リロードで初期化）
   const handleCommentSubmit = async (name: string, content: string) => {
     if (!postId) return;
 
     setIsSubmittingComment(true);
 
     try {
-      console.log("PostDetail: コメント投稿開始");
+      console.log("💬 コメント投稿開始:", { name, content });
 
-      // APIにコメントを投稿
+      // MSW APIにPOST（handlers.tsで既存のcommentsダミーデータに追加）
       const response = await fetch(`/api/blogs/${postId}/comments`, {
         method: "POST",
         headers: {
@@ -118,22 +113,21 @@ const PostDetail = () => {
       }
 
       const result = await response.json();
-      console.log("PostDetail: コメント投稿成功:", result);
+      console.log("✅ コメント投稿成功:", result);
 
-      // 新しいコメントを追加
+      // フロントエンドの状態を即座に更新（楽観的更新）
       const newComment: Comment = result.comment;
-      const updatedComments = [newComment, ...comments];
-      setComments(updatedComments);
+      setComments((prevComments) => [newComment, ...prevComments]);
       setIsWriting(false);
     } catch (error) {
-      console.error("PostDetail: コメント投稿エラー:", error);
+      console.error("❌ コメント投稿エラー:", error);
       alert("コメントの投稿に失敗しました。もう一度お試しください。");
     } finally {
       setIsSubmittingComment(false);
     }
   };
 
-  // カテゴリー名の変換
+  // カテゴリー表示名の変換
   const getCategoryDisplayName = (categoryName: string) => {
     switch (categoryName) {
       case "hobby":
@@ -147,7 +141,7 @@ const PostDetail = () => {
     }
   };
 
-  // カテゴリーの色クラス
+  // カテゴリー色クラス
   const getCategoryColorClass = (categoryName: string) => {
     switch (categoryName) {
       case "hobby":
@@ -160,15 +154,6 @@ const PostDetail = () => {
         return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
     }
   };
-
-  console.log(
-    "PostDetail: レンダリング状態 - isLoading:",
-    isLoading,
-    "error:",
-    error,
-    "blog:",
-    !!blog,
-  );
 
   if (isLoading) {
     return (
@@ -267,6 +252,11 @@ const PostDetail = () => {
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 sm:p-8 border border-gray-200 dark:border-gray-700">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-6">
               コメント ({comments.length})
+              {import.meta.env.DEV && (
+                <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
+                  ※開発環境：ページリロードで初期化されます
+                </span>
+              )}
             </h2>
 
             {/* コメント投稿フォーム */}
@@ -274,6 +264,7 @@ const PostDetail = () => {
               <CommentForm
                 onSubmit={handleCommentSubmit}
                 onCancel={() => setIsWriting(false)}
+                disabled={isSubmittingComment}
               />
             ) : (
               <div className="mb-8 flex flex-col sm:flex-row gap-4">

@@ -12,204 +12,328 @@ import {
   displayTextSafe,
   displayTextPlain,
 } from "@/components/utils/sanitizer";
-import {
-  handleStorageError,
-  safeJsonParse,
-} from "@/components/utils/errorHandler";
 import { cn } from "@/components/utils/cn";
+import type { BlogWithCategoryName } from "@/dummy/types";
 
-// 型定義 - createdAtを必須に変更
-type Post = {
+// ========== localStorage削除：型定義の更新 ==========
+type BlogPost = {
   id: number;
   title: string;
   content: string;
-  category: string;
-  createdAt: string; // 必須に変更
-  safeTitle?: string; // XSS対策用
-  safeCategory?: string; // XSS対策用
-  safeDisplayContent?: string; // XSS対策用
+  category: number; // ダミーデータに合わせて数値型
+  created_at: string;
+  updated_at: string;
+  // 表示用の安全な値
+  safeTitle?: string;
+  safeCategory?: string;
+  safeDisplayContent?: string;
 };
 
 const Admin = () => {
-  // 状態管理
-  const [posts, setPosts] = useState<Post[]>([]);
+  // ========== localStorage削除：状態管理の簡素化 ==========
+  const [posts, setPosts] = useState<BlogPost[]>([]);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [category, setCategory] = useState("tech");
+  const [category, setCategory] = useState("0"); // hobby=0, tech=1, other=2
   const [error, setError] = useState("");
   const [editingPostId, setEditingPostId] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeletingId, setIsDeletingId] = useState<number | null>(null);
 
-  // データ読み込み
-  const loadPosts = useCallback(() => {
+  // 開発環境チェック
+  const isDevelopment = import.meta.env.DEV;
+
+  // ========== localStorage削除：ダミーデータからAPI経由で読み込み ==========
+  const loadPosts = useCallback(async () => {
     try {
-      const storedPosts = localStorage.getItem("blog_posts");
-      if (storedPosts) {
-        const parsedPosts = safeJsonParse(storedPosts, []);
-        // データサニタイズとバリデーション
-        const validatedPosts = parsedPosts
-          .filter((post: any) => {
-            return (
-              post &&
-              typeof post.id === "number" &&
-              typeof post.title === "string" &&
-              typeof post.content === "string" &&
-              typeof post.category === "string" &&
-              validateCategory(post.category) &&
-              post.title.length <= TEXT_LIMITS.TITLE_MAX_LENGTH &&
-              post.content.length <= TEXT_LIMITS.CONTENT_MAX_LENGTH
-            );
-          })
-          .map((post: any) => ({
-            ...post,
-            title: sanitizeInput(post.title),
-            content: sanitizeInput(post.content),
-            category: sanitizeInput(post.category),
-            createdAt: post.createdAt || new Date().toISOString(),
-            safeTitle: displayTextPlain(post.title),
-            safeCategory: displayTextPlain(post.category),
-            safeDisplayContent: displayTextSafe(post.content),
-          }));
-        setPosts(validatedPosts);
-      } else {
-        setPosts([]);
+      console.log("📚 Admin: ダミーデータから投稿一覧を読み込み中...");
+
+      const response = await fetch("/api/blogs?limit=100");
+      if (!response.ok) {
+        throw new Error("投稿データの取得に失敗しました");
       }
+
+      const data = await response.json();
+
+      // BlogWithCategoryNameをBlogPostに変換し、安全な値を追加
+      const blogPosts: BlogPost[] = data.blogs.map(
+        (blog: BlogWithCategoryName) => ({
+          id: blog.id,
+          title: blog.title,
+          category: blog.category,
+          content: blog.content,
+          created_at: blog.created_at,
+          updated_at: blog.updated_at,
+          // 表示用の安全な値を生成
+          safeTitle: displayTextPlain(blog.title),
+          safeCategory: getCategoryDisplayName(blog.category_name),
+          safeDisplayContent: displayTextSafe(blog.content),
+        }),
+      );
+
+      setPosts(blogPosts);
+      console.log("✅ Admin: ダミーデータ読み込み成功", blogPosts.length, "件");
     } catch (error) {
-      console.error("投稿読み込みエラー:", error);
-      handleStorageError(error, "投稿の読み込みに失敗しました");
+      console.error("❌ Admin: ダミーデータ読み込みエラー:", error);
+      setError("投稿の読み込みに失敗しました");
       setPosts([]);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // 開発環境での認証チェック
-  const isDevelopment = import.meta.env.DEV;
-
   useEffect(() => {
     if (isDevelopment) {
-      console.warn("開発環境では認証チェックをスキップします");
+      console.warn("🚧 開発環境では認証チェックをスキップします");
       loadPosts();
       return;
     }
 
-    // 本番環境での認証チェック（簡易版）
-    const token = localStorage.getItem("auth_token");
-    if (!token) {
-      window.location.href = "/login";
-      return;
+    // 本番環境では認証をチェック（認証システムが実装された場合）
+    console.warn("🔐 本番環境: 認証システムが必要です");
+    setError("本番環境では認証システムが必要です");
+    setIsLoading(false);
+  }, [isDevelopment, loadPosts]);
+
+  // カテゴリー表示名変換
+  const getCategoryDisplayName = (categoryName: string) => {
+    switch (categoryName) {
+      case "hobby":
+        return "しゅみ";
+      case "tech":
+        return "テック";
+      case "other":
+        return "その他";
+      default:
+        return categoryName;
     }
-
-    loadPosts();
-  }, [loadPosts, isDevelopment]);
-
-  // フォームリセット
-  const resetForm = () => {
-    setTitle("");
-    setContent("");
-    setCategory("tech");
-    setEditingPostId(null);
-    setError("");
   };
 
-  // 新規投稿/編集処理
-  const handleSubmit = async () => {
+  const getCategoryName = (categoryValue: number) => {
+    switch (categoryValue) {
+      case 0:
+        return "hobby";
+      case 1:
+        return "tech";
+      case 2:
+        return "other";
+      default:
+        return "other";
+    }
+  };
+
+  // バリデーション
+  const validateForm = () => {
+    const titleValidation = validateAndSanitize(
+      title,
+      TEXT_LIMITS.TITLE_MAX_LENGTH,
+      "タイトル",
+    );
+    const contentValidation = validateAndSanitize(
+      content,
+      TEXT_LIMITS.CONTENT_MAX_LENGTH,
+      "内容",
+    );
+    const categoryValidation = validateCategory(
+      getCategoryName(parseInt(category)),
+    );
+
+    if (!titleValidation.isValid) {
+      setError(titleValidation.error || "タイトルが無効です");
+      return null;
+    }
+
+    if (!contentValidation.isValid) {
+      setError(contentValidation.error || "内容が無効です");
+      return null;
+    }
+
+    if (!categoryValidation.isValid) {
+      setError(categoryValidation.error || "カテゴリが無効です");
+      return null;
+    }
+
+    return {
+      sanitizedTitle: titleValidation.sanitized,
+      sanitizedContent: contentValidation.sanitized,
+      sanitizedCategory: parseInt(category),
+    };
+  };
+
+  // ========== localStorage削除：投稿作成処理の変更 ==========
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError("");
+
+    const validation = validateForm();
+    if (!validation) return;
+
+    const { sanitizedTitle, sanitizedContent, sanitizedCategory } = validation;
+
     setIsSaving(true);
 
     try {
-      // バリデーション
-      const validation = validateAndSanitize(title, content, category);
-      if (!validation.isValid) {
-        setError(validation.error || "入力内容が無効です");
-        return;
-      }
+      if (editingPostId) {
+        // 編集処理（将来の実装用）
+        console.log("📝 Admin: 投稿更新 (未実装)", {
+          id: editingPostId,
+          title: sanitizedTitle,
+        });
 
-      // データ準備
-      const postData: Post = {
-        id: editingPostId || Date.now(),
-        title: validation.safeTitle!,
-        content: validation.safeContent!,
-        category: validation.safeCategory!,
-        createdAt: editingPostId
-          ? posts.find((p) => p.id === editingPostId)?.createdAt ||
-            new Date().toISOString()
-          : new Date().toISOString(),
-        safeTitle: displayTextPlain(validation.safeTitle!),
-        safeCategory: displayTextPlain(validation.safeCategory!),
-        safeDisplayContent: displayTextSafe(validation.safeContent!),
-      };
-
-      let newPosts: Post[];
-      if (editingPostId !== null) {
-        // 編集モード
-        newPosts = posts.map((post) =>
-          post.id === editingPostId ? postData : post,
+        // フロントエンドの状態を更新
+        setPosts((prevPosts) =>
+          prevPosts.map((post) =>
+            post.id === editingPostId
+              ? {
+                  ...post,
+                  title: sanitizedTitle,
+                  content: sanitizedContent,
+                  category: sanitizedCategory,
+                  updated_at: new Date().toISOString(),
+                  safeTitle: displayTextPlain(sanitizedTitle),
+                  safeCategory: getCategoryDisplayName(
+                    getCategoryName(sanitizedCategory),
+                  ),
+                  safeDisplayContent: displayTextSafe(sanitizedContent),
+                }
+              : post,
+          ),
         );
       } else {
-        // 新規投稿
-        newPosts = [postData, ...posts];
+        // 新規作成処理
+        const newPostData = {
+          title: sanitizedTitle,
+          category: sanitizedCategory,
+          content: sanitizedContent,
+        };
+
+        console.log("📝 Admin: 新規投稿作成中...", newPostData);
+
+        // MSW APIに投稿
+        const response = await fetch("/api/admin/blogs", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newPostData),
+        });
+
+        if (!response.ok) {
+          throw new Error("投稿の作成に失敗しました");
+        }
+
+        const result = await response.json();
+        console.log("✅ Admin: 投稿作成成功:", result);
+
+        // フロントエンドの状態に新規投稿を追加
+        const newPost: BlogPost = {
+          id: Date.now(), // 簡易的なID生成
+          title: sanitizedTitle,
+          content: sanitizedContent,
+          category: sanitizedCategory,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          safeTitle: displayTextPlain(sanitizedTitle),
+          safeCategory: getCategoryDisplayName(
+            getCategoryName(sanitizedCategory),
+          ),
+          safeDisplayContent: displayTextSafe(sanitizedContent),
+        };
+
+        setPosts((prevPosts) => [newPost, ...prevPosts]);
       }
 
-      // 保存
-      localStorage.setItem("blog_posts", JSON.stringify(newPosts));
-      setPosts(newPosts);
       resetForm();
-
-      // 成功メッセージ（オプション）
-      console.log(editingPostId ? "投稿を更新しました" : "投稿を作成しました");
+      console.log("✅ Admin: フォーム送信完了");
     } catch (error) {
-      console.error("投稿保存エラー:", error);
-      handleStorageError(error, "投稿の保存に失敗しました");
+      console.error("❌ Admin: 投稿保存エラー:", error);
       setError("投稿の保存に失敗しました。もう一度お試しください。");
     } finally {
       setIsSaving(false);
     }
   };
 
-  // 編集開始
-  const handleEdit = (post: Post) => {
-    setTitle(post.title);
-    setContent(post.content);
-    setCategory(post.category);
-    setEditingPostId(post.id);
-    setError("");
-    // フォームまでスクロール
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  // 削除処理
+  // ========== localStorage削除：投稿削除処理の変更 ==========
   const handleDelete = async (id: number) => {
-    if (!confirm("この投稿を削除しますか？")) return;
+    if (!window.confirm("この投稿を削除してもよろしいですか？")) {
+      return;
+    }
 
     setIsDeletingId(id);
 
     try {
-      const newPosts = posts.filter((post) => post.id !== id);
-      localStorage.setItem("blog_posts", JSON.stringify(newPosts));
-      setPosts(newPosts);
+      console.log("🗑️ Admin: 投稿削除中...", id);
+
+      // MSW APIで削除リクエスト（実際の削除は行われない）
+      const response = await fetch(`/api/admin/blogs/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("投稿の削除に失敗しました");
+      }
+
+      // フロントエンドの状態から削除
+      setPosts((prevPosts) => prevPosts.filter((post) => post.id !== id));
 
       // 編集中の投稿が削除された場合、フォームリセット
       if (editingPostId === id) {
         resetForm();
       }
 
-      console.log("投稿を削除しました");
+      console.log("✅ Admin: 投稿削除成功 (開発環境・メモリ内のみ)");
     } catch (error) {
-      console.error("削除エラー:", error);
-      handleStorageError(error, "投稿の削除に失敗しました");
-      setError("削除に失敗しました。もう一度お試しください。");
+      console.error("❌ Admin: 投稿削除エラー:", error);
+      setError("投稿の削除に失敗しました");
     } finally {
       setIsDeletingId(null);
     }
   };
 
-  // バリデーション
-  const isFormValid = Boolean(
-    title.trim() && content.trim() && category.trim(),
-  );
+  // フォームリセット
+  const resetForm = () => {
+    setTitle("");
+    setContent("");
+    setCategory("0");
+    setEditingPostId(null);
+    setError("");
+  };
+
+  // 編集開始
+  const startEditing = (post: BlogPost) => {
+    setTitle(post.title);
+    setContent(post.content);
+    setCategory(post.category.toString());
+    setEditingPostId(post.id);
+    setError("");
+  };
+
+  // カテゴリー色クラス
+  const getCategoryColorClass = (categoryValue: number) => {
+    switch (categoryValue) {
+      case 0: // hobby
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+      case 1: // tech
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
+      case 2: // other
+        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <LoadingSpinner size="large" message="投稿を読み込み中..." />
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -218,135 +342,150 @@ const Admin = () => {
         <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 md:gap-4 mb-8">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white">
             管理画面
+            {isDevelopment && (
+              <span className="text-sm font-normal text-yellow-600 dark:text-yellow-400 ml-2">
+                (開発環境)
+              </span>
+            )}
           </h1>
-          <LogoutButton />
+          <div className="flex gap-2">
+            <Link
+              to="/"
+              className="px-4 py-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 transition-colors"
+            >
+              ← ホームに戻る
+            </Link>
+            <LogoutButton />
+          </div>
         </header>
 
+        {/* エラーメッセージ */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-red-700">{error}</p>
+          </div>
+        )}
+
+        {isDevelopment && (
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+            <p className="text-yellow-800">
+              ⚠️
+              開発環境：投稿データはページリロードで初期化されます（localStorage使用なし）
+            </p>
+          </div>
+        )}
+
         {/* 投稿フォーム */}
-        <section
-          className="mb-8 space-y-6 p-6 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
-          aria-labelledby="post-form-heading"
-        >
+        <section className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
           <h2
             id="post-form-heading"
             className="text-xl sm:text-2xl lg:text-3xl font-semibold text-gray-900 dark:text-white"
           >
-            {editingPostId !== null ? "投稿を編集" : "新しい投稿"}
+            {editingPostId ? "投稿を編集" : "新しい投稿を作成"}
           </h2>
 
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSubmit();
-            }}
-            className="space-y-6"
-          >
-            <div className="space-y-2">
+          <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+            {/* タイトル入力 */}
+            <div>
               <label
                 htmlFor="title-input"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                タイトル（{title.length}/{TEXT_LIMITS.TITLE_MAX_LENGTH}文字）
+                タイトル
               </label>
               <input
                 id="title-input"
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 type="text"
                 value={title}
-                onChange={(e) => setTitle(sanitizeInput(e.target.value))}
-                placeholder="投稿のタイトルを入力"
+                onChange={(e) => setTitle(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                placeholder="投稿のタイトルを入力してください"
                 maxLength={TEXT_LIMITS.TITLE_MAX_LENGTH}
-                disabled={isSaving}
                 required
+                disabled={isSaving}
               />
+              <p className="mt-1 text-sm text-gray-500">
+                {title.length}/{TEXT_LIMITS.TITLE_MAX_LENGTH}文字
+              </p>
             </div>
 
-            <div className="space-y-2">
+            {/* カテゴリー選択 */}
+            <div>
               <label
                 htmlFor="category-select"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                カテゴリ
+                カテゴリー
               </label>
               <select
                 id="category-select"
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                disabled={isSaving}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 required
+                disabled={isSaving}
               >
-                <option value="tech">テック</option>
-                <option value="hobby">しゅみ</option>
-                <option value="other">その他</option>
+                <option value="0">しゅみ</option>
+                <option value="1">テック</option>
+                <option value="2">その他</option>
               </select>
             </div>
 
-            <div className="space-y-2">
+            {/* 内容入力 */}
+            <div>
               <label
                 htmlFor="content-textarea"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                本文（{content.length}/{TEXT_LIMITS.CONTENT_MAX_LENGTH}文字）
+                内容
               </label>
               <textarea
                 id="content-textarea"
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                rows={8}
                 value={content}
-                onChange={(e) => setContent(sanitizeInput(e.target.value))}
-                placeholder="投稿の内容を入力"
+                onChange={(e) => setContent(e.target.value)}
+                rows={15}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                placeholder="投稿の内容を入力してください（Markdownが使用できます）"
                 maxLength={TEXT_LIMITS.CONTENT_MAX_LENGTH}
-                disabled={isSaving}
                 required
+                disabled={isSaving}
               />
+              <p className="mt-1 text-sm text-gray-500">
+                {content.length}/{TEXT_LIMITS.CONTENT_MAX_LENGTH}文字
+              </p>
             </div>
 
-            {error && (
-              <p
-                className="text-red-600 dark:text-red-400 text-sm"
-                role="alert"
-              >
-                {error}
-              </p>
-            )}
-
+            {/* 送信ボタン */}
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 type="submit"
-                disabled={!isFormValid || isSaving}
+                disabled={isSaving || !title.trim() || !content.trim()}
                 className={cn(
-                  "relative flex-1 px-6 py-3 rounded text-white font-medium",
-                  "bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800",
-                  "focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
-                  "disabled:opacity-50 disabled:cursor-not-allowed",
-                  "transition duration-200",
+                  "px-6 py-3 rounded-md font-medium transition-colors",
+                  "focus:outline-none focus:ring-2 focus:ring-offset-2",
+                  isSaving || !title.trim() || !content.trim()
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
                 )}
               >
                 {isSaving ? (
-                  <>
-                    <LoadingSpinner size="sm" className="mr-2" />
-                    保存中...
-                  </>
-                ) : editingPostId !== null ? (
+                  <div className="flex items-center gap-2">
+                    <LoadingSpinner size="small" />
+                    {editingPostId ? "更新中..." : "投稿中..."}
+                  </div>
+                ) : editingPostId ? (
                   "投稿を更新"
                 ) : (
                   "投稿を作成"
                 )}
               </button>
 
-              {editingPostId !== null && (
+              {editingPostId && (
                 <button
                   type="button"
                   onClick={resetForm}
                   disabled={isSaving}
-                  className={cn(
-                    "px-6 py-3 rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300",
-                    "hover:bg-gray-50 dark:hover:bg-gray-700",
-                    "focus:ring-2 focus:ring-gray-500 focus:ring-offset-2",
-                    "disabled:opacity-50 disabled:cursor-not-allowed",
-                    "transition duration-200",
-                  )}
+                  className="px-6 py-3 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 transition-colors"
                 >
                   キャンセル
                 </button>
@@ -356,105 +495,86 @@ const Admin = () => {
         </section>
 
         {/* 投稿一覧 */}
-        <section
-          className="p-6 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
-          aria-labelledby="posts-heading"
-        >
+        <section>
           <h2
             id="posts-heading"
             className="text-xl sm:text-2xl lg:text-3xl font-semibold mb-4"
           >
-            投稿一覧（{posts.length}件）
+            投稿一覧 ({posts.length}件)
           </h2>
 
-          {isLoading ? (
-            <div className="flex justify-center items-center py-12">
-              <LoadingSpinner size="lg" label="投稿を読み込み中..." />
+          {posts.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500 dark:text-gray-400">
+                まだ投稿がありません。最初の投稿を作成してみませんか？
+              </p>
             </div>
-          ) : posts.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-12">
-              まだ投稿がありません。新しい投稿を作成してください。
-            </p>
           ) : (
-            <div className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {posts.map((post) => (
                 <article
                   key={post.id}
-                  className="border border-gray-200 dark:border-gray-600 rounded-lg p-6 hover:shadow-lg transition-shadow"
+                  className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden"
                 >
-                  <div className="flex flex-col space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white break-words">
-                          {displayTextPlain(post.title)}
-                        </h3>
-                        <div className="flex flex-wrap items-center gap-2 mt-1 text-sm text-gray-500 dark:text-gray-400">
-                          <span>ID: {post.id}</span>
-                          <span>•</span>
-                          <span>カテゴリ: {post.category}</span>
-                          <span>•</span>
-                          <time dateTime={post.createdAt}>
-                            {new Date(post.createdAt).toLocaleString("ja-JP")}
-                          </time>
-                        </div>
-                      </div>
+                  <div className="p-6">
+                    {/* カテゴリーバッジ */}
+                    <div className="flex items-center justify-between mb-3">
+                      <span
+                        className={cn(
+                          "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+                          getCategoryColorClass(post.category),
+                        )}
+                      >
+                        {post.safeCategory}
+                      </span>
+                      <time className="text-xs text-gray-500 dark:text-gray-400">
+                        {new Date(post.created_at).toLocaleDateString("ja-JP")}
+                      </time>
                     </div>
 
-                    <div className="text-gray-600 dark:text-gray-300 line-clamp-3">
-                      <div
+                    {/* タイトル */}
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
+                      <span
                         dangerouslySetInnerHTML={{
-                          __html: displayTextSafe(post.content),
+                          __html:
+                            post.safeTitle || displayTextPlain(post.title),
+                        }}
+                      />
+                    </h3>
+
+                    {/* 内容プレビュー */}
+                    <div className="text-gray-600 dark:text-gray-300 text-sm line-clamp-3 mb-4">
+                      <span
+                        dangerouslySetInnerHTML={{
+                          __html:
+                            post.safeDisplayContent?.slice(0, 100) + "..." ||
+                            displayTextSafe(post.content).slice(0, 100) + "...",
                         }}
                       />
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <button
-                        type="button"
-                        onClick={() => handleEdit(post)}
-                        className={cn(
-                          "flex-1 px-4 py-2 rounded",
-                          "bg-yellow-600 hover:bg-yellow-700 text-white",
-                          "focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2",
-                          "transition duration-200",
-                        )}
-                      >
-                        編集
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(post.id)}
-                        disabled={isDeletingId === post.id}
-                        className={cn(
-                          "flex-1 px-4 py-2 rounded",
-                          "bg-red-600 hover:bg-red-700 text-white",
-                          "focus:ring-2 focus:ring-red-500 focus:ring-offset-2",
-                          "disabled:opacity-50 disabled:cursor-not-allowed",
-                          "transition duration-200",
-                        )}
-                      >
-                        {isDeletingId === post.id ? (
-                          <>
-                            <LoadingSpinner size="sm" className="mr-1" />
-                            削除中...
-                          </>
-                        ) : (
-                          "削除"
-                        )}
-                      </button>
-
+                    {/* アクションボタン */}
+                    <div className="flex gap-2">
                       <Link
-                        to={`/posts/${post.id}`}
-                        className={cn(
-                          "flex-1 px-4 py-2 rounded text-center",
-                          "bg-blue-600 hover:bg-blue-700 text-white",
-                          "focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
-                          "transition duration-200",
-                        )}
+                        to={`/post/${post.id}`}
+                        className="px-3 py-1.5 text-xs bg-blue-100 text-blue-800 rounded hover:bg-blue-200 transition-colors"
                       >
                         表示
                       </Link>
+                      <button
+                        onClick={() => startEditing(post)}
+                        disabled={isSaving}
+                        className="px-3 py-1.5 text-xs bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200 transition-colors disabled:opacity-50"
+                      >
+                        編集
+                      </button>
+                      <button
+                        onClick={() => handleDelete(post.id)}
+                        disabled={isDeletingId === post.id}
+                        className="px-3 py-1.5 text-xs bg-red-100 text-red-800 rounded hover:bg-red-200 transition-colors disabled:opacity-50"
+                      >
+                        {isDeletingId === post.id ? "削除中..." : "削除"}
+                      </button>
                     </div>
                   </div>
                 </article>
