@@ -1,41 +1,42 @@
-// app/src/components/utils/sanitizer.tsx
+// app/src/components/utils/sanitizer.ts
 import DOMPurify from "dompurify";
-import { decode } from "html-entities"; // html-entities をインポート
 
 // プレーンテキスト専用表示関数（XSS完全防止）
 export const displayTextPlain = (text: string): string => {
   if (!text) return "";
 
   try {
-    // HTMLタグを完全除去してプレーンテキスト化
+    // DOMPurifyでHTMLタグを完全除去
     const cleanText = DOMPurify.sanitize(text, {
       ALLOWED_TAGS: [],
       ALLOWED_ATTR: [],
       KEEP_CONTENT: true,
     });
 
-    // HTMLエンティティをデコード
-    if (typeof document !== "undefined") {
-      // クライアントサイドの場合
-      const tempDiv = document.createElement("div");
-      tempDiv.innerHTML = cleanText;
-      return tempDiv.textContent || tempDiv.innerText || "";
-    } else {
-      // サーバーサイド用フォールバック（html-entitiesを使用）
-      return decode(cleanText);
-    }
+    // ブラウザのDOMを使ってHTMLエンティティをデコード
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = cleanText;
+    return tempDiv.textContent || tempDiv.innerText || "";
   } catch (error) {
     console.error("Plain text conversion error:", error);
-    return String(text).replace(/<[^>]*>/g, "");
+    // フォールバック：正規表現でHTMLタグとエンティティを処理
+    return String(text)
+      .replace(/<[^>]*>/g, "")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&amp;/g, "&")
+      .replace(/&quot;/g, '"')
+      .replace(/&#x27;/g, "'")
+      .replace(/&#39;/g, "'");
   }
 };
 
-// XSSサニタイズ仕様統一 - DOMPurifyのみ使用
+// XSSサニタイズ仕様統一 - 安全なHTMLタグのみ許可
 export const displayTextSafe = (text: string): string => {
   if (!text) return "";
 
   try {
-    // DOMPurifyのみでサニタイズ（二重エスケープ防止）
+    // DOMPurifyでサニタイズ（基本的なHTMLタグのみ許可）
     return DOMPurify.sanitize(text, {
       ALLOWED_TAGS: [
         "br",
@@ -47,9 +48,32 @@ export const displayTextSafe = (text: string): string => {
         "blockquote",
         "code",
         "pre",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "ul",
+        "ol",
+        "li",
       ],
       ALLOWED_ATTR: [],
       KEEP_CONTENT: true,
+      // セキュリティ強化オプション
+      SANITIZE_DOM: true,
+      SANITIZE_NAMED_PROPS: true,
+      FORBID_CONTENTS: ["script", "style"],
+      FORBID_TAGS: [
+        "script",
+        "object",
+        "embed",
+        "base",
+        "link",
+        "meta",
+        "style",
+      ],
+      FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover"],
     });
   } catch (error) {
     console.error("Safe display error:", error);
@@ -58,21 +82,30 @@ export const displayTextSafe = (text: string): string => {
   }
 };
 
-// 入力サニタイズ
+// 入力サニタイズ（完全にプレーンテキスト化）
 export const sanitizeInput = (input: string): string => {
   if (!input) return "";
 
   try {
-    return DOMPurify.sanitize(input, {
+    // 入力値は完全にプレーンテキスト化
+    const sanitized = DOMPurify.sanitize(input, {
       ALLOWED_TAGS: [],
       ALLOWED_ATTR: [],
       KEEP_CONTENT: true,
-    }).trim();
+    });
+
+    return sanitized.trim();
   } catch (error) {
     console.error("Input sanitization error:", error);
+    // フォールバック処理
     return String(input)
-      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "") // ここを修正
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
       .replace(/<[^>]*>/g, "")
+      .replace(/javascript:/gi, "")
+      .replace(/on\w+\s*=/gi, "")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&amp;/g, "&")
       .trim();
   }
 };
@@ -108,7 +141,7 @@ export const validateAndSanitize = (
   return { isValid: true, sanitized };
 };
 
-// カテゴリバリデーション（仕様統一）
+// カテゴリバリデーション
 export const validateCategory = (
   category: string,
 ): { isValid: boolean; sanitized: string; error?: string } => {
@@ -126,7 +159,7 @@ export const validateCategory = (
   return { isValid: true, sanitized };
 };
 
-// 新しいバリデーション関数（limits形式対応）
+// limits形式対応のバリデーション関数
 export const validateWithLimits = (
   input: string,
   limits: { min: number; max: number },
