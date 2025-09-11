@@ -51,7 +51,77 @@ export const UI_COLORS = {
 
 export type CategoryType = keyof typeof CATEGORY_COLORS;
 
-// ========== 新規追加（既存に影響なし） ==========\n\n// Layout.tsxで使用されている色を定数化（参考用・将来使用予定）
+// ========== 新規追加：セマンティックカラーシステム ==========
+
+// 既存のUI_COLORSを活用したセマンティックなカラーシステム
+export const SEMANTIC_COLORS = {
+  // Primary（メインアクション・ブランドカラー）
+  primary: {
+    ...UI_COLORS.blue,
+    // 追加のバリエーション
+    solid: "bg-ui-primary-600 hover:bg-ui-primary-700 text-white",
+    outline:
+      "border border-ui-primary-600 text-ui-primary-600 hover:bg-ui-primary-600 hover:text-white",
+    ghost:
+      "text-ui-primary-600 hover:bg-ui-primary-100 dark:hover:bg-ui-primary-900",
+    subtle:
+      "bg-ui-primary-100 text-ui-primary-800 dark:bg-ui-primary-900 dark:text-ui-primary-200",
+  },
+
+  // Secondary（サブアクション・グレー系）
+  secondary: {
+    bg: "bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600",
+    text: "text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300",
+    textHover: "hover:text-gray-800 dark:hover:text-gray-200",
+    focus: "focus:ring-gray-500",
+    // バリエーション
+    solid: "bg-gray-600 hover:bg-gray-700 text-white",
+    outline:
+      "border border-gray-600 text-gray-600 hover:bg-gray-600 hover:text-white",
+    ghost: "text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800",
+    subtle: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
+  },
+
+  // Danger（削除・エラー・警告）
+  danger: {
+    ...UI_COLORS.red,
+    // 追加のバリエーション
+    solid: "bg-ui-danger-600 hover:bg-ui-danger-700 text-white",
+    outline:
+      "border border-ui-danger-600 text-ui-danger-600 hover:bg-ui-danger-600 hover:text-white",
+    ghost:
+      "text-ui-danger-600 hover:bg-ui-danger-100 dark:hover:bg-ui-danger-900",
+    subtle:
+      "bg-ui-danger-100 text-ui-danger-800 dark:bg-ui-danger-900 dark:text-ui-danger-200",
+  },
+
+  // Success（成功・完了・承認）
+  success: {
+    ...UI_COLORS.green,
+    // 追加のバリエーション
+    solid: "bg-ui-success-600 hover:bg-ui-success-700 text-white",
+    outline:
+      "border border-ui-success-600 text-ui-success-600 hover:bg-ui-success-600 hover:text-white",
+    ghost: "text-ui-success-600 hover:bg-green-100 dark:hover:bg-green-900",
+    subtle: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  },
+} as const;
+
+// 使いやすさのための型定義
+export type SemanticColorKey = keyof typeof SEMANTIC_COLORS;
+export type ColorVariant = "solid" | "outline" | "ghost" | "subtle";
+
+// ヘルパー関数：セマンティックカラーを簡単に取得
+export const getSemanticColor = (
+  color: SemanticColorKey,
+  variant: ColorVariant = "solid",
+): string => {
+  return SEMANTIC_COLORS[color][variant];
+};
+
+// ========== 既存コード（変更なし） ==========
+
+// Layout.tsxで使用されている色を定数化（参考用・将来使用予定）
 export const LAYOUT_COLORS = {
   // Layout.tsxの現在のクラス名をそのまま定数化
   mainBackground:
