@@ -1,49 +1,42 @@
 // app/src/components/utils/ResettableErrorBoundary.tsx
 import { useState } from "react";
-import React from "react";
-import { ErrorBoundary } from "./ErrorBoundary";
-
-type FallbackProps = {
-  error: Error;
-  resetErrorBoundary: () => void;
-};
-
-type FallbackType =
-  | React.ReactNode
-  | ((props: FallbackProps) => React.ReactNode);
+import type { ReactNode } from "react";
+import { AppErrorBoundary } from "./ErrorBoundary";
 
 export function ResettableErrorBoundary({
   children,
-  fallback,
+  onError,
+  onReset,
 }: {
-  children: React.ReactNode;
-  fallback?: FallbackType;
+  children: ReactNode;
+  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
+  onReset?: () => void;
 }) {
   const [key, setKey] = useState(0);
 
-  const handleReset = () => setKey((prev) => prev + 1);
+  const handleReset = () => {
+    setKey((prev) => prev + 1);
+    onReset?.();
+    console.log("🔄 ResettableErrorBoundary: コンポーネントをリセットしました");
+  };
 
   return (
-    <ErrorBoundary
+    <AppErrorBoundary
       key={key}
-      fallback={
-        typeof fallback === "function"
-          ? (props: FallbackProps) => {
-              // 重複呼び出しを避けるため、ラップした関数を作成
-              const combinedReset = () => {
-                handleReset();
-                props.resetErrorBoundary();
-              };
-
-              return fallback({
-                ...props,
-                resetErrorBoundary: combinedReset,
-              });
-            }
-          : fallback
-      }
+      onError={(error, errorInfo) => {
+        console.error(
+          "🚨 ResettableErrorBoundary caught an error:",
+          error,
+          errorInfo,
+        );
+        onError?.(error, errorInfo);
+      }}
+      onReset={handleReset} // AppErrorBoundaryのonResetに渡す
     >
       {children}
-    </ErrorBoundary>
+    </AppErrorBoundary>
   );
 }
+
+// 使いやすさのためのエクスポート
+export { ResettableErrorBoundary as default };
