@@ -1,6 +1,6 @@
 // app/src/mocks/handlers.ts
 import { http, HttpResponse } from "msw";
-import { blogs, comments, admins } from "../dummy";
+import { blogs, comments } from "../dummy";
 import { CATEGORY_NAMES } from "../dummy/types";
 import type { Admin, AuthResponse } from "../dummy/types";
 
@@ -9,8 +9,8 @@ const API_BASE = "/api";
 
 // 開発環境専用の認証情報（環境変数を使用しない）
 const DEVELOPMENT_CREDENTIALS = {
-  email: "admin@localhost.dev",
-  password: "dev-password-123",
+  email: "admin@example.com",
+  password: "password",
 } as const;
 
 // エラーレスポンス用のヘルパー関数
@@ -62,12 +62,20 @@ const validateAdmin = (email: string, password: string): boolean => {
 };
 
 export const handlers = [
+  // ========== ブログ関連API（デバッグログ強化版） ==========
+
   // ブログ記事一覧取得
   http.get(`${API_BASE}/blogs`, ({ request }) => {
+    console.log("🔍 MSW Handler: GET /api/blogs called");
+    console.log("📍 Request URL:", request.url);
+
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get("page") || "1", 10);
     const limit = parseInt(url.searchParams.get("limit") || "10", 10);
     const category = url.searchParams.get("category");
+
+    console.log("📊 MSW Handler: Query params", { page, limit, category });
+    console.log("📚 MSW Handler: Total blogs available", blogs.length);
 
     let filteredBlogs = blogs;
 
@@ -78,6 +86,13 @@ export const handlers = [
         (blog) =>
           blog.category === categoryMap[category as keyof typeof categoryMap],
       );
+      console.log(
+        "🏷️ MSW Handler: Filtered by category",
+        category,
+        "->",
+        filteredBlogs.length,
+        "blogs",
+      );
     }
 
     // ページネーション
@@ -87,13 +102,24 @@ export const handlers = [
     const end = start + limit;
     const paginatedBlogs = filteredBlogs.slice(start, end);
 
+    console.log("📄 MSW Handler: Pagination", {
+      start,
+      end,
+      paginatedCount: paginatedBlogs.length,
+    });
+
     // レスポンス形式を調整（category_nameを追加）
     const blogsWithCategoryName = paginatedBlogs.map((blog) => ({
       ...blog,
       category_name: CATEGORY_NAMES[blog.category],
     }));
 
-    return HttpResponse.json({
+    console.log(
+      "📝 MSW Handler: Returning blogs",
+      blogsWithCategoryName.length,
+    );
+
+    const responseData = {
       blogs: blogsWithCategoryName,
       pagination: {
         current_page: page,
@@ -101,15 +127,26 @@ export const handlers = [
         total_pages: totalPages,
         total_count: total,
       },
+    };
+
+    console.log("📤 MSW Handler: Response data", responseData);
+
+    return HttpResponse.json(responseData, {
+      headers: {
+        "Content-Type": "application/json",
+      },
     });
   }),
 
   // ブログ記事詳細取得
   http.get(`${API_BASE}/blogs/:id`, ({ params }) => {
     const id = parseInt(params.id as string, 10);
+    console.log("🔍 MSW Handler: GET /api/blogs/:id called", { id });
+
     const blog = blogs.find((b) => b.id === id);
 
     if (!blog) {
+      console.log("❌ MSW Handler: Blog not found", { id });
       return createErrorResponse("ブログ記事が見つかりません", 404);
     }
 
@@ -118,77 +155,123 @@ export const handlers = [
       category_name: CATEGORY_NAMES[blog.category],
     };
 
-    return HttpResponse.json({ blog: blogWithCategoryName });
+    console.log("✅ MSW Handler: Blog found", blogWithCategoryName.title);
+
+    return HttpResponse.json(
+      { blog: blogWithCategoryName },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
   }),
 
   // ブログのコメント一覧取得
   http.get(`${API_BASE}/blogs/:id/comments`, ({ params }) => {
     const blogId = parseInt(params.id as string, 10);
+    console.log("🔍 MSW Handler: GET /api/blogs/:id/comments called", {
+      blogId,
+    });
+
     const blog = blogs.find((b) => b.id === blogId);
 
     if (!blog) {
+      console.log("❌ MSW Handler: Blog not found for comments", { blogId });
       return createErrorResponse("ブログ記事が見つかりません", 404);
     }
 
     const blogComments = comments.filter((c) => c.blog_id === blogId);
+    console.log("💬 MSW Handler: Found comments", blogComments.length);
 
-    return HttpResponse.json({
-      comments: blogComments.sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-      ),
-    });
+    const sortedComments = blogComments.sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
+
+    return HttpResponse.json(
+      {
+        comments: sortedComments,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
   }),
 
   // コメント投稿
   http.post(`${API_BASE}/blogs/:id/comments`, async ({ request, params }) => {
     const blogId = parseInt(params.id as string, 10);
-    const body = (await request.json()) as {
-      user_name: string;
-      comment: string;
-    };
+    console.log("🔍 MSW Handler: POST /api/blogs/:id/comments called", {
+      blogId,
+    });
 
-    const blog = blogs.find((b) => b.id === blogId);
-    if (!blog) {
-      return createErrorResponse("ブログ記事が見つかりません", 404);
+    try {
+      const body = (await request.json()) as {
+        user_name: string;
+        comment: string;
+      };
+
+      console.log("📝 MSW Handler: Comment data", body);
+
+      const blog = blogs.find((b) => b.id === blogId);
+      if (!blog) {
+        console.log("❌ MSW Handler: Blog not found for comment post", {
+          blogId,
+        });
+        return createErrorResponse("ブログ記事が見つかりません", 404);
+      }
+
+      const newComment = {
+        id: Math.max(...comments.map((c) => c.id), 0) + 1,
+        blog_id: blogId,
+        user_name: body.user_name,
+        comment: body.comment,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      // 実際のcommentsに追加（開発環境でのみ有効）
+      comments.push(newComment);
+      console.log("✅ MSW Handler: Comment added", newComment);
+
+      return HttpResponse.json(
+        {
+          comment: newComment,
+          message: "コメントを投稿しました",
+        },
+        {
+          status: 201,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
+    } catch (error) {
+      console.error("❌ MSW Handler: Comment post error", error);
+      return createErrorResponse("コメントの投稿に失敗しました", 500);
     }
-
-    const newComment = {
-      id: Math.max(...comments.map((c) => c.id), 0) + 1,
-      blog_id: blogId,
-      user_name: body.user_name,
-      comment: body.comment,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
-    // 実際のcommentsに追加（開発環境でのみ有効）
-    comments.push(newComment);
-
-    return HttpResponse.json(
-      {
-        comment: newComment,
-        message: "コメントを投稿しました",
-      },
-      { status: 201 },
-    );
   }),
 
-  // ========== 認証関連（セキュリティ改善版） ==========
+  // ========== 認証関連API（セキュリティ改善版） ==========
 
   // 開発環境専用ログイン
   http.post(`${API_BASE}/auth/login`, async ({ request }) => {
+    console.log("🔍 MSW Handler: POST /api/auth/login called");
+
     try {
       const body = (await request.json()) as {
         email: string;
         password: string;
       };
 
-      console.log("🔐 開発環境: ログイン処理開始");
+      console.log("🔐 MSW Handler: Login attempt", { email: body.email });
 
       // 入力値検証
       if (!body.email || !body.password) {
-        console.log("❌ 開発環境: 入力値が不正");
+        console.log("❌ MSW Handler: Missing credentials");
         return createErrorResponse("メールアドレスとパスワードが必要です", 400);
       }
 
@@ -214,31 +297,42 @@ export const handlers = [
         message: "ログインしました",
       };
 
-      console.log("✅ 開発環境: ログイン成功");
+      console.log("✅ MSW Handler: Login successful");
       return HttpResponse.json(response, {
         headers: {
           "Content-Type": "application/json",
         },
       });
     } catch (error) {
-      console.error("🚫 開発環境: ログイン処理エラー", error);
+      console.error("🚫 MSW Handler: Login error", error);
       return createErrorResponse("サーバーエラーが発生しました", 500);
     }
   }),
 
   // 開発環境専用ログアウト
   http.post(`${API_BASE}/auth/logout`, async ({ request }) => {
+    console.log("🔍 MSW Handler: POST /api/auth/logout called");
+
     const authError = requireAuth(request);
     if (authError) return authError;
 
-    console.log("🚪 開発環境: ログアウト処理");
-    return HttpResponse.json({
-      message: "ログアウトしました",
-    });
+    console.log("🚪 MSW Handler: Logout successful");
+    return HttpResponse.json(
+      {
+        message: "ログアウトしました",
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
   }),
 
   // 認証状態チェック
   http.get(`${API_BASE}/auth/me`, async ({ request }) => {
+    console.log("🔍 MSW Handler: GET /api/auth/me called");
+
     const authError = requireAuth(request);
     if (authError) return authError;
 
@@ -249,71 +343,113 @@ export const handlers = [
       updated_at: new Date().toISOString(),
     };
 
-    console.log("🔍 開発環境: 認証状態確認");
-    return HttpResponse.json({ admin });
+    console.log("🔍 MSW Handler: Auth check successful");
+    return HttpResponse.json(
+      { admin },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
   }),
 
   // ========== 管理者用API（開発環境専用） ==========
 
   // ブログ投稿（管理者用）
   http.post(`${API_BASE}/admin/blogs`, async ({ request }) => {
+    console.log("🔍 MSW Handler: POST /api/admin/blogs called");
+
     const authError = requireAuth(request);
     if (authError) return authError;
 
-    const body = await request.json();
-    console.log("📝 開発環境: ブログ投稿", body);
+    try {
+      const body = await request.json();
+      console.log("📝 MSW Handler: Admin blog creation", body);
 
-    // 実際のblogsに追加（開発環境でのみ有効）
-    const newBlog = {
-      id: Math.max(...blogs.map((b) => b.id), 0) + 1,
-      ...body,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
+      // 実際のblogsに追加（開発環境でのみ有効）
+      const newBlog = {
+        id: Math.max(...blogs.map((b) => b.id), 0) + 1,
+        ...body,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
 
-    blogs.push(newBlog);
+      blogs.push(newBlog);
+      console.log("✅ MSW Handler: Admin blog created", newBlog);
 
-    return HttpResponse.json(
-      {
-        blog: newBlog,
-        message: "ブログを作成しました",
-      },
-      { status: 201 },
-    );
+      return HttpResponse.json(
+        {
+          blog: newBlog,
+          message: "ブログを作成しました",
+        },
+        {
+          status: 201,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
+    } catch (error) {
+      console.error("❌ MSW Handler: Admin blog creation error", error);
+      return createErrorResponse("ブログの作成に失敗しました", 500);
+    }
   }),
 
   // ブログ更新（管理者用）
   http.put(`${API_BASE}/admin/blogs/:id`, async ({ request, params }) => {
+    console.log("🔍 MSW Handler: PUT /api/admin/blogs/:id called");
+
     const authError = requireAuth(request);
     if (authError) return authError;
 
     const id = parseInt(params.id as string, 10);
     const body = await request.json();
 
-    console.log("📝 開発環境: ブログ更新", { id, body });
+    console.log("📝 MSW Handler: Admin blog update", { id, body });
 
-    return HttpResponse.json({
-      message: "ブログを更新しました",
-    });
+    return HttpResponse.json(
+      {
+        message: "ブログを更新しました",
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
   }),
 
   // ブログ削除（管理者用）
   http.delete(`${API_BASE}/admin/blogs/:id`, async ({ request, params }) => {
+    console.log("🔍 MSW Handler: DELETE /api/admin/blogs/:id called");
+
     const authError = requireAuth(request);
     if (authError) return authError;
 
     const id = parseInt(params.id as string, 10);
-    console.log("🗑️ 開発環境: ブログ削除", { id });
+    console.log("🗑️ MSW Handler: Admin blog deletion", { id });
 
-    return HttpResponse.json({
-      message: "ブログを削除しました",
-    });
+    return HttpResponse.json(
+      {
+        message: "ブログを削除しました",
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
   }),
 
   // ========== 後方互換性のため ==========
 
   // 古いAPI endpoints
   http.get(`${API_BASE}/articles`, ({ request }) => {
+    console.log(
+      "🔍 MSW Handler: GET /api/articles (redirecting to /api/blogs)",
+    );
+
     const url = new URL(request.url);
     const blogsUrl = url.toString().replace("/articles", "/blogs");
     return fetch(blogsUrl)

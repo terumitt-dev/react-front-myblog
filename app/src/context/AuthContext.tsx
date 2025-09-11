@@ -52,9 +52,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // セッション確認（開発環境のみ）
     const checkAuthStatus = async () => {
       try {
-        const response = await fetch("/api/auth/me");
+        const token = localStorage.getItem("auth_token");
+
+        const response = await fetch("/api/auth/me", {
+          headers: token
+            ? {
+                Authorization: `Bearer ${token}`,
+              }
+            : {},
+        });
+
         if (response.ok) {
           setIsLoggedIn(true);
+        } else {
+          // トークンが無効な場合はクリアする
+          localStorage.removeItem("auth_token");
+          localStorage.removeItem("admin_data");
+          setIsLoggedIn(false);
         }
       } catch (error) {
         console.log("認証状態の確認に失敗（開発環境）:", error);
@@ -93,9 +107,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         const data = await response.json();
 
-        if (data.success) {
+        // MSWハンドラーのレスポンス形式に合わせて修正
+        if (data.token && data.admin) {
           setIsLoggedIn(true);
           console.log("✅ 開発環境: ログイン成功");
+
+          // トークンをローカルストレージに保存（開発環境のみ）
+          localStorage.setItem("auth_token", data.token);
+          localStorage.setItem("admin_data", JSON.stringify(data.admin));
+
           return { success: true };
         } else {
           return { success: false, error: "invalid_credentials" };
@@ -115,8 +135,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      const token = localStorage.getItem("auth_token");
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: token
+          ? {
+              Authorization: `Bearer ${token}`,
+            }
+          : {},
+      });
     } finally {
+      // ローカルストレージをクリア
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("admin_data");
       setIsLoggedIn(false);
       console.log("🚪 開発環境: ログアウト完了");
     }

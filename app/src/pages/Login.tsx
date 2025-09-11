@@ -8,8 +8,13 @@ import { cn } from "@/components/utils/cn";
 
 const Login = () => {
   const { login } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  // 開発環境では正しい認証情報をデフォルト値として設定
+  const [email, setEmail] = useState(
+    import.meta.env.DEV ? "admin@example.com" : "",
+  );
+  const [password, setPassword] = useState(
+    import.meta.env.DEV ? "password" : "",
+  );
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -190,10 +195,14 @@ const Login = () => {
               </div>
               <div className="ml-3">
                 <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
-                  開発環境
+                  開発環境用認証情報
                 </h3>
-                <p className="text-sm text-yellow-700 dark:text-yellow-400 mt-1">
-                  開発環境では認証チェックが簡略化されています。本番環境では適切な認証システムを実装してください。
+                <div className="text-sm text-yellow-700 dark:text-yellow-400 mt-1 font-mono">
+                  <div>Email: admin@example.com</div>
+                  <div>Password: password</div>
+                </div>
+                <p className="text-sm text-yellow-600 dark:text-yellow-500 mt-2">
+                  ※本番環境では適切な認証システムを実装してください。
                 </p>
               </div>
             </div>
