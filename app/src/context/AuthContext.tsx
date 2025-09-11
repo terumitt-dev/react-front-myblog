@@ -1,54 +1,16 @@
 // app/src/context/AuthContext.tsx
-import { createContext, useState, useEffect } from "react";
-import { authApi } from "@/api/client";
+import { createContext, useState, useEffect, useCallback } from "react";
 
-// 複数の環境変数チェックで堅牢性を向上
-const NODE_ENV = import.meta.env.MODE;
-const IS_DEV_BUILD = import.meta.env.DEV;
-const FORCE_DISABLE_AUTH = import.meta.env.VITE_FORCE_DISABLE_AUTH === "true";
-const IS_PRODUCTION = import.meta.env.PROD;
-
-// 共通: 許可ホストリストを取得する関数
-const getAllowedHosts = (): string[] => {
-  const defaultHosts = ["localhost", "127.0.0.1", "0.0.0.0"];
-  return defaultHosts;
-};
-
-// 共通: ホスト検証を行う関数
-const isHostAllowed = (): boolean => {
-  if (typeof window === "undefined") return false;
-
-  const hostname = window.location.hostname;
-  const allowedHosts = getAllowedHosts();
-  return allowedHosts.includes(hostname);
-};
-
-// 本番動作ガード強化 - 厳格なホスト制御
-const checkDevelopmentMode = (): boolean => {
-  // SSR時は false
-  if (typeof window === "undefined") return false;
-
-  // 基本条件
-  const basicConditions =
-    IS_DEV_BUILD &&
-    NODE_ENV !== "production" &&
-    !IS_PRODUCTION &&
-    !FORCE_DISABLE_AUTH;
-
-  // 共通のホスト検証を使用
-  const isValidHost = isHostAllowed();
-
-  return basicConditions && isValidHost;
-};
+// ⚠️ 重要：本番環境では絶対に使用しないでください
+// この実装は開発環境専用の簡易認証システムです
 
 type LoginResult = {
   success: boolean;
   error?:
-    | "invalid_config"
+    | "network_error"
     | "invalid_credentials"
     | "production_disabled"
-    | "build_error"
-    | "security_violation";
+    | "development_only";
 };
 
 type AuthContextType = {
@@ -60,155 +22,110 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// セッション用のキー
-const TOKEN_KEY = "token";
+// 開発環境チェック（厳格）
+const isDevelopmentEnvironment = (): boolean => {
+  // SSR対応
+  if (typeof window === "undefined") return false;
+
+  // 複数条件での厳格チェック
+  return (
+    import.meta.env.DEV && // Viteの開発モード
+    import.meta.env.MODE === "development" && // NODE_ENVチェック
+    !import.meta.env.PROD && // 本番環境ではない
+    window.location.hostname === "localhost" && // localhostでのみ動作
+    (window.location.port === "5173" || // Vite開発サーバー
+      window.location.port === "3000") // 代替ポート
+  );
+};
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    // SSR時は false
-    if (typeof window === "undefined") return false;
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const isDevelopmentMode = isDevelopmentEnvironment();
 
-    // トークンの存在をチェック
-    try {
-      const token = localStorage.getItem(TOKEN_KEY);
-      return !!token;
-    } catch (error) {
-      console.error("Failed to read token from localStorage:", error);
-      return false;
-    }
-  });
-
-  // 認証状態の監視
+  // 開発環境チェック（初期化時）
   useEffect(() => {
-    const checkAuth = async () => {
-      if (!isLoggedIn) return;
+    if (!isDevelopmentMode) {
+      console.warn("🚫 認証システムは開発環境でのみ利用可能です");
+      return;
+    }
 
+    // セッション確認（開発環境のみ）
+    const checkAuthStatus = async () => {
       try {
-        // 認証状態をチェック
-        const response = await authApi.me();
-        if ("error" in response) {
-          setIsLoggedIn(false);
-          localStorage.removeItem(TOKEN_KEY);
+        const response = await fetch("/api/auth/me");
+        if (response.ok) {
+          setIsLoggedIn(true);
         }
       } catch (error) {
+        console.log("認証状態の確認に失敗（開発環境）:", error);
         setIsLoggedIn(false);
-        localStorage.removeItem(TOKEN_KEY);
       }
     };
 
-    checkAuth();
-  }, [isLoggedIn]);
+    checkAuthStatus();
+  }, [isDevelopmentMode]);
 
-  const login = async (
-    email: string,
-    password: string,
-  ): Promise<LoginResult> => {
-    // SSR時のチェック
-    if (typeof window === "undefined") {
-      return { success: false, error: "build_error" };
-    }
-
-    const isDev = checkDevelopmentMode();
-
-    // 本番環境ガード
-    if (!isDev) {
-      console.error("🚫 Production: Development authentication is disabled");
-      return { success: false, error: "production_disabled" };
-    }
-
-    // 共通のホスト検証を使用
-    if (!isHostAllowed()) {
-      const hostname = window.location.hostname;
-      const allowedHosts = getAllowedHosts();
-      console.error(
-        "🚨 Security violation: Unauthorized host access:",
-        hostname,
-        "Allowed hosts:",
-        allowedHosts,
-      );
-      return { success: false, error: "security_violation" };
-    }
-
-    // 環境変数チェック
-    const devEmail = import.meta.env.VITE_DEV_ADMIN_EMAIL;
-    const devPassword = import.meta.env.VITE_DEV_ADMIN_PASSWORD;
-
-    // ビルド時置換エラーチェック
-    if (devEmail === "undefined" || devPassword === "undefined") {
-      if (process.env.NODE_ENV === "development") {
-        console.error(
-          "❌ Build replacement error: Environment variables not properly configured",
-        );
+  const login = useCallback(
+    async (email: string, password: string): Promise<LoginResult> => {
+      // 本番環境ガード（最優先）
+      if (!isDevelopmentMode) {
+        console.error("🚫 本番環境: 認証機能は無効化されています");
+        return { success: false, error: "production_disabled" };
       }
-      return { success: false, error: "build_error" };
-    }
 
-    if (!devEmail || !devPassword) {
-      if (process.env.NODE_ENV === "development") {
-        console.error("❌ Development environment variables not configured");
-        console.warn(
-          "Please set VITE_DEV_ADMIN_EMAIL and VITE_DEV_ADMIN_PASSWORD",
-        );
-      }
-      return { success: false, error: "invalid_config" };
-    }
-
-    try {
-      const response = await authApi.login(email, password);
-
-      if ("error" in response) {
-        if (process.env.NODE_ENV === "development") {
-          console.warn("❌ Development login failed");
-        }
+      // 入力値検証
+      if (!email || !password) {
         return { success: false, error: "invalid_credentials" };
       }
 
-      // トークンを保存
       try {
-        const { token } = response.data;
-        localStorage.setItem(TOKEN_KEY, token);
-        setIsLoggedIn(true);
+        // モックAPI経由での認証（環境変数を使用しない）
+        const response = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
 
-        if (process.env.NODE_ENV === "development") {
-          console.log("✅ Development login successful");
+        if (!response.ok) {
+          console.log("🔒 開発環境: ログイン失敗");
+          return { success: false, error: "invalid_credentials" };
         }
-        return { success: true };
-      } catch (error) {
-        console.error("Failed to save token to localStorage:", error);
-        return { success: false, error: "build_error" };
-      }
-    } catch (error) {
-      console.error("Login error:", error);
-      return { success: false, error: "invalid_credentials" };
-    }
-  };
 
-  const logout = async () => {
-    const isDev = checkDevelopmentMode();
+        const data = await response.json();
+
+        if (data.success) {
+          setIsLoggedIn(true);
+          console.log("✅ 開発環境: ログイン成功");
+          return { success: true };
+        } else {
+          return { success: false, error: "invalid_credentials" };
+        }
+      } catch (error) {
+        console.error("開発環境: 認証エラー", error);
+        return { success: false, error: "network_error" };
+      }
+    },
+    [isDevelopmentMode],
+  );
+
+  const logout = useCallback(async () => {
+    if (!isDevelopmentMode) {
+      console.warn("🚫 本番環境: ログアウト機能は無効化されています");
+      return;
+    }
 
     try {
-      await authApi.logout();
+      await fetch("/api/auth/logout", { method: "POST" });
     } finally {
       setIsLoggedIn(false);
-      try {
-        localStorage.removeItem(TOKEN_KEY);
-
-        if (isDev && process.env.NODE_ENV === "development") {
-          console.log("🚪 Logout completed");
-        }
-      } catch (error) {
-        console.error("Failed to remove token from localStorage:", error);
-      }
+      console.log("🚪 開発環境: ログアウト完了");
     }
-  };
-
-  const isDevelopmentMode =
-    typeof window !== "undefined" ? checkDevelopmentMode() : false;
+  }, [isDevelopmentMode]);
 
   return (
     <AuthContext.Provider
       value={{
-        isLoggedIn,
+        isLoggedIn: isDevelopmentMode ? isLoggedIn : false,
         login,
         logout,
         isDevelopmentMode,

@@ -7,6 +7,12 @@ import type { Admin, AuthResponse } from "../dummy/types";
 // APIのベースURL
 const API_BASE = "/api";
 
+// 開発環境専用の認証情報（環境変数を使用しない）
+const DEVELOPMENT_CREDENTIALS = {
+  email: "admin@localhost.dev",
+  password: "dev-password-123",
+} as const;
+
 // エラーレスポンス用のヘルパー関数
 const createErrorResponse = (message: string, status: number = 400) => {
   return new HttpResponse(
@@ -31,23 +37,28 @@ const getAuthToken = (request: Request) => {
 // 認証済みかチェックするミドルウェア的な関数
 const requireAuth = (request: Request) => {
   const token = getAuthToken(request);
-  if (!token || token !== "mock-jwt-token") {
+  if (!token || token !== "dev-token-mock") {
     return createErrorResponse("認証が必要です", 401);
   }
   return null;
 };
 
-// 管理者情報の検証
-const validateAdmin = (email: string, password: string) => {
-  const adminEmail = import.meta.env.VITE_DEV_ADMIN_EMAIL;
-  const adminPassword = import.meta.env.VITE_DEV_ADMIN_PASSWORD;
+// 開発環境専用の認証検証（環境変数を使用しない）
+const validateAdmin = (email: string, password: string): boolean => {
+  console.log("🔐 開発環境: 認証試行", { email });
 
-  if (!adminEmail || !adminPassword) {
-    console.warn("Admin credentials not configured in environment variables");
-    return false;
+  const isValid =
+    email === DEVELOPMENT_CREDENTIALS.email &&
+    password === DEVELOPMENT_CREDENTIALS.password;
+
+  if (isValid) {
+    console.log("✅ 開発環境: 認証成功");
+  } else {
+    console.log("❌ 開発環境: 認証失敗");
+    console.log("💡 開発環境の認証情報:", DEVELOPMENT_CREDENTIALS);
   }
 
-  return email === adminEmail && password === adminPassword;
+  return isValid;
 };
 
 export const handlers = [
@@ -151,6 +162,9 @@ export const handlers = [
       updated_at: new Date().toISOString(),
     };
 
+    // 実際のcommentsに追加（開発環境でのみ有効）
+    comments.push(newComment);
+
     return HttpResponse.json(
       {
         comment: newComment,
@@ -160,46 +174,64 @@ export const handlers = [
     );
   }),
 
-  // 管理者ログイン
+  // ========== 認証関連（セキュリティ改善版） ==========
+
+  // 開発環境専用ログイン
   http.post(`${API_BASE}/auth/login`, async ({ request }) => {
-    const body = (await request.json()) as { email: string; password: string };
+    try {
+      const body = (await request.json()) as {
+        email: string;
+        password: string;
+      };
 
-    // 認証情報の検証
-    if (!validateAdmin(body.email, body.password)) {
-      return createErrorResponse(
-        "メールアドレスまたはパスワードが正しくありません",
-        401,
-      );
-    }
+      console.log("🔐 開発環境: ログイン処理開始");
 
-    // 認証成功時は管理者情報を返す
-    const admin =
-      admins.find((a) => a.email === body.email) ||
-      ({
+      // 入力値検証
+      if (!body.email || !body.password) {
+        console.log("❌ 開発環境: 入力値が不正");
+        return createErrorResponse("メールアドレスとパスワードが必要です", 400);
+      }
+
+      // 開発環境専用の認証検証
+      if (!validateAdmin(body.email, body.password)) {
+        return createErrorResponse(
+          "メールアドレスまたはパスワードが正しくありません",
+          401,
+        );
+      }
+
+      // 認証成功時のレスポンス
+      const admin: Admin = {
         id: 1,
-        email: body.email,
+        email: DEVELOPMENT_CREDENTIALS.email,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      } as Admin);
+      };
 
-    const response: AuthResponse = {
-      admin,
-      token: "mock-jwt-token",
-      message: "ログインしました",
-    };
+      const response: AuthResponse = {
+        admin,
+        token: "dev-token-mock", // 開発環境専用トークン
+        message: "ログインしました",
+      };
 
-    return HttpResponse.json(response, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+      console.log("✅ 開発環境: ログイン成功");
+      return HttpResponse.json(response, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    } catch (error) {
+      console.error("🚫 開発環境: ログイン処理エラー", error);
+      return createErrorResponse("サーバーエラーが発生しました", 500);
+    }
   }),
 
-  // 管理者ログアウト
+  // 開発環境専用ログアウト
   http.post(`${API_BASE}/auth/logout`, async ({ request }) => {
     const authError = requireAuth(request);
     if (authError) return authError;
 
+    console.log("🚪 開発環境: ログアウト処理");
     return HttpResponse.json({
       message: "ログアウトしました",
     });
@@ -210,48 +242,77 @@ export const handlers = [
     const authError = requireAuth(request);
     if (authError) return authError;
 
-    const adminEmail = import.meta.env.VITE_DEV_ADMIN_EMAIL;
-    const admin = admins.find((a) => a.email === adminEmail) || admins[0];
+    const admin: Admin = {
+      id: 1,
+      email: DEVELOPMENT_CREDENTIALS.email,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
 
+    console.log("🔍 開発環境: 認証状態確認");
     return HttpResponse.json({ admin });
   }),
 
-  // 管理者用のブログ操作API
+  // ========== 管理者用API（開発環境専用） ==========
+
+  // ブログ投稿（管理者用）
   http.post(`${API_BASE}/admin/blogs`, async ({ request }) => {
     const authError = requireAuth(request);
     if (authError) return authError;
 
-    await request.json();
+    const body = await request.json();
+    console.log("📝 開発環境: ブログ投稿", body);
+
+    // 実際のblogsに追加（開発環境でのみ有効）
+    const newBlog = {
+      id: Math.max(...blogs.map((b) => b.id), 0) + 1,
+      ...body,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    blogs.push(newBlog);
 
     return HttpResponse.json(
       {
+        blog: newBlog,
         message: "ブログを作成しました",
       },
       { status: 201 },
     );
   }),
 
-  http.put(`${API_BASE}/admin/blogs/:id`, async ({ request }) => {
+  // ブログ更新（管理者用）
+  http.put(`${API_BASE}/admin/blogs/:id`, async ({ request, params }) => {
     const authError = requireAuth(request);
     if (authError) return authError;
 
-    await request.json();
+    const id = parseInt(params.id as string, 10);
+    const body = await request.json();
+
+    console.log("📝 開発環境: ブログ更新", { id, body });
 
     return HttpResponse.json({
       message: "ブログを更新しました",
     });
   }),
 
-  http.delete(`${API_BASE}/admin/blogs/:id`, async ({ request }) => {
+  // ブログ削除（管理者用）
+  http.delete(`${API_BASE}/admin/blogs/:id`, async ({ request, params }) => {
     const authError = requireAuth(request);
     if (authError) return authError;
+
+    const id = parseInt(params.id as string, 10);
+    console.log("🗑️ 開発環境: ブログ削除", { id });
 
     return HttpResponse.json({
       message: "ブログを削除しました",
     });
   }),
 
-  // 後方互換性のため、古いAPI endpoints
+  // ========== 後方互換性のため ==========
+
+  // 古いAPI endpoints
   http.get(`${API_BASE}/articles`, ({ request }) => {
     const url = new URL(request.url);
     const blogsUrl = url.toString().replace("/articles", "/blogs");
