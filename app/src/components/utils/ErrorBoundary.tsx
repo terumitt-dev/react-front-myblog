@@ -1,76 +1,102 @@
 // app/src/components/utils/ErrorBoundary.tsx
-import { Component } from "react";
-import type { ReactNode, ErrorInfo } from "react";
+import { ErrorBoundary } from "react-error-boundary";
+import type { ReactNode } from "react";
 
-interface FallbackProps {
+interface ErrorFallbackProps {
   error: Error;
   resetErrorBoundary: () => void;
 }
 
-type FallbackType = ReactNode | ((props: FallbackProps) => ReactNode);
+const ErrorFallback = ({ error, resetErrorBoundary }: ErrorFallbackProps) => {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-red-50 dark:bg-red-900">
+      <div className="max-w-2xl mx-auto p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+        <h1 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-4">
+          エラーが発生しました
+        </h1>
+
+        {/* デバッグモードでのみエラー詳細を表示 */}
+        {import.meta.env.DEV && (
+          <details className="mb-4">
+            <summary className="cursor-pointer text-gray-700 dark:text-gray-300 font-semibold">
+              エラー詳細を表示（開発環境のみ）
+            </summary>
+            <pre className="mt-2 p-4 bg-gray-100 dark:bg-gray-700 rounded text-xs overflow-auto text-gray-800 dark:text-gray-200">
+              <strong>Error:</strong> {error.message}
+              {error.stack && (
+                <>
+                  <br />
+                  <strong>Stack:</strong>
+                  <br />
+                  {error.stack}
+                </>
+              )}
+            </pre>
+          </details>
+        )}
+
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+          >
+            ページを再読み込み
+          </button>
+
+          <button
+            onClick={resetErrorBoundary}
+            className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+          >
+            再試行
+          </button>
+        </div>
+
+        {/* 本番環境では簡潔なメッセージのみ */}
+        {!import.meta.env.DEV && (
+          <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+            問題が継続する場合は、ページを再読み込みしてください。
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
 
 interface Props {
   children: ReactNode;
-  fallback?: FallbackType;
+  fallback?: React.ComponentType<ErrorFallbackProps>;
+  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
 }
 
-interface State {
-  hasError: boolean;
-  error: Error | null;
-}
+export const AppErrorBoundary = ({
+  children,
+  fallback: FallbackComponent = ErrorFallback,
+  onError,
+}: Props) => {
+  return (
+    <ErrorBoundary
+      FallbackComponent={FallbackComponent}
+      onError={(error, errorInfo) => {
+        // 開発環境でのみコンソールログ
+        if (import.meta.env.DEV) {
+          console.error("🚨 ErrorBoundary caught an error:", error);
+          console.error("Component stack:", errorInfo.componentStack);
+        }
 
-export class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = { hasError: false, error: null };
+        // カスタムエラーハンドラーがあれば実行
+        onError?.(error, errorInfo);
+      }}
+      onReset={() => {
+        // 必要に応じてアプリケーション状態をリセット
+        if (import.meta.env.DEV) {
+          console.log("🔄 ErrorBoundary reset");
+        }
+      }}
+    >
+      {children}
+    </ErrorBoundary>
+  );
+};
 
-    this.resetError = this.resetError.bind(this);
-  }
-
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error("ErrorBoundary caught an error:", error);
-    console.error("Error info:", info);
-  }
-
-  resetError() {
-    this.setState({ hasError: false, error: null });
-  }
-
-  render() {
-    if (this.state.hasError) {
-      const { fallback } = this.props;
-      const { error } = this.state;
-
-      if (typeof fallback === "function") {
-        // 関数型fallback
-        return fallback({
-          error: error || new Error("Unknown error"),
-          resetErrorBoundary: this.resetError,
-        });
-      }
-
-      // ReactNode型fallback
-      return (
-        fallback ?? (
-          <div style={{ padding: "2rem", color: "red" }}>
-            <h2>予期せぬエラーが発生しました。</h2>
-            <p>ページを再読み込みするか、しばらくしてからお試しください。</p>
-            <button
-              type="button"
-              style={{ marginTop: "1rem", padding: "0.5rem 1rem" }}
-              onClick={this.resetError}
-            >
-              やり直す
-            </button>
-          </div>
-        )
-      );
-    }
-
-    return this.props.children;
-  }
-}
+// 後方互換性のためのエイリアス
+export const DebugErrorBoundary = AppErrorBoundary;
