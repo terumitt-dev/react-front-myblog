@@ -12,97 +12,81 @@ const PostDetailSkeleton = ({ className }: Props) => {
       role="main"
       className={cn(
         "bg-gray-100 dark:bg-gray-800 w-full rounded-xl overflow-hidden py-8",
-        LAYOUT_PATTERNS.mainContainer,
+        "max-w-4xl mx-auto px-4 sm:px-6 lg:px-8",
         className,
       )}
       aria-label="記事を読み込み中"
     >
-      {/* 2カラムレイアウト */}
-      <div
+      {/* 記事エリアのスケルトン */}
+      <article
         className={cn(
-          "grid",
-          "grid-cols-1 md:grid-cols-3",
-          RESPONSIVE_SPACING.gap,
+          "w-full bg-white dark:bg-gray-700 rounded-xl shadow p-6 space-y-6",
         )}
+        aria-label="記事内容を読み込み中"
       >
-        {/* 記事エリアのスケルトン */}
-        <article
-          className={cn(
-            "w-full bg-white dark:bg-gray-700 rounded-xl shadow p-6 space-y-6",
-            "md:col-span-2",
-          )}
-          aria-label="記事内容を読み込み中"
-        >
-          {/* ヘッダー部分 */}
-          <header className="space-y-4">
-            {/* タイトル */}
-            <Skeleton variant="text" height="2.5rem" width="85%" />
-            {/* カテゴリ */}
+        {/* ヘッダー部分 */}
+        <header className="space-y-4">
+          {/* メタ情報とバックボタン */}
+          <div className="text-center space-y-4">
+            <div className="flex justify-center items-center gap-4">
+              <Skeleton
+                variant="rectangular"
+                height="1.5rem"
+                width="4rem"
+                className="rounded-full"
+              />
+              <Skeleton variant="text" height="1rem" width="6rem" />
+            </div>
             <Skeleton
               variant="rectangular"
               height="2rem"
-              width="25%"
-              className="rounded"
+              width="8rem"
+              className="rounded mx-auto"
             />
-            {/* 区切り線 */}
-            <div className="mt-4 border-t border-gray-300 dark:border-gray-600" />
+          </div>
+        </header>
+
+        {/* 記事本文エリア */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 sm:p-8 space-y-6">
+          {/* タイトル */}
+          <header>
+            <Skeleton variant="text" height="3rem" width="85%" />
           </header>
 
           {/* 記事本文 */}
-          <div className="pt-2">
-            <Skeleton variant="text" lines={12} />
+          <div className="space-y-3">
+            <Skeleton variant="text" lines={8} />
           </div>
-        </article>
+        </div>
 
-        {/* コメント一覧のスケルトン */}
-        <aside
-          className={cn(
-            "w-full bg-white dark:bg-gray-700 rounded-xl shadow p-6 space-y-4",
-          )}
-          aria-label="コメント一覧を読み込み中"
-          role="complementary"
-        >
+        {/* コメントセクション */}
+        <section className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 sm:p-8 space-y-6">
           {/* コメント見出し */}
-          <Skeleton variant="text" height="1.75rem" width="65%" />
+          <Skeleton variant="text" height="2rem" width="8rem" />
 
-          {/* コメントリスト */}
-          <div className="space-y-3" role="list">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <div
-                key={index}
-                className="bg-gray-50 dark:bg-gray-600 p-4 rounded shadow-sm space-y-2"
-                role="listitem"
-              >
-                {/* ユーザー名 */}
-                <Skeleton variant="text" height="1rem" width="35%" />
-                {/* コメント内容 */}
-                <Skeleton variant="text" lines={2} />
-              </div>
-            ))}
+          {/* コメントフォームボタン */}
+          <div className="mb-8">
+            <Skeleton
+              variant="rectangular"
+              height="3rem"
+              width="100%"
+              className="rounded-lg"
+            />
           </div>
-        </aside>
-      </div>
 
-      {/* ボタン列のスケルトン */}
-      <nav
-        className={cn(
-          RESPONSIVE_FLEX.columnToRow,
-          RESPONSIVE_SPACING.gapSmall,
-          "mt-8",
-        )}
-        aria-label="記事関連アクション（読み込み中）"
-      >
-        <Skeleton
-          variant="rectangular"
-          height="3rem"
-          className="w-full sm:basis-[60%] rounded"
-        />
-        <Skeleton
-          variant="rectangular"
-          height="3rem"
-          className="w-full sm:basis-[40%] rounded"
-        />
-      </nav>
+          {/* コメント一覧 */}
+          <div className="space-y-6">
+            <div className="text-center py-8">
+              <Skeleton
+                variant="text"
+                height="1rem"
+                width="20rem"
+                className="mx-auto"
+              />
+            </div>
+          </div>
+        </section>
+      </article>
     </main>
   );
 };

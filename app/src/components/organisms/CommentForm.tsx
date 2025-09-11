@@ -26,10 +26,8 @@ const CommentForm = ({ onSubmit, onCancel, disabled = false }: Props) => {
   };
 
   return (
-    <div
-      className={`flex flex-col gap-3 p-4 rounded ${BACKGROUND_STYLES.cardSecondary} border border-gray-200 dark:border-gray-600`}
-    >
-      <h3 className={`text-lg font-semibold ${TEXT_STYLES.primary} mb-2`}>
+    <div className="flex flex-col gap-3 p-4 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
         コメントを投稿
       </h3>
       <Input
@@ -47,6 +45,7 @@ const CommentForm = ({ onSubmit, onCancel, disabled = false }: Props) => {
         onChange={(e) => setComment(e.target.value)}
         placeholder="コメントを入力"
         disabled={disabled}
+        rows={4}
       />
       <CommentButtons
         onSubmit={handleSubmit}

@@ -1,402 +1,342 @@
 // app/src/pages/PostDetail.tsx
 import Layout from "@/components/layouts/Layout";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import CommentForm from "@/components/organisms/CommentForm";
 import BackToHomeButton from "@/components/molecules/BackToHomeButton";
 import CommentStartButton from "@/components/molecules/CommentStartButton";
 import PostDetailSkeleton from "@/components/molecules/PostDetailSkeleton";
-import LoadingSpinner from "@/components/atoms/LoadingSpinner";
 import {
   displayTextSafe,
   displayTextPlain,
 } from "@/components/utils/sanitizer";
 import { cn } from "@/components/utils/cn";
-
-// Rails Blog モデルに基づく型定義
-type Blog = {
-  id: number;
-  title: string;
-  content: string;
-  category: number;
-  category_name: string;
-  created_at: string;
-  updated_at: string;
-};
-
-type Comment = {
-  id: number;
-  blog_id: number;
-  user_name: string;
-  comment: string;
-  created_at: string;
-  updated_at: string;
-};
+import Container from "@/components/layouts/Container";
+import type { BlogWithCategoryName, Comment } from "@/dummy/types";
 
 const PostDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const postIdRaw = Number(id);
-  const postId = Number.isFinite(postIdRaw) ? postIdRaw : NaN;
-  const isValidId = Number.isFinite(postId) && postId > 0;
+  const postId = id ? parseInt(id, 10) : null;
 
-  // ========== 全てのHooksを最初に配置 ==========
-  const [blog, setBlog] = useState<Blog | null>(null);
+  // 状態管理
+  const [blog, setBlog] = useState<BlogWithCategoryName | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
-  const [isWriting, setIsWriting] = useState(false);
-  const [openCommentIds, setOpenCommentIds] = useState<number[]>([]);
-
-  // ローディング状態
-  const [isLoadingPost, setIsLoadingPost] = useState(true);
-  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isWriting, setIsWriting] = useState(false);
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
+  // APIからデータを読み込み
   useEffect(() => {
-    if (!isValidId) {
-      setIsLoadingPost(false);
-      return;
-    }
-
-    // MSWからブログデータを読み込み
     const loadBlogData = async () => {
-      setIsLoadingPost(true);
-      setError(null);
+      if (!postId) {
+        setError("記事IDが無効です");
+        setIsLoading(false);
+        return;
+      }
 
       try {
-        // ブログ記事取得
+        setIsLoading(true);
+        setError(null);
+
+        console.log("PostDetail: データ読み込み開始, postId:", postId);
+
+        // ブログ詳細を取得
         const blogResponse = await fetch(`/api/blogs/${postId}`);
+        console.log(
+          "PostDetail: ブログレスポンス:",
+          blogResponse.status,
+          blogResponse.statusText,
+        );
+
         if (!blogResponse.ok) {
-          throw new Error(`HTTP error! status: ${blogResponse.status}`);
+          throw new Error(
+            `ブログの取得に失敗しました。Status: ${blogResponse.status}`,
+          );
         }
+
         const blogData = await blogResponse.json();
+        console.log("PostDetail: ブログデータ:", blogData);
         setBlog(blogData.blog);
 
-        // コメント取得
+        // コメントを取得
         const commentsResponse = await fetch(`/api/blogs/${postId}/comments`);
-        if (commentsResponse.ok) {
+        console.log(
+          "PostDetail: コメントレスポンス:",
+          commentsResponse.status,
+          commentsResponse.statusText,
+        );
+
+        if (!commentsResponse.ok) {
+          console.warn("コメントの取得に失敗しましたが、記事は表示します");
+          setComments([]);
+        } else {
           const commentsData = await commentsResponse.json();
-          setComments(commentsData.comments);
+          console.log("PostDetail: コメントデータ:", commentsData);
+          setComments(commentsData.comments || []);
         }
-      } catch (e) {
-        console.error("Failed to load blog data:", e);
-        setError(e instanceof Error ? e.message : "Unknown error");
+      } catch (err) {
+        console.error("PostDetail: データ読み込みエラー:", err);
+        setError(
+          err instanceof Error ? err.message : "データの読み込みに失敗しました",
+        );
         setBlog(null);
         setComments([]);
       } finally {
-        setIsLoadingPost(false);
+        setIsLoading(false);
       }
     };
 
     loadBlogData();
-  }, [isValidId, postId]);
+  }, [postId]);
 
-  // コメント一覧の最適化
-  const processedComments = useMemo(() => {
-    return comments.map((c) => ({
-      ...c,
-      displayContent:
-        c.comment.length > 30 ? `${c.comment.slice(0, 30)}...` : c.comment,
-    }));
-  }, [comments]);
-
-  // ========== 早期リターン：不正なID ==========
-  if (!isValidId) {
-    return (
-      <Layout>
-        <main role="main" aria-labelledby="error-title">
-          <div className="p-6 text-gray-900 dark:text-white">
-            <h1 id="error-title">エラー</h1>
-            <p role="alert">不正な記事IDです。</p>
-          </div>
-        </main>
-      </Layout>
-    );
-  }
-
-  // ========== 早期リターン：ローディング中 ==========
-  if (isLoadingPost) {
-    return (
-      <Layout>
-        <PostDetailSkeleton />
-      </Layout>
-    );
-  }
-
-  // ========== 早期リターン：エラー ==========
-  if (error) {
-    return (
-      <Layout>
-        <main role="main" aria-labelledby="error-title">
-          <div className="p-6 text-gray-900 dark:text-white">
-            <h1 id="error-title">エラー</h1>
-            <p role="alert">記事の読み込みに失敗しました: {error}</p>
-          </div>
-        </main>
-      </Layout>
-    );
-  }
-
-  // ========== 早期リターン：記事が見つからない ==========
-  if (!blog) {
-    return (
-      <Layout>
-        <main role="main" aria-labelledby="not-found-title">
-          <div className="p-6 text-gray-900 dark:text-white">
-            <h1 id="not-found-title">記事が見つかりません</h1>
-            <p role="alert">記事が見つかりませんでした。</p>
-          </div>
-        </main>
-      </Layout>
-    );
-  }
-
-  // ========== イベントハンドラー関数の定義 ==========
-  /* コメント送信 */
-  const handleCommentSubmit = async (user: string, content: string) => {
-    if (!user.trim() || !content.trim()) return;
+  // コメント投稿処理
+  const handleCommentSubmit = async (name: string, content: string) => {
+    if (!postId) return;
 
     setIsSubmittingComment(true);
 
     try {
+      console.log("PostDetail: コメント投稿開始");
+
+      // APIにコメントを投稿
       const response = await fetch(`/api/blogs/${postId}/comments`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          user_name: user,
-          comment: content,
+          user_name: name.trim(),
+          comment: content.trim(),
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(
+          `コメントの投稿に失敗しました。Status: ${response.status}`,
+        );
       }
 
       const result = await response.json();
+      console.log("PostDetail: コメント投稿成功:", result);
 
-      // コメント一覧を再読み込み
-      const commentsResponse = await fetch(`/api/blogs/${postId}/comments`);
-      if (commentsResponse.ok) {
-        const commentsData = await commentsResponse.json();
-        setComments(commentsData.comments);
-      }
-
+      // 新しいコメントを追加
+      const newComment: Comment = result.comment;
+      const updatedComments = [newComment, ...comments];
+      setComments(updatedComments);
       setIsWriting(false);
     } catch (error) {
-      console.error("Failed to submit comment:", error);
-      // エラーハンドリング（トースト通知等）
+      console.error("PostDetail: コメント投稿エラー:", error);
+      alert("コメントの投稿に失敗しました。もう一度お試しください。");
     } finally {
       setIsSubmittingComment(false);
     }
   };
 
-  /* コメントの開閉トグル */
-  const toggleComment = (commentId: number) => {
-    setOpenCommentIds((prev) =>
-      prev.includes(commentId)
-        ? prev.filter((id) => id !== commentId)
-        : [...prev, commentId],
-    );
+  // カテゴリー名の変換
+  const getCategoryDisplayName = (categoryName: string) => {
+    switch (categoryName) {
+      case "hobby":
+        return "しゅみ";
+      case "tech":
+        return "テック";
+      case "other":
+        return "その他";
+      default:
+        return categoryName;
+    }
   };
+
+  // カテゴリーの色クラス
+  const getCategoryColorClass = (categoryName: string) => {
+    switch (categoryName) {
+      case "hobby":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+      case "tech":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
+      case "other":
+        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
+    }
+  };
+
+  console.log(
+    "PostDetail: レンダリング状態 - isLoading:",
+    isLoading,
+    "error:",
+    error,
+    "blog:",
+    !!blog,
+  );
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <Container size="wide" padding="section">
+          <PostDetailSkeleton />
+        </Container>
+      </Layout>
+    );
+  }
+
+  if (error || !blog) {
+    return (
+      <Layout>
+        <Container size="wide" padding="section" className="text-center py-12">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-8">
+            <div className="flex justify-center mb-4">
+              <svg
+                className="h-12 w-12 text-red-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
+              </svg>
+            </div>
+            <h1 className="text-lg font-semibold text-red-800 dark:text-red-300 mb-2">
+              記事が見つかりません
+            </h1>
+            <p className="text-red-600 dark:text-red-400 mb-4">
+              {error || "指定された記事が見つかりませんでした"}
+            </p>
+            <BackToHomeButton />
+          </div>
+        </Container>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
-      <main
-        role="main"
-        aria-labelledby="post-title"
-        className={cn(
-          "bg-gray-100 dark:bg-gray-800 w-full rounded-xl overflow-hidden py-8",
-          LAYOUT_PATTERNS.mainContainer,
-        )}
-      >
-        {/* 2カラム */}
-        <div
-          className={cn(
-            "grid",
-            "grid-cols-1 md:grid-cols-3",
-            RESPONSIVE_SPACING.gap,
-          )}
-        >
-          {/* ===== 記事エリア ===== */}
-          <article
-            className={cn(
-              "w-full bg-white dark:bg-gray-700 rounded-xl shadow p-6 space-y-6",
-              "md:col-span-2",
-            )}
-            aria-labelledby="post-title"
-          >
-            <header>
-              <h1
-                id="post-title"
-                className={cn(
-                  `${RESPONSIVE_TEXT.heading1} font-bold mb-3 break-words text-gray-900 dark:text-white`,
-                )}
-              >
-                <span
-                  dangerouslySetInnerHTML={{
-                    __html: displayTextSafe(blog.title),
-                  }}
-                />
-              </h1>
-              <span
-                className={cn(
-                  "inline-block text-sm font-semibold",
-                  "px-3 py-1 rounded bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200",
-                )}
-                aria-label={`カテゴリー: ${displayTextPlain(blog.category_name)}`}
-              >
-                {displayTextPlain(blog.category_name)}
-              </span>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                <p>
-                  投稿日:{" "}
-                  {new Date(blog.created_at).toLocaleDateString("ja-JP")}
-                </p>
-                {blog.updated_at !== blog.created_at && (
-                  <p>
-                    更新日:{" "}
-                    {new Date(blog.updated_at).toLocaleDateString("ja-JP")}
-                  </p>
-                )}
-              </div>
-              <hr
-                className="mt-4 border-gray-300 dark:border-gray-600"
-                role="separator"
-              />
-            </header>
-            <div
+      <Container size="wide" padding="section" className="space-y-8">
+        {/* メタ情報 */}
+        <div className="text-center space-y-4">
+          <div className="flex justify-center items-center gap-4">
+            <span
               className={cn(
-                "leading-relaxed whitespace-pre-line break-words text-gray-900 dark:text-gray-100",
+                "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium",
+                getCategoryColorClass(blog.category_name),
               )}
+            >
+              {getCategoryDisplayName(blog.category_name)}
+            </span>
+            <time
+              dateTime={blog.created_at}
+              className="text-sm text-gray-500 dark:text-gray-400"
+            >
+              {new Date(blog.created_at).toLocaleDateString("ja-JP", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </time>
+          </div>
+          <BackToHomeButton />
+        </div>
+
+        {/* 記事本文 */}
+        <article className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 sm:p-8 border border-gray-200 dark:border-gray-700">
+          <header className="mb-8">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+              <span
+                dangerouslySetInnerHTML={{
+                  __html: displayTextSafe(blog.title),
+                }}
+              />
+            </h1>
+          </header>
+
+          <div className="prose prose-lg max-w-none dark:prose-invert">
+            <div
               dangerouslySetInnerHTML={{
                 __html: displayTextSafe(blog.content),
               }}
-              role="main"
-              aria-label="記事本文"
             />
-          </article>
+          </div>
+        </article>
 
-          {/* ===== コメント一覧 ===== */}
-          <aside
-            className={cn(
-              "w-full bg-white dark:bg-gray-700 rounded-xl shadow p-6 space-y-4",
-            )}
-            aria-labelledby="comments-heading"
-            role="complementary"
-          >
-            <h2
-              id="comments-heading"
-              className={`${RESPONSIVE_TEXT.heading2} font-semibold text-gray-900 dark:text-white`}
-            >
-              コメント一覧 ({comments.length})
+        {/* コメントセクション */}
+        <section className="space-y-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 sm:p-8 border border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-6">
+              コメント ({comments.length})
             </h2>
 
-            {comments.length === 0 ? (
-              <p
-                className="text-gray-600 dark:text-gray-400"
-                role="status"
-                aria-live="polite"
-              >
-                コメントはまだありません。
-              </p>
+            {/* コメント投稿フォーム */}
+            {isWriting ? (
+              <CommentForm
+                onSubmit={handleCommentSubmit}
+                onCancel={() => setIsWriting(false)}
+              />
             ) : (
-              <ul
-                className="space-y-3"
-                role="list"
-                aria-label={`${comments.length}件のコメント`}
-              >
-                {processedComments.map((c) => {
-                  const isOpen = openCommentIds.includes(c.id);
-                  return (
-                    <li key={c.id} role="listitem">
-                      <button
-                        type="button"
-                        onClick={() => toggleComment(c.id)}
-                        className={cn(
-                          "cursor-pointer p-4 rounded shadow-sm text-sm w-full text-left",
-                          "bg-gray-50 dark:bg-gray-600 hover:bg-gray-100 dark:hover:bg-gray-500",
-                          "transition break-words focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1",
-                        )}
-                        aria-expanded={isOpen}
-                        aria-label={`${displayTextPlain(c.user_name)}さんのコメント${isOpen ? "（展開中）" : "（クリックで展開）"}`}
-                      >
-                        <p className="font-semibold text-gray-900 dark:text-white">
-                          {displayTextPlain(c.user_name)}
-                        </p>
-                        <p className="text-gray-700 dark:text-gray-300 mt-1">
-                          {isOpen
-                            ? displayTextPlain(c.comment)
-                            : displayTextPlain(c.displayContent)}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          {new Date(c.created_at).toLocaleDateString("ja-JP")}
-                        </p>
-                        {!isOpen && c.comment.length > 30 && (
-                          <span className="sr-only">
-                            続きを読むにはクリックしてください
-                          </span>
-                        )}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </aside>
-        </div>
-
-        {/* ===== ボタン列 ===== */}
-        <nav
-          className={cn(
-            RESPONSIVE_FLEX.columnToRow,
-            RESPONSIVE_SPACING.gapSmall,
-            "mt-8",
-          )}
-          aria-label="記事関連アクション"
-        >
-          <CommentStartButton
-            onClick={() => setIsWriting(true)}
-            className="w-full sm:basis-[60%]"
-            aria-expanded={isWriting}
-            aria-controls={isWriting ? "comment-form" : undefined}
-            disabled={isSubmittingComment}
-          />
-          <BackToHomeButton className="w-full sm:basis-[40%]" />
-        </nav>
-
-        {/* ===== コメントフォーム ===== */}
-        {isWriting && (
-          <section
-            id="comment-form"
-            className={cn(
-              "mt-3 bg-white dark:bg-gray-700 p-3 rounded-xl shadow",
-              isSubmittingComment && "opacity-50 pointer-events-none",
-            )}
-            aria-labelledby="comment-form-heading"
-            role="region"
-          >
-            <h3 id="comment-form-heading" className="sr-only">
-              新しいコメントを投稿
-            </h3>
-
-            {/* コメント送信中のローディング表示 */}
-            {isSubmittingComment && (
-              <div className="flex items-center justify-center p-4 mb-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <LoadingSpinner size="sm" className="mr-2" />
-                <span className="text-blue-700 dark:text-blue-300 text-sm">
-                  コメントを送信中...
-                </span>
+              <div className="mb-8 flex flex-col sm:flex-row gap-4">
+                <CommentStartButton
+                  onClick={() => setIsWriting(true)}
+                  className="w-full sm:basis-[60%]"
+                  aria-expanded={isWriting}
+                  aria-controls={isWriting ? "comment-form" : undefined}
+                  disabled={isSubmittingComment}
+                />
               </div>
             )}
 
-            <CommentForm
-              onSubmit={handleCommentSubmit}
-              onCancel={() => setIsWriting(false)}
-              disabled={isSubmittingComment}
-            />
-          </section>
-        )}
-      </main>
+            {/* コメント一覧 */}
+            <div className="space-y-6">
+              {comments.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500 dark:text-gray-400">
+                    まだコメントがありません。最初のコメントを投稿してみませんか？
+                  </p>
+                </div>
+              ) : (
+                comments.map((comment) => (
+                  <div
+                    key={comment.id}
+                    className="border-b border-gray-200 dark:border-gray-600 pb-6 last:border-b-0"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <h4 className="font-medium text-gray-900 dark:text-white">
+                        <span
+                          dangerouslySetInnerHTML={{
+                            __html: displayTextPlain(comment.user_name),
+                          }}
+                        />
+                      </h4>
+                      <time
+                        dateTime={comment.created_at}
+                        className="text-sm text-gray-500 dark:text-gray-400"
+                      >
+                        {new Date(comment.created_at).toLocaleDateString(
+                          "ja-JP",
+                          {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          },
+                        )}
+                      </time>
+                    </div>
+                    <div className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                      <span
+                        dangerouslySetInnerHTML={{
+                          __html: displayTextPlain(comment.comment),
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </section>
+      </Container>
     </Layout>
   );
 };
