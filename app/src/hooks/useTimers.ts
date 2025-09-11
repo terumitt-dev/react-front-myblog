@@ -1,79 +1,67 @@
-// app/src/hooks/useTimers.ts
-import { useRef, useEffect, useCallback } from "react";
+// app/src/hooks/useTheme.ts（別解）
+import { useState, useEffect } from "react";
 
-/**
- * タイマーとインターバルを管理するシンプルなフック
- * コンポーネントのライフサイクルに合わせて自動的にクリーンアップを行います
- */
-export function useTimers() {
-  // コンポーネント固有のタイマーIDを保持する
-  const timeoutIdsRef = useRef<number[]>([]);
-  const intervalIdsRef = useRef<number[]>([]);
+type Theme = "light" | "dark";
 
-  /**
-   * タイムアウトを設定し、IDを自動的に管理する
-   * @param callback 実行する関数
-   * @param delay 遅延時間（ミリ秒）
-   * @returns タイムアウトID
-   */
-  const setTimeout = useCallback((callback: () => void, delay: number) => {
-    const id = window.setTimeout(() => {
-      // 実行後、自動的にIDリストから削除
-      callback();
-      timeoutIdsRef.current = timeoutIdsRef.current.filter((tid) => tid !== id);
-    }, delay);
+export const useThemeManager = () => {
+  const [theme, setTheme] = useState<Theme>("light");
+  const [isHydrated, setIsHydrated] = useState(false);
 
-    timeoutIdsRef.current.push(id);
-    return id;
-  }, []);
-
-  /**
-   * タイムアウトをクリアする
-   * @param id タイムアウトID
-   */
-  const clearMyTimeout = useCallback((id: number) => {
-    window.clearTimeout(id);
-    timeoutIdsRef.current = timeoutIdsRef.current.filter((tid) => tid !== id);
-  }, []);
-
-  /**
-   * インターバルを設定し、IDを自動的に管理する
-   * @param callback 実行する関数
-   * @param delay 間隔（ミリ秒）
-   * @returns インターバルID
-   */
-  const setInterval = useCallback((callback: () => void, delay: number) => {
-    const id = window.setInterval(callback, delay);
-    intervalIdsRef.current.push(id);
-    return id;
-  }, []);
-
-  /**
-   * インターバルをクリアする
-   * @param id インターバルID
-   */
-  const clearInterval = useCallback((id: number) => {
-    window.clearInterval(id);
-    intervalIdsRef.current = intervalIdsRef.current.filter((iid) => iid !== id);
-  }, []);
-
-  // コンポーネントのアンマウント時にすべてのタイマーをクリーンアップ
+  // 初期化
   useEffect(() => {
-    return () => {
-      // すべてのタイムアウトをクリア
-      timeoutIdsRef.current.forEach((id) => window.clearTimeout(id));
-      // すべてのインターバルをクリア
-      intervalIdsRef.current.forEach((id) => window.clearInterval(id));
-      // 参照を空にする
-      timeoutIdsRef.current = [];
-      intervalIdsRef.current = [];
-    };
+    try {
+      const savedTheme = localStorage.getItem("theme") as Theme | null;
+      const systemPrefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)",
+      ).matches;
+
+      const initialTheme = savedTheme || (systemPrefersDark ? "dark" : "light");
+      setTheme(initialTheme);
+
+      // documentElementのクラスを更新（React管理下で実行）
+      updateDocumentClass(initialTheme);
+    } catch (error) {
+      console.warn("Theme initialization failed:", error);
+      setTheme("light");
+      updateDocumentClass("light");
+    } finally {
+      setIsHydrated(true);
+    }
   }, []);
+
+  // テーマ変更時にdocumentElementも更新
+  useEffect(() => {
+    if (isHydrated) {
+      updateDocumentClass(theme);
+
+      try {
+        localStorage.setItem("theme", theme);
+      } catch (error) {
+        console.warn("Failed to save theme:", error);
+      }
+    }
+  }, [theme, isHydrated]);
+
+  // DOM操作を一箇所に集約
+  const updateDocumentClass = (newTheme: Theme) => {
+    if (typeof document === "undefined") return; // SSR対応
+
+    const { documentElement } = document;
+
+    if (newTheme === "dark") {
+      documentElement.classList.add("dark");
+    } else {
+      documentElement.classList.remove("dark");
+    }
+  };
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+  };
 
   return {
-    setTimeout,
-    clearMyTimeout,
-    setInterval,
-    clearInterval,
+    theme,
+    toggleTheme,
+    isHydrated,
   };
-}
+};
