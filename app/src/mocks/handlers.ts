@@ -365,6 +365,20 @@ export const handlers = [
     const id = parseInt(params.id as string, 10);
     console.log("🗑️ MSW Handler: Admin blog deletion", { id });
 
+    // 実際にblogs配列から削除
+    const blogIndex = blogs.findIndex((blog: Blog) => blog.id === id);
+    if (blogIndex === -1) {
+      console.log("❌ MSW Handler: Blog not found", { id });
+      return HttpResponse.json(
+        { message: "投稿が見つかりません" },
+        { status: 404 },
+      );
+    }
+
+    // blogs配列から削除
+    const deletedBlog = blogs.splice(blogIndex, 1)[0];
+    console.log("✅ MSW Handler: Blog deleted from array", deletedBlog);
+
     return HttpResponse.json(
       {
         message: "投稿が削除されました",

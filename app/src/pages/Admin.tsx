@@ -13,7 +13,7 @@ import {
 } from "@/components/utils/sanitizer";
 import { cn } from "@/components/utils/cn";
 import { useAuthenticatedApi } from "@/api/client";
-import type { BlogWithCategoryName } from "@/dummy/types";
+import type { BlogWithCategoryName, Blog } from "@/dummy/types";
 
 // ========== localStorage削除：型定義の更新 ==========
 type BlogPost = {
@@ -221,22 +221,23 @@ const Admin = () => {
 
         console.log("✅ Admin: 投稿作成成功:", response.data);
 
-        // レスポンスが期待通りでない場合は、フロントエンド側のデータを使用
-        // 本来は開発環境でAPIを確認し、適切な型定義を追加するべき
+        // APIレスポンスの正しいBlogオブジェクトを使用
+        const createdBlog = response.data as Blog;
+
         const newPost: BlogPost = {
-          // 開発環境では仮IDを使用、本番では適切なAPIレスポンスを期待
-          id: Date.now(),
-          title: sanitizedTitle,
-          content: sanitizedContent,
-          category: sanitizedCategory,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          // APIが返す正しいIDを使用
+          id: createdBlog.id,
+          title: createdBlog.title,
+          content: createdBlog.content,
+          category: createdBlog.category,
+          created_at: createdBlog.created_at,
+          updated_at: createdBlog.updated_at,
           // サニタイズ済みの安全な表示値を生成
-          safeTitle: displayTextPlain(sanitizedTitle),
+          safeTitle: displayTextPlain(createdBlog.title),
           safeCategory: getCategoryDisplayName(
-            getCategoryName(sanitizedCategory),
+            getCategoryName(createdBlog.category),
           ),
-          safeDisplayContent: displayTextSafe(sanitizedContent),
+          safeDisplayContent: displayTextSafe(createdBlog.content),
         };
 
         setPosts((prevPosts) => [newPost, ...prevPosts]);
@@ -542,9 +543,16 @@ const Admin = () => {
                     <div className="text-gray-600 dark:text-gray-300 text-sm line-clamp-3 mb-4">
                       <span
                         dangerouslySetInnerHTML={{
-                          __html:
-                            post.safeDisplayContent?.slice(0, 100) + "..." ||
-                            displayTextSafe(post.content).slice(0, 100) + "...",
+                          __html: (() => {
+                            // 1. サニタイズ → 2. トリミング → 3. HTML構築の順序で一貫処理
+                            const safeContent =
+                              post.safeDisplayContent ||
+                              displayTextSafe(post.content);
+                            return (
+                              safeContent.slice(0, 100) +
+                              (safeContent.length > 100 ? "..." : "")
+                            );
+                          })(),
                         }}
                       />
                     </div>
