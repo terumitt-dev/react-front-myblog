@@ -4,4 +4,3 @@ export type * from "./types";
 export * from "./types";
 export * from "./blogs";
 export * from "./comments";
-export * from "./admins";
