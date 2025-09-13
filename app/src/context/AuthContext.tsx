@@ -1,5 +1,5 @@
 // app/src/context/AuthContext.tsx
-import { createContext, useState, useEffect, useCallback } from "react";
+import { createContext, useState, useCallback } from "react";
 
 // ⚠️ 重要：本番環境では絶対に使用しないでください
 // この実装は開発環境専用の簡易認証システムです
@@ -15,6 +15,8 @@ type LoginResult = {
 
 type AuthContextType = {
   isLoggedIn: boolean;
+  token: string | null;
+  getAuthToken: () => string | null;
   login: (email: string, password: string) => Promise<LoginResult>;
   logout: () => void;
   isDevelopmentMode: boolean;
@@ -40,44 +42,11 @@ const isDevelopmentEnvironment = (): boolean => {
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
   const isDevelopmentMode = isDevelopmentEnvironment();
 
-  // 開発環境チェック（初期化時）
-  useEffect(() => {
-    if (!isDevelopmentMode) {
-      console.warn("🚫 認証システムは開発環境でのみ利用可能です");
-      return;
-    }
-
-    // セッション確認（開発環境のみ）
-    const checkAuthStatus = async () => {
-      try {
-        const token = localStorage.getItem("auth_token");
-
-        const response = await fetch("/api/auth/me", {
-          headers: token
-            ? {
-                Authorization: `Bearer ${token}`,
-              }
-            : {},
-        });
-
-        if (response.ok) {
-          setIsLoggedIn(true);
-        } else {
-          // トークンが無効な場合はクリアする
-          localStorage.removeItem("auth_token");
-          localStorage.removeItem("admin_data");
-          setIsLoggedIn(false);
-        }
-      } catch (error) {
-        console.log("認証状態の確認に失敗（開発環境）:", error);
-        setIsLoggedIn(false);
-      }
-    };
-
-    checkAuthStatus();
-  }, [isDevelopmentMode]);
+  // トークン取得関数
+  const getAuthToken = useCallback(() => token, [token]);
 
   const login = useCallback(
     async (email: string, password: string): Promise<LoginResult> => {
@@ -93,7 +62,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       try {
-        // モックAPI経由での認証（環境変数を使用しない）
+        // モックAPI経由での認証
         const response = await fetch("/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -107,14 +76,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         const data = await response.json();
 
-        // MSWハンドラーのレスポンス形式に合わせて修正
+        // MSWハンドラーのレスポンス形式に合わせて処理
         if (data.token && data.admin) {
           setIsLoggedIn(true);
-          console.log("✅ 開発環境: ログイン成功");
-
-          // トークンをローカルストレージに保存（開発環境のみ）
-          localStorage.setItem("auth_token", data.token);
-          localStorage.setItem("admin_data", JSON.stringify(data.admin));
+          setToken(data.token);
+          console.log("✅ 開発環境: ログイン成功（メモリ管理）");
 
           return { success: true };
         } else {
@@ -135,28 +101,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     try {
-      const token = localStorage.getItem("auth_token");
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        headers: token
-          ? {
-              Authorization: `Bearer ${token}`,
-            }
-          : {},
-      });
+      // ログアウトAPI呼び出し（トークン付き）
+      if (token) {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      }
     } finally {
-      // ローカルストレージをクリア
-      localStorage.removeItem("auth_token");
-      localStorage.removeItem("admin_data");
+      // メモリから全てクリア
       setIsLoggedIn(false);
-      console.log("🚪 開発環境: ログアウト完了");
+      setToken(null);
+      console.log("🚪 開発環境: ログアウト完了（メモリクリア）");
     }
-  }, [isDevelopmentMode]);
+  }, [isDevelopmentMode, token]);
 
   return (
     <AuthContext.Provider
       value={{
         isLoggedIn: isDevelopmentMode ? isLoggedIn : false,
+        token,
+        getAuthToken,
         login,
         logout,
         isDevelopmentMode,
