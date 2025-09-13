@@ -250,7 +250,7 @@ const Category = () => {
             >
               <img
                 src="/patterns/spider.svg"
-                alt="蜘蛛"
+                alt=""
                 className="w-full h-full object-contain"
               />
             </span>
@@ -277,7 +277,7 @@ const Category = () => {
           >
             <img
               src="/patterns/bubbles.svg"
-              alt="泡"
+              alt=""
               className="w-full h-full object-contain"
             />
           </div>
@@ -321,7 +321,7 @@ const Category = () => {
           >
             <img
               src="/patterns/snail.svg"
-              alt="カタツムリ"
+              alt=""
               className="w-full h-full object-contain"
             />
           </div>

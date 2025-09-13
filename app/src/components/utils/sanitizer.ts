@@ -11,6 +11,38 @@ export const displayTextPlain = (text: string): string => {
       ALLOWED_TAGS: [],
       ALLOWED_ATTR: [],
       KEEP_CONTENT: true,
+      // セキュリティ強化オプション
+      SANITIZE_DOM: true,
+      SANITIZE_NAMED_PROPS: true,
+      FORBID_CONTENTS: ["script", "style", "svg", "math"],
+      FORBID_TAGS: [
+        "script",
+        "object",
+        "embed",
+        "base",
+        "link",
+        "meta",
+        "style",
+        "svg",
+        "math",
+      ],
+      FORBID_ATTR: [
+        "onerror",
+        "onload",
+        "onclick",
+        "onmouseover",
+        "onmouseout",
+        "onfocus",
+        "onblur",
+        "onchange",
+        "onsubmit",
+        "onkeydown",
+        "onkeyup",
+        "onkeypress",
+        "style",
+        "class",
+        "id",
+      ],
     });
 
     // ブラウザのDOMを使ってHTMLエンティティをデコード
@@ -19,9 +51,14 @@ export const displayTextPlain = (text: string): string => {
     return tempDiv.textContent || tempDiv.innerText || "";
   } catch (error) {
     console.error("Plain text conversion error:", error);
-    // フォールバック：正規表現でHTMLタグとエンティティを処理
+    // セキュアなフォールバック
     return String(text)
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
       .replace(/<[^>]*>/g, "")
+      .replace(/javascript:/gi, "")
+      .replace(/data:/gi, "")
+      .replace(/vbscript:/gi, "")
+      .replace(/on\w+\s*=/gi, "")
       .replace(/&lt;/g, "<")
       .replace(/&gt;/g, ">")
       .replace(/&amp;/g, "&")
@@ -57,13 +94,17 @@ export const displayTextSafe = (text: string): string => {
         "ul",
         "ol",
         "li",
+        "hr",
+        "small",
+        "sup",
+        "sub",
       ],
       ALLOWED_ATTR: [],
       KEEP_CONTENT: true,
       // セキュリティ強化オプション
       SANITIZE_DOM: true,
       SANITIZE_NAMED_PROPS: true,
-      FORBID_CONTENTS: ["script", "style"],
+      FORBID_CONTENTS: ["script", "style", "svg", "math"],
       FORBID_TAGS: [
         "script",
         "object",
@@ -72,8 +113,46 @@ export const displayTextSafe = (text: string): string => {
         "link",
         "meta",
         "style",
+        "svg",
+        "math",
+        "iframe",
+        "form",
+        "input",
+        "button",
+        "select",
+        "textarea",
+        "option",
       ],
-      FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover"],
+      FORBID_ATTR: [
+        "onerror",
+        "onload",
+        "onclick",
+        "onmouseover",
+        "onmouseout",
+        "onfocus",
+        "onblur",
+        "onchange",
+        "onsubmit",
+        "onkeydown",
+        "onkeyup",
+        "onkeypress",
+        "style",
+        "class",
+        "id",
+        "src",
+        "href",
+        "action",
+        "formaction",
+        "background",
+        "dynsrc",
+        "lowsrc",
+        "ping",
+        "poster",
+        "xlink:href",
+      ],
+      // 危険なプロトコルを禁止
+      ALLOWED_URI_REGEXP:
+        /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/i,
     });
   } catch (error) {
     console.error("Safe display error:", error);
@@ -92,16 +171,49 @@ export const sanitizeInput = (input: string): string => {
       ALLOWED_TAGS: [],
       ALLOWED_ATTR: [],
       KEEP_CONTENT: true,
+      SANITIZE_DOM: true,
+      SANITIZE_NAMED_PROPS: true,
+      FORBID_CONTENTS: ["script", "style", "svg", "math"],
+      FORBID_TAGS: [
+        "script",
+        "object",
+        "embed",
+        "base",
+        "link",
+        "meta",
+        "style",
+        "svg",
+        "math",
+      ],
+      FORBID_ATTR: [
+        "onerror",
+        "onload",
+        "onclick",
+        "onmouseover",
+        "onmouseout",
+        "onfocus",
+        "onblur",
+        "onchange",
+        "onsubmit",
+        "onkeydown",
+        "onkeyup",
+        "onkeypress",
+        "style",
+        "class",
+        "id",
+      ],
     });
 
     return sanitized.trim();
   } catch (error) {
     console.error("Input sanitization error:", error);
-    // フォールバック処理
+    // セキュアなフォールバック処理
     return String(input)
       .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
       .replace(/<[^>]*>/g, "")
       .replace(/javascript:/gi, "")
+      .replace(/data:/gi, "")
+      .replace(/vbscript:/gi, "")
       .replace(/on\w+\s*=/gi, "")
       .replace(/&lt;/g, "<")
       .replace(/&gt;/g, ">")
