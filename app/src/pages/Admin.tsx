@@ -550,7 +550,7 @@ const Admin = () => {
                     {/* アクションボタン */}
                     <div className="flex gap-2">
                       <Link
-                        to={`/post/${post.id}`}
+                        to={`/posts/${post.id}`}
                         className="px-3 py-1.5 text-xs bg-blue-100 text-blue-800 rounded hover:bg-blue-200 transition-colors"
                       >
                         表示

@@ -112,8 +112,8 @@ const PostDetail = () => {
       const result = await response.json();
       console.log("✅ コメント投稿成功:", result);
 
-      // 楽観的更新
-      const newComment: Comment = result.comment;
+      // 楽観的更新 - MSWハンドラは新規コメントオブジェクト自体を返す
+      const newComment: Comment = result;
       setComments((prevComments) => [newComment, ...prevComments]);
       setIsWriting(false);
     } catch (error) {
