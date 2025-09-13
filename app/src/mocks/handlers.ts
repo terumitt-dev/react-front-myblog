@@ -2,7 +2,7 @@
 import { http, HttpResponse } from "msw";
 import { blogs, comments } from "../dummy";
 import { CATEGORY_NAMES } from "../dummy/types";
-import type { Admin, AuthResponse } from "../dummy/types";
+import type { Admin, AuthResponse, BlogCategory } from "../dummy/types";
 
 // APIのベースURL
 const API_BASE = "/api";
@@ -382,13 +382,19 @@ export const handlers = [
     if (authError) return authError;
 
     try {
-      const body = await request.json();
+      const body = (await request.json()) as {
+        title: string;
+        content: string;
+        category: BlogCategory;
+      };
       console.log("📝 MSW Handler: Admin blog creation", body);
 
       // 実際のblogsに追加（開発環境でのみ有効）
       const newBlog = {
         id: Math.max(...blogs.map((b) => b.id), 0) + 1,
-        ...body,
+        title: body.title,
+        content: body.content,
+        category: body.category,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
