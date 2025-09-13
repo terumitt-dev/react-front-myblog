@@ -10,7 +10,7 @@ import ArticleSkeleton from "@/components/molecules/ArticleSkeleton";
 import { useStaticEffects } from "@/hooks/useStaticEffects";
 import {
   displayTextPlain,
-  displayTextSafe,
+  createSafePreview,
 } from "@/components/utils/sanitizer";
 import type { BlogWithCategoryName, BlogCategory } from "@/dummy/types";
 import "./Category.css";
@@ -474,13 +474,9 @@ const Category = () => {
                   <div className="text-gray-700 dark:text-gray-300 line-clamp-3 mb-4">
                     <span
                       dangerouslySetInnerHTML={{
-                        __html: displayTextSafe(
-                          post.content.length > TEXT_LIMITS.PREVIEW_LENGTH
-                            ? post.content.substring(
-                                0,
-                                TEXT_LIMITS.PREVIEW_LENGTH,
-                              ) + "..."
-                            : post.content,
+                        __html: createSafePreview(
+                          post.content,
+                          TEXT_LIMITS.PREVIEW_LENGTH,
                         ),
                       }}
                     />

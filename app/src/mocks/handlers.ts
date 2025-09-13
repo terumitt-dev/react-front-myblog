@@ -5,11 +5,11 @@ import type { BlogCategory, Blog, Comment } from "@/dummy";
 
 const API_BASE = "/api";
 
-// カテゴリ名マッピング
+// カテゴリ名マッピング（フロントエンドの期待値に合わせる）
 const CATEGORY_NAMES: Record<number, string> = {
-  0: "Hobby",
-  1: "Tech",
-  2: "Other",
+  0: "hobby",
+  1: "tech",
+  2: "other",
 };
 
 // 認証チェック関数

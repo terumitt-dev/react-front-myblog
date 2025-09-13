@@ -177,11 +177,27 @@ const Admin = () => {
 
     try {
       if (editingPostId) {
-        // 編集処理（将来の実装用）
-        console.log("📝 Admin: 投稿更新 (未実装)", {
-          id: editingPostId,
+        // 編集処理の実装
+        const updateData = {
           title: sanitizedTitle,
+          content: sanitizedContent,
+          category: sanitizedCategory,
+        };
+
+        console.log("📝 Admin: 投稿更新中...", {
+          id: editingPostId,
+          ...updateData,
         });
+
+        // 認証付きAPIクライアントで更新
+        const response = await blogsApi.update(editingPostId, updateData);
+
+        if (response.error) {
+          throw new Error(response.error);
+        }
+
+        const updatedBlog = response.data as any;
+        console.log("✅ Admin: 投稿更新成功:", updatedBlog);
 
         // フロントエンドの状態を更新
         setPosts((prevPosts) =>
@@ -189,15 +205,20 @@ const Admin = () => {
             post.id === editingPostId
               ? {
                   ...post,
-                  title: sanitizedTitle,
-                  content: sanitizedContent,
-                  category: sanitizedCategory,
-                  updated_at: new Date().toISOString(),
-                  safeTitle: displayTextPlain(sanitizedTitle),
-                  safeCategory: getCategoryDisplayName(
-                    getCategoryName(sanitizedCategory),
+                  title: updatedBlog.title || sanitizedTitle,
+                  content: updatedBlog.content || sanitizedContent,
+                  category: updatedBlog.category || sanitizedCategory,
+                  updated_at:
+                    updatedBlog.updated_at || new Date().toISOString(),
+                  safeTitle: displayTextPlain(
+                    updatedBlog.title || sanitizedTitle,
                   ),
-                  safeDisplayContent: displayTextSafe(sanitizedContent),
+                  safeCategory: getCategoryDisplayName(
+                    getCategoryName(updatedBlog.category || sanitizedCategory),
+                  ),
+                  safeDisplayContent: displayTextSafe(
+                    updatedBlog.content || sanitizedContent,
+                  ),
                 }
               : post,
           ),

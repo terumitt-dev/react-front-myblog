@@ -222,6 +222,63 @@ export const sanitizeInput = (input: string): string => {
   }
 };
 
+// 安全なプレビュー生成（HTML化前にテキストをトリミング）
+export const createSafePreview = (
+  text: string,
+  maxLength: number = 100,
+): string => {
+  if (!text) return "";
+
+  try {
+    // 1. まずプレーンテキスト化
+    const plainText = displayTextPlain(text);
+
+    // 2. 指定文字数でトリミング
+    const trimmedText =
+      plainText.length > maxLength
+        ? plainText.substring(0, maxLength).trim() + "..."
+        : plainText;
+
+    // 3. トリミング後にHTML化（安全）
+    return displayTextSafe(trimmedText);
+  } catch (error) {
+    console.error("Safe preview generation error:", error);
+    // フォールバック: プレーンテキストのみ
+    const plainText = String(text).replace(/<[^>]*>/g, "");
+    return plainText.length > maxLength
+      ? plainText.substring(0, maxLength).trim() + "..."
+      : plainText;
+  }
+};
+
+// HTML化後の安全なトリミング（既存HTMLを壊さない）
+export const createSafeHtmlPreview = (
+  htmlText: string,
+  maxLength: number = 100,
+): string => {
+  if (!htmlText) return "";
+
+  try {
+    // 1. HTMLをサニタイズ
+    const safeHtml = displayTextSafe(htmlText);
+
+    // 2. HTMLをDOMパースしてテキスト長を確認
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = safeHtml;
+    const textContent = tempDiv.textContent || tempDiv.innerText || "";
+
+    // 3. テキストが長すぎる場合は元のHTMLではなくプレーンテキストでプレビュー
+    if (textContent.length > maxLength) {
+      return createSafePreview(textContent, maxLength);
+    }
+
+    return safeHtml;
+  } catch (error) {
+    console.error("Safe HTML preview generation error:", error);
+    return createSafePreview(htmlText, maxLength);
+  }
+};
+
 // バリデーション関数（互換性維持）
 export const validateAndSanitize = (
   input: string,
