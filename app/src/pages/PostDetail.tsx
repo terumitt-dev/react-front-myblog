@@ -3,13 +3,11 @@ import Layout from "@/components/layouts/Layout";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import CommentForm from "@/components/organisms/CommentForm";
+import CommentList from "@/components/organisms/CommentList";
 import BackToHomeButton from "@/components/molecules/BackToHomeButton";
 import CommentStartButton from "@/components/molecules/CommentStartButton";
 import PostDetailSkeleton from "@/components/molecules/PostDetailSkeleton";
-import {
-  displayTextSafe,
-  displayTextPlain,
-} from "@/components/utils/sanitizer";
+import { displayTextSafe } from "@/components/utils/sanitizer";
 import { cn } from "@/components/utils/cn";
 import Container from "@/components/layouts/Container";
 import type { BlogWithCategoryName, Comment } from "@/dummy/types";
@@ -18,7 +16,7 @@ const PostDetail = () => {
   const { id } = useParams<{ id: string }>();
   const postId = id ? parseInt(id, 10) : null;
 
-  // ========== localStorage削除：純粋な状態管理のみ ==========
+  // 状態管理（コンポーネント化により大幅簡素化）
   const [blog, setBlog] = useState<BlogWithCategoryName | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,7 +24,7 @@ const PostDetail = () => {
   const [isWriting, setIsWriting] = useState(false);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
-  // 既存のダミーデータからAPIで読み込み
+  // データ読み込み
   useEffect(() => {
     const loadBlogData = async () => {
       if (!postId) {
@@ -44,7 +42,7 @@ const PostDetail = () => {
           postId,
         );
 
-        // 既存のMSW APIからブログ詳細を取得
+        // ブログ詳細を取得
         const blogResponse = await fetch(`/api/blogs/${postId}`);
         if (!blogResponse.ok) {
           throw new Error(
@@ -56,7 +54,7 @@ const PostDetail = () => {
         setBlog(blogData.blog);
         console.log("✅ ブログデータ取得成功:", blogData.blog.title);
 
-        // 既存のMSW APIからコメントを取得
+        // コメントを取得
         const commentsResponse = await fetch(`/api/blogs/${postId}/comments`);
         if (!commentsResponse.ok) {
           console.warn("コメントの取得に失敗しましたが、記事は表示します");
@@ -85,7 +83,7 @@ const PostDetail = () => {
     loadBlogData();
   }, [postId]);
 
-  // コメント投稿処理（MSWのダミーデータに追加、リロードで初期化）
+  // コメント投稿処理
   const handleCommentSubmit = async (name: string, content: string) => {
     if (!postId) return;
 
@@ -94,7 +92,6 @@ const PostDetail = () => {
     try {
       console.log("💬 コメント投稿開始:", { name, content });
 
-      // MSW APIにPOST（handlers.tsで既存のcommentsダミーデータに追加）
       const response = await fetch(`/api/blogs/${postId}/comments`, {
         method: "POST",
         headers: {
@@ -115,7 +112,7 @@ const PostDetail = () => {
       const result = await response.json();
       console.log("✅ コメント投稿成功:", result);
 
-      // フロントエンドの状態を即座に更新（楽観的更新）
+      // 楽観的更新
       const newComment: Comment = result.comment;
       setComments((prevComments) => [newComment, ...prevComments]);
       setIsWriting(false);
@@ -226,107 +223,60 @@ const PostDetail = () => {
           <BackToHomeButton />
         </div>
 
-        {/* 記事本文 */}
-        <article className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 sm:p-8 border border-gray-200 dark:border-gray-700">
-          <header className="mb-8">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              <span
-                dangerouslySetInnerHTML={{
-                  __html: displayTextSafe(blog.title),
-                }}
-              />
-            </h1>
-          </header>
+        {/* メインコンテンツ - 2カラムレイアウト */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* 左カラム - 記事本文とコメントフォーム */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* 記事本文 */}
+            <article className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 sm:p-8 border border-gray-200 dark:border-gray-700">
+              <header className="mb-8">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                  <span
+                    dangerouslySetInnerHTML={{
+                      __html: displayTextSafe(blog.title),
+                    }}
+                  />
+                </h1>
+              </header>
 
-          <div className="prose prose-lg max-w-none dark:prose-invert">
-            <div
-              dangerouslySetInnerHTML={{
-                __html: displayTextSafe(blog.content),
-              }}
-            />
-          </div>
-        </article>
+              <div className="prose prose-lg max-w-none dark:prose-invert">
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: displayTextSafe(blog.content),
+                  }}
+                />
+              </div>
+            </article>
 
-        {/* コメントセクション */}
-        <section className="space-y-6">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 sm:p-8 border border-gray-200 dark:border-gray-700">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-6">
-              コメント ({comments.length})
-              {import.meta.env.DEV && (
-                <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
-                  ※開発環境：ページリロードで初期化されます
-                </span>
-              )}
-            </h2>
+            {/* コメントフォーム */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 sm:p-8 border border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
+                コメントを投稿
+              </h2>
 
-            {/* コメント投稿フォーム */}
-            {isWriting ? (
-              <CommentForm
-                onSubmit={handleCommentSubmit}
-                onCancel={() => setIsWriting(false)}
-                disabled={isSubmittingComment}
-              />
-            ) : (
-              <div className="mb-8 flex flex-col sm:flex-row gap-4">
+              {isWriting ? (
+                <CommentForm
+                  onSubmit={handleCommentSubmit}
+                  onCancel={() => setIsWriting(false)}
+                  disabled={isSubmittingComment}
+                />
+              ) : (
                 <CommentStartButton
                   onClick={() => setIsWriting(true)}
-                  className="w-full sm:basis-[60%]"
+                  className="w-full"
                   aria-expanded={isWriting}
                   aria-controls={isWriting ? "comment-form" : undefined}
                   disabled={isSubmittingComment}
                 />
-              </div>
-            )}
-
-            {/* コメント一覧 */}
-            <div className="space-y-6">
-              {comments.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-500 dark:text-gray-400">
-                    まだコメントがありません。最初のコメントを投稿してみませんか？
-                  </p>
-                </div>
-              ) : (
-                comments.map((comment) => (
-                  <div
-                    key={comment.id}
-                    className="border-b border-gray-200 dark:border-gray-600 pb-6 last:border-b-0"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <h4 className="font-medium text-gray-900 dark:text-white">
-                        <span
-                          dangerouslySetInnerHTML={{
-                            __html: displayTextPlain(comment.user_name),
-                          }}
-                        />
-                      </h4>
-                      <time
-                        dateTime={comment.created_at}
-                        className="text-sm text-gray-500 dark:text-gray-400"
-                      >
-                        {new Date(comment.created_at).toLocaleDateString(
-                          "ja-JP",
-                          {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          },
-                        )}
-                      </time>
-                    </div>
-                    <div className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                      <span
-                        dangerouslySetInnerHTML={{
-                          __html: displayTextPlain(comment.comment),
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))
               )}
             </div>
           </div>
-        </section>
+
+          {/* 右カラム - コメント一覧 */}
+          <div className="lg:col-span-1">
+            <CommentList comments={comments} isDevMode={import.meta.env.DEV} />
+          </div>
+        </div>
       </Container>
     </Layout>
   );

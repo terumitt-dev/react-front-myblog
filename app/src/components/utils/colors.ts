@@ -4,16 +4,22 @@ export const CATEGORY_COLORS = {
   hobby: {
     bg: "bg-category-hobby-bg", // TailwindクラスとしてCSS変数を参照
     hex: "var(--color-category-hobby-bg)", // CSS変数を参照（ダークモード対応）
+    accent: "var(--color-category-hobby-bg)", // ボタン背景色用
+    text: "#ffffff", // ボタンテキスト色（白）
     name: "しゅみ",
   },
   tech: {
     bg: "bg-category-tech-bg",
     hex: "var(--color-category-tech-bg)", // CSS変数を参照（ダークモード対応）
+    accent: "var(--color-category-tech-bg)", // ボタン背景色用
+    text: "#ffffff", // ボタンテキスト色（白）
     name: "テック",
   },
   other: {
     bg: "bg-category-other-bg",
     hex: "var(--color-category-other-bg)", // CSS変数を参照（ダークモード対応）
+    accent: "var(--color-category-other-bg)", // ボタン背景色用
+    text: "#ffffff", // ボタンテキスト色（白）
     name: "その他",
   },
 } as const;
