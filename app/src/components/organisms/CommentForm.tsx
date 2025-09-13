@@ -27,12 +27,8 @@ const CommentForm = ({ onSubmit, onCancel, disabled = false }: Props) => {
 
   return (
     <div className="flex flex-col gap-3 p-4 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-        コメントを投稿
-      </h3>
       <Input
         id={`username-${userNameId}`}
-        label="ユーザー名"
         value={userName}
         onChange={(e) => setUserName(e.target.value)}
         placeholder="ユーザ名"
@@ -40,7 +36,6 @@ const CommentForm = ({ onSubmit, onCancel, disabled = false }: Props) => {
       />
       <Textarea
         id={`comment-${commentId}`}
-        label="コメント"
         value={comment}
         onChange={(e) => setComment(e.target.value)}
         placeholder="コメントを入力"
