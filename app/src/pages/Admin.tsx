@@ -12,6 +12,7 @@ import {
   displayTextPlain,
 } from "@/components/utils/sanitizer";
 import { cn } from "@/components/utils/cn";
+import { useAuthenticatedApi } from "@/api/client";
 import type { BlogWithCategoryName } from "@/dummy/types";
 
 // ========== localStorage削除：型定義の更新 ==========
@@ -29,6 +30,8 @@ type BlogPost = {
 };
 
 const Admin = () => {
+  const { blogsApi } = useAuthenticatedApi();
+
   // ========== localStorage削除：状態管理の簡素化 ==========
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [title, setTitle] = useState("");
@@ -48,15 +51,15 @@ const Admin = () => {
     try {
       console.log("📚 Admin: ダミーデータから投稿一覧を読み込み中...");
 
-      const response = await fetch("/api/blogs?limit=100");
-      if (!response.ok) {
-        throw new Error("投稿データの取得に失敗しました");
+      const response = await blogsApi.getAll({ limit: 100 });
+      if (response.error) {
+        throw new Error(response.error);
       }
 
-      const data = await response.json();
+      const data = response.data || {};
 
       // BlogWithCategoryNameをBlogPostに変換し、安全な値を追加
-      const blogPosts: BlogPost[] = data.blogs.map(
+      const blogPosts: BlogPost[] = (data.blogs || []).map(
         (blog: BlogWithCategoryName) => ({
           id: blog.id,
           title: blog.title,
@@ -80,7 +83,7 @@ const Admin = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [blogsApi]);
 
   useEffect(() => {
     if (isDevelopment) {
@@ -209,20 +212,14 @@ const Admin = () => {
 
         console.log("📝 Admin: 新規投稿作成中...", newPostData);
 
-        // MSW APIに投稿
-        const response = await fetch("/api/admin/blogs", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(newPostData),
-        });
+        // 認証付きAPIクライアントで投稿
+        const response = await blogsApi.create(newPostData);
 
-        if (!response.ok) {
-          throw new Error("投稿の作成に失敗しました");
+        if (response.error) {
+          throw new Error(response.error);
         }
 
-        const result = await response.json();
+        const result = response.data;
         console.log("✅ Admin: 投稿作成成功:", result);
 
         // フロントエンドの状態に新規投稿を追加
@@ -264,13 +261,11 @@ const Admin = () => {
     try {
       console.log("🗑️ Admin: 投稿削除中...", id);
 
-      // MSW APIで削除リクエスト（実際の削除は行われない）
-      const response = await fetch(`/api/admin/blogs/${id}`, {
-        method: "DELETE",
-      });
+      // 認証付きAPIクライアントで削除
+      const response = await blogsApi.delete(id);
 
-      if (!response.ok) {
-        throw new Error("投稿の削除に失敗しました");
+      if (response.error) {
+        throw new Error(response.error);
       }
 
       // フロントエンドの状態から削除
@@ -555,7 +550,7 @@ const Admin = () => {
                     {/* アクションボタン */}
                     <div className="flex gap-2">
                       <Link
-                        to={`/posts/${post.id}`}
+                        to={`/post/${post.id}`}
                         className="px-3 py-1.5 text-xs bg-blue-100 text-blue-800 rounded hover:bg-blue-200 transition-colors"
                       >
                         表示

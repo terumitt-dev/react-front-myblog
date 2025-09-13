@@ -226,7 +226,7 @@ export const handlers = [
     console.log("🔐 MSW Handler: Login attempt", { email: body.email });
 
     // 開発環境用の簡易認証
-    if (body.email === "admin@example.com" && body.password === "password123") {
+    if (body.email === "admin@example.com" && body.password === "password") {
       const responseData = {
         token: "dev-token-123",
         admin: {
