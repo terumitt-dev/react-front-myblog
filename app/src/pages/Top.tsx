@@ -8,6 +8,7 @@ import { displayTextSafe } from "@/components/utils/sanitizer";
 import Container from "@/components/layouts/Container";
 import { cn } from "@/components/utils/cn";
 import type { BlogWithCategoryName } from "@/dummy/types";
+import { getReadMoreButtonStyle } from "@/components/utils/colors";
 
 const Top = () => {
   const [posts, setPosts] = useState<BlogWithCategoryName[]>([]);
@@ -238,12 +239,7 @@ const Top = () => {
 
                       <Link
                         to={`/posts/${post.id}`}
-                        className={cn(
-                          "inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium",
-                          "bg-blue-600 hover:bg-blue-700 text-white",
-                          "focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none",
-                          "transition-colors duration-200",
-                        )}
+                        className={getReadMoreButtonStyle("sm")}
                       >
                         続きを読む
                         <svg

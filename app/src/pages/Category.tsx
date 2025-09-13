@@ -10,6 +10,7 @@ import ArticleSkeleton from "@/components/molecules/ArticleSkeleton";
 import { useStaticEffects } from "@/hooks/useStaticEffects";
 import type { BlogWithCategoryName, BlogCategory } from "@/dummy/types";
 import "./Category.css";
+import { getReadMoreButtonStyle } from "@/components/utils/colors";
 
 const Category = () => {
   const { category } = useParams<{ category: string }>();
@@ -471,15 +472,7 @@ const Category = () => {
 
                   <Link
                     to={`/posts/${post.id}`}
-                    className={cn(
-                      "inline-flex items-center px-4 py-2 rounded-lg text-white font-medium",
-                      "hover:opacity-90 transition-opacity",
-                      "focus:ring-2 focus:ring-offset-2 focus:outline-none",
-                    )}
-                    style={{
-                      backgroundColor: categoryConfig.colors.accent,
-                      color: categoryConfig.colors.text,
-                    }}
+                    className={getReadMoreButtonStyle("md")}
                   >
                     続きを読む
                     <svg

@@ -57,7 +57,31 @@ export const UI_COLORS = {
 
 export type CategoryType = keyof typeof CATEGORY_COLORS;
 
-// ========== 新規追加：セマンティックカラーシステム ==========
+// ========== 新規追加：共通ボタンスタイル ==========
+
+// 「続きを読む」ボタン専用スタイル
+export const READ_MORE_BUTTON = {
+  base: "inline-flex items-center px-3 py-2 rounded-lg font-medium transition-colors duration-200 focus:ring-2 focus:ring-offset-2 focus:outline-none",
+  colors: "bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500",
+  // サイズバリエーション
+  sizes: {
+    sm: "px-3 py-2 text-sm",
+    md: "px-4 py-2 text-base",
+    lg: "px-5 py-3 text-lg",
+  },
+} as const;
+
+// ヘルパー関数：読み込みボタンのスタイルを取得
+export const getReadMoreButtonStyle = (
+  size: keyof typeof READ_MORE_BUTTON.sizes = "sm",
+): string => {
+  return `${READ_MORE_BUTTON.base} ${READ_MORE_BUTTON.colors}`.replace(
+    "px-3 py-2",
+    READ_MORE_BUTTON.sizes[size],
+  );
+};
+
+// ========== 既存：セマンティックカラーシステム ==========
 
 // 既存のUI_COLORSを活用したセマンティックなカラーシステム
 export const SEMANTIC_COLORS = {
