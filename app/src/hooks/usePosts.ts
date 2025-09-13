@@ -1,6 +1,21 @@
 // app/src/hooks/usePosts.ts
 import { useState, useEffect } from "react";
 
+// MSWレスポンス用の型定義
+interface BlogFromAPI {
+  id: number;
+  title: string;
+  content: string;
+  category: number;
+  category_name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface BlogsAPIResponse {
+  blogs: BlogFromAPI[];
+}
+
 export type Post = {
   id: number;
   title: string;
@@ -51,11 +66,11 @@ export const usePosts = (category?: string) => {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const data = await response.json();
+        const data: BlogsAPIResponse = await response.json();
 
         if (isMounted) {
           // MSWからのレスポンス（Blog）をPost型に変換
-          const mappedPosts: Post[] = data.blogs.map((blog: any) => ({
+          const mappedPosts: Post[] = data.blogs.map((blog: BlogFromAPI) => ({
             id: blog.id,
             title: blog.title,
             content: blog.content,
