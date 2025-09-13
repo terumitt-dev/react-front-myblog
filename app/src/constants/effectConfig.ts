@@ -12,16 +12,16 @@ export const BREAKPOINTS = {
 export const EFFECT_CONFIG = {
   spider: {
     hobby: {
-      mobile: 0,
-      tablet: 2,
-      desktop: 5,
+      mobile: 3,
+      tablet: 4,
+      desktop: 6,
     },
   },
   snail: {
     other: {
-      mobile: 0,
-      tablet: 2,
-      desktop: 5,
+      mobile: 3,
+      tablet: 4,
+      desktop: 6,
     },
   },
   bubble: {
