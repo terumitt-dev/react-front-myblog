@@ -79,20 +79,38 @@ export const handlers = [
 
     let filteredBlogs = blogs;
 
-    // カテゴリフィルター
-    if (category && ["hobby", "tech", "other"].includes(category)) {
-      const categoryMap = { hobby: 0, tech: 1, other: 2 };
-      filteredBlogs = blogs.filter(
-        (blog) =>
-          blog.category === categoryMap[category as keyof typeof categoryMap],
-      );
-      console.log(
-        "🏷️ MSW Handler: Filtered by category",
-        category,
-        "->",
-        filteredBlogs.length,
-        "blogs",
-      );
+    // カテゴリフィルター（数値と文字列の両方に対応）
+    if (category) {
+      let categoryNumber: number | null = null;
+
+      // カテゴリが数値文字列の場合（例: "0", "1", "2"）
+      if (/^\d+$/.test(category)) {
+        const numericCategory = parseInt(category, 10);
+        if ([0, 1, 2].includes(numericCategory)) {
+          categoryNumber = numericCategory;
+        }
+      }
+      // カテゴリが名前文字列の場合（例: "hobby", "tech", "other"）
+      else if (["hobby", "tech", "other"].includes(category)) {
+        const categoryMap = { hobby: 0, tech: 1, other: 2 };
+        categoryNumber = categoryMap[category as keyof typeof categoryMap];
+      }
+
+      // 有効なカテゴリ番号でフィルタリング
+      if (categoryNumber !== null) {
+        filteredBlogs = blogs.filter(
+          (blog) => blog.category === categoryNumber,
+        );
+        console.log(
+          "🏷️ MSW Handler: Filtered by category",
+          `${category} -> ${categoryNumber}`,
+          "->",
+          filteredBlogs.length,
+          "blogs",
+        );
+      } else {
+        console.log("⚠️ MSW Handler: Invalid category parameter", category);
+      }
     }
 
     // ページネーション
