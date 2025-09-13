@@ -1,5 +1,5 @@
 // app/src/pages/Top.tsx
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/layouts/Layout";
 import { Link } from "react-router-dom";
 import CategoryButtons from "@/components/organisms/CategoryButtons";
