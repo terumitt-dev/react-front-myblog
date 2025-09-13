@@ -56,7 +56,7 @@ const Admin = () => {
         throw new Error(response.error);
       }
 
-      const data = response.data || {};
+      const data: { blogs?: BlogWithCategoryName[] } = response.data || {};
 
       // BlogWithCategoryNameをBlogPostに変換し、安全な値を追加
       const blogPosts: BlogPost[] = (data.blogs || []).map(
@@ -206,7 +206,7 @@ const Admin = () => {
         // 新規作成処理
         const newPostData = {
           title: sanitizedTitle,
-          category: sanitizedCategory,
+          category: String(sanitizedCategory),
           content: sanitizedContent,
         };
 

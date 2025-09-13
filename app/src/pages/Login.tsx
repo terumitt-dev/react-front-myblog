@@ -31,8 +31,10 @@ const Login = () => {
     try {
       await login(email, password);
       navigate("/admin");
-    } catch (error: any) {
-      setError(error.message || "ログインに失敗しました。");
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "ログインに失敗しました。";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
