@@ -3,17 +3,17 @@
 export const CATEGORY_COLORS = {
   hobby: {
     bg: "bg-category-hobby-bg", // TailwindクラスとしてCSS変数を参照
-    hex: "#E1C6F9", // HEX値はそのまま残す
+    hex: "var(--color-category-hobby-bg)", // CSS変数を参照（ダークモード対応）
     name: "しゅみ",
   },
   tech: {
     bg: "bg-category-tech-bg",
-    hex: "#AFEBFF",
+    hex: "var(--color-category-tech-bg)", // CSS変数を参照（ダークモード対応）
     name: "テック",
   },
   other: {
     bg: "bg-category-other-bg",
-    hex: "#CCF5B1",
+    hex: "var(--color-category-other-bg)", // CSS変数を参照（ダークモード対応）
     name: "その他",
   },
 } as const;

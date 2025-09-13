@@ -4,7 +4,7 @@
 
 /* カスタムCSS変数 */
 :root {
-    /* カテゴリーカラー */
+    /* カテゴリーカラー（ライトモード） */
     --color-category-hobby-bg: #e1c6f9;
     --color-category-tech-bg: #afebff;
     --color-category-other-bg: #ccf5b1;
@@ -46,6 +46,11 @@
 
 /* ダークモード対応 */
 .dark {
+    /* カテゴリーカラー（ダークモード） - 適度な濃さに調整 */
+    --color-category-hobby-bg: #8b5cf6; /* purple-500 - hobby(紫)の適度な濃さ */
+    --color-category-tech-bg: #0ea5e9; /* sky-500 - tech(青)の適度な濃さ */
+    --color-category-other-bg: #22c55e; /* green-500 - other(緑)の適度な濃さ */
+
     /* UIカラー - Primary (Blue) */
     --color-ui-primary-600: #1d4ed8; /* dark:bg-blue-700 */
     --color-ui-primary-700: #1e40af; /* dark:hover:bg-blue-800 */
