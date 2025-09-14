@@ -10,6 +10,8 @@ import {
   validateCategory,
   displayTextSafe,
   displayTextPlain,
+  sanitizeInput,
+  createSafePreview,
 } from "@/components/utils/sanitizer";
 import { cn } from "@/components/utils/cn";
 import { useAuthenticatedApi } from "@/api/client";
@@ -181,7 +183,7 @@ const Admin = () => {
         const updateData = {
           title: sanitizedTitle,
           content: sanitizedContent,
-          category: sanitizedCategory,
+          category: String(sanitizedCategory), // API期待値に合わせて文字列化
         };
 
         console.log("📝 Admin: 投稿更新中...", {
@@ -196,7 +198,7 @@ const Admin = () => {
           throw new Error(response.error);
         }
 
-        const updatedBlog = response.data as any;
+        const updatedBlog = response.data as Blog; // Blog型でキャスト
         console.log("✅ Admin: 投稿更新成功:", updatedBlog);
 
         // フロントエンドの状態を更新
@@ -423,7 +425,7 @@ const Admin = () => {
                 disabled={isSaving}
               />
               <p className="mt-1 text-sm text-gray-500">
-                {title.length}/{TEXT_LIMITS.TITLE_MAX_LENGTH}文字
+                {sanitizeInput(title).length}/{TEXT_LIMITS.TITLE_MAX_LENGTH}文字
               </p>
             </div>
 
@@ -469,7 +471,8 @@ const Admin = () => {
                 disabled={isSaving}
               />
               <p className="mt-1 text-sm text-gray-500">
-                {content.length}/{TEXT_LIMITS.CONTENT_MAX_LENGTH}文字
+                {sanitizeInput(content).length}/{TEXT_LIMITS.CONTENT_MAX_LENGTH}
+                文字
               </p>
             </div>
 
@@ -564,16 +567,7 @@ const Admin = () => {
                     <div className="text-gray-600 dark:text-gray-300 text-sm line-clamp-3 mb-4">
                       <span
                         dangerouslySetInnerHTML={{
-                          __html: (() => {
-                            // 1. サニタイズ → 2. トリミング → 3. HTML構築の順序で一貫処理
-                            const safeContent =
-                              post.safeDisplayContent ||
-                              displayTextSafe(post.content);
-                            return (
-                              safeContent.slice(0, 100) +
-                              (safeContent.length > 100 ? "..." : "")
-                            );
-                          })(),
+                          __html: createSafePreview(post.content, 100),
                         }}
                       />
                     </div>

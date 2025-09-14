@@ -14,6 +14,15 @@ const CATEGORY_NAMES: Record<number, string> = {
 
 // 認証チェック関数
 const requireAuth = (request: Request) => {
+  // 本番環境では無効化
+  if (import.meta.env.PROD) {
+    console.warn("🚫 MSW Handler: MSW should not be used in production!");
+    return HttpResponse.json(
+      { message: "This API is not available in production" },
+      { status: 503 },
+    );
+  }
+
   const authHeader = request.headers.get("authorization");
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -23,8 +32,9 @@ const requireAuth = (request: Request) => {
 
   const token = authHeader.split(" ")[1];
 
-  // 開発環境用の簡易トークン検証
-  if (token !== "dev-token-123") {
+  // 開発環境用の簡易トークン検証（環境変数から取得）
+  const devToken = import.meta.env.VITE_DEV_AUTH_TOKEN || "dev-token-123";
+  if (token !== devToken) {
     console.log("🚫 MSW Handler: Invalid token:", token);
     return HttpResponse.json(
       { message: "無効なトークンです" },
