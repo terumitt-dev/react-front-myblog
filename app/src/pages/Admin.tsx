@@ -15,7 +15,11 @@ import {
 } from "@/components/utils/sanitizer";
 import { cn } from "@/components/utils/cn";
 import { useAuthenticatedApi } from "@/api/client";
-import type { BlogWithCategoryName, Blog } from "@/dummy/types";
+import type { BlogWithCategoryName } from "@/dummy/types";
+import {
+  categoryToString,
+  normalizeBlogResponse,
+} from "@/components/utils/categoryConverter";
 
 // ========== localStorage削除：型定義の更新 ==========
 type BlogPost = {
@@ -183,7 +187,7 @@ const Admin = () => {
         const updateData = {
           title: sanitizedTitle,
           content: sanitizedContent,
-          category: String(sanitizedCategory), // API期待値に合わせて文字列化
+          category: categoryToString(sanitizedCategory), // 型安全な文字列化
         };
 
         console.log("📝 Admin: 投稿更新中...", {
@@ -198,7 +202,7 @@ const Admin = () => {
           throw new Error(response.error);
         }
 
-        const updatedBlog = response.data as Blog; // Blog型でキャスト
+        const updatedBlog = normalizeBlogResponse(response.data);
         console.log("✅ Admin: 投稿更新成功:", updatedBlog);
 
         // フロントエンドの状態を更新
@@ -229,7 +233,7 @@ const Admin = () => {
         // 新規作成処理
         const newPostData = {
           title: sanitizedTitle,
-          category: String(sanitizedCategory),
+          category: categoryToString(sanitizedCategory), // 型安全な文字列化
           content: sanitizedContent,
         };
 
@@ -245,7 +249,7 @@ const Admin = () => {
         console.log("✅ Admin: 投稿作成成功:", response.data);
 
         // APIレスポンスの正しいBlogオブジェクトを使用
-        const createdBlog = response.data as Blog;
+        const createdBlog = normalizeBlogResponse(response.data);
 
         const newPost: BlogPost = {
           // APIが返す正しいIDを使用
