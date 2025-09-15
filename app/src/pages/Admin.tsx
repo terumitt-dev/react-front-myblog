@@ -42,9 +42,6 @@ const Admin = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeletingId, setIsDeletingId] = useState<number | null>(null);
 
-  // 開発環境チェック
-  const isDevelopment = import.meta.env.DEV;
-
   // ========== localStorage削除：ダミーデータからAPI経由で読み込み ==========
   const loadPosts = useCallback(async () => {
     try {
@@ -78,16 +75,8 @@ const Admin = () => {
   }, [blogsApi]);
 
   useEffect(() => {
-    if (isDevelopment) {
-      loadPosts();
-      return;
-    }
-
-    // 本番環境では認証をチェック（認証システムが実装された場合）
-    console.warn("🔐 本番環境: 認証システムが必要です");
-    setError("本番環境では認証システムが必要です");
-    setIsLoading(false);
-  }, [isDevelopment, loadPosts]);
+    loadPosts();
+  }, [loadPosts]);
 
   // カテゴリー表示名変換
   const getCategoryDisplayName = (categoryName: string) => {
@@ -319,14 +308,7 @@ const Admin = () => {
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
         {/* ヘッダー */}
         <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 md:gap-4 mb-8">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white">
-            管理画面
-            {isDevelopment && (
-              <span className="text-sm font-normal text-yellow-600 dark:text-yellow-400 ml-2">
-                (開発環境)
-              </span>
-            )}
-          </h1>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white"></h1>
           <div className="flex gap-2">
             <Link
               to="/"
@@ -342,15 +324,6 @@ const Admin = () => {
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
             <p className="text-red-700">{error}</p>
-          </div>
-        )}
-
-        {isDevelopment && (
-          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-            <p className="text-yellow-800">
-              ⚠️
-              開発環境：投稿データはページリロードで初期化されます（localStorage使用なし）
-            </p>
           </div>
         )}
 
