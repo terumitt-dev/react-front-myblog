@@ -44,7 +44,8 @@
         transition: none !important;
     }
 
-    .spider:hover {
+    .spider:hover,
+    .spider:focus {
         -webkit-transform: translateZ(0) !important;
         -moz-transform: translateZ(0) !important;
         -ms-transform: translateZ(0) !important;
@@ -93,9 +94,15 @@
     height: 50px;
     opacity: 0.7;
 
-    -webkit-transition: -webkit-transform 0.3s ease;
-    -moz-transition: -moz-transform 0.3s ease;
-    transition: transform 0.3s ease;
+    -webkit-transition:
+        -webkit-transform 0.3s ease,
+        opacity 0.3s ease;
+    -moz-transition:
+        -moz-transform 0.3s ease,
+        opacity 0.3s ease;
+    transition:
+        transform 0.3s ease,
+        opacity 0.3s ease;
 
     cursor: pointer;
 
@@ -103,6 +110,9 @@
     -moz-transform: translateZ(0);
     -ms-transform: translateZ(0);
     transform: translateZ(0);
+
+    /* アウトラインを完全に無効化 */
+    outline: none;
 }
 
 /* 内側ラッパー：回転専用（冗長なtransform削除） */
@@ -128,6 +138,40 @@
     transform: translateY(-20px) translateZ(0);
 }
 
+/* フォーカス時：ホバーと同じ自然な動作のみ（アウトラインなし） */
+.spider:focus {
+    /* ホバーと同じ移動効果を適用 */
+    -webkit-transform: translateY(-20px) translateZ(0);
+    -moz-transform: translateY(-20px) translateZ(0);
+    -ms-transform: translateY(-20px) translateZ(0);
+    transform: translateY(-20px) translateZ(0);
+
+    /* フォーカス時の透明度を少し上げる（自然な表現） */
+    opacity: 0.9;
+
+    /* アウトラインを完全に無効化 */
+    outline: none !important;
+}
+
+/* フォーカス可視化も完全に無効化 */
+.spider:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* ホバー + フォーカス同時の場合 */
+.spider:hover:focus,
+.spider:focus:hover {
+    /* 両方の効果を適用 */
+    -webkit-transform: translateY(-20px) translateZ(0);
+    -moz-transform: translateY(-20px) translateZ(0);
+    -ms-transform: translateY(-20px) translateZ(0);
+    transform: translateY(-20px) translateZ(0);
+
+    opacity: 1;
+    outline: none !important;
+}
+
 /* 消失時：外側でスケール・移動、内側で回転維持（既存動作保持） */
 .spider-disappear {
     -webkit-transform: scale(0) translateY(-40px) translateZ(0);
@@ -150,6 +194,12 @@
     -webkit-animation-fill-mode: forwards;
     -moz-animation-fill-mode: forwards;
     animation-fill-mode: forwards;
+}
+
+/* 消失中はフォーカススタイルを無効化（アニメーション優先） */
+.spider-disappear:focus,
+.spider-disappear:focus-visible {
+    outline: none !important;
 }
 
 /* ==================== 泡 ==================== */
@@ -287,12 +337,19 @@
 }
 
 .performance-reduced.spider {
-    -webkit-transition: -webkit-transform 0.2s ease !important;
-    -moz-transition: -moz-transform 0.2s ease !important;
-    transition: transform 0.2s ease !important;
+    -webkit-transition:
+        -webkit-transform 0.2s ease,
+        opacity 0.2s ease !important;
+    -moz-transition:
+        -moz-transform 0.2s ease,
+        opacity 0.2s ease !important;
+    transition:
+        transform 0.2s ease,
+        opacity 0.2s ease !important;
 }
 
-.performance-reduced.spider:hover {
+.performance-reduced.spider:hover,
+.performance-reduced.spider:focus {
     -webkit-transform: translateY(-10px) translateZ(0) !important;
     -moz-transform: translateY(-10px) translateZ(0) !important;
     -ms-transform: translateY(-10px) translateZ(0) !important;
@@ -373,6 +430,15 @@
         -moz-transform: translateZ(0);
         -ms-transform: translateZ(0);
         transform: translateZ(0);
+    }
+
+    /* フォーカスはモバイルでも有効（アウトラインなし） */
+    .spider:focus {
+        -webkit-transform: translateY(-20px) translateZ(0);
+        -moz-transform: translateY(-20px) translateZ(0);
+        -ms-transform: translateY(-20px) translateZ(0);
+        transform: translateY(-20px) translateZ(0);
+        outline: none !important;
     }
 }
 
