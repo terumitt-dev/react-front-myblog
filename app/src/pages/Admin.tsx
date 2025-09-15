@@ -8,10 +8,7 @@ import { TEXT_LIMITS } from "@/constants/appConfig";
 import {
   validateAndSanitize,
   validateCategory,
-  displayTextSafe,
-  displayTextPlain,
   sanitizeInput,
-  createSafePreview,
 } from "@/components/utils/sanitizer";
 import { cn } from "@/components/utils/cn";
 import { useAuthenticatedApi } from "@/api/client";
@@ -26,13 +23,9 @@ type BlogPost = {
   id: number;
   title: string;
   content: string;
-  category: number; // ダミーデータに合わせて数値型
+  category: number;
   created_at: string;
   updated_at: string;
-  // 表示用の安全な値
-  safeTitle?: string;
-  safeCategory?: string;
-  safeDisplayContent?: string;
 };
 
 const Admin = () => {
@@ -71,10 +64,6 @@ const Admin = () => {
           content: blog.content,
           created_at: blog.created_at,
           updated_at: blog.updated_at,
-          // 表示用の安全な値を生成
-          safeTitle: displayTextPlain(blog.title),
-          safeCategory: getCategoryDisplayName(blog.category_name),
-          safeDisplayContent: displayTextSafe(blog.content),
         }),
       );
 
@@ -206,15 +195,6 @@ const Admin = () => {
                   category: updatedBlog.category || sanitizedCategory,
                   updated_at:
                     updatedBlog.updated_at || new Date().toISOString(),
-                  safeTitle: displayTextPlain(
-                    updatedBlog.title || sanitizedTitle,
-                  ),
-                  safeCategory: getCategoryDisplayName(
-                    getCategoryName(updatedBlog.category || sanitizedCategory),
-                  ),
-                  safeDisplayContent: displayTextSafe(
-                    updatedBlog.content || sanitizedContent,
-                  ),
                 }
               : post,
           ),
@@ -245,12 +225,6 @@ const Admin = () => {
           category: createdBlog.category,
           created_at: createdBlog.created_at,
           updated_at: createdBlog.updated_at,
-          // サニタイズ済みの安全な表示値を生成
-          safeTitle: displayTextPlain(createdBlog.title),
-          safeCategory: getCategoryDisplayName(
-            getCategoryName(createdBlog.category),
-          ),
-          safeDisplayContent: displayTextSafe(createdBlog.content),
         };
 
         setPosts((prevPosts) => [newPost, ...prevPosts]);
@@ -531,7 +505,7 @@ const Admin = () => {
                           getCategoryColorClass(post.category),
                         )}
                       >
-                        {post.safeCategory}
+                        {getCategoryDisplayName(getCategoryName(post.category))}
                       </span>
                       <time className="text-xs text-gray-500 dark:text-gray-400">
                         {new Date(post.created_at).toLocaleDateString("ja-JP")}
@@ -540,21 +514,14 @@ const Admin = () => {
 
                     {/* タイトル */}
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
-                      <span
-                        dangerouslySetInnerHTML={{
-                          __html:
-                            post.safeTitle || displayTextPlain(post.title),
-                        }}
-                      />
+                      {post.title}
                     </h3>
 
                     {/* 内容プレビュー */}
                     <div className="text-gray-600 dark:text-gray-300 text-sm line-clamp-3 mb-4">
-                      <span
-                        dangerouslySetInnerHTML={{
-                          __html: createSafePreview(post.content, 100),
-                        }}
-                      />
+                      {post.content.length > 100
+                        ? post.content.substring(0, 100) + "..."
+                        : post.content}
                     </div>
 
                     {/* アクションボタン */}

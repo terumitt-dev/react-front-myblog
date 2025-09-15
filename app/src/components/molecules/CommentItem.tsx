@@ -1,6 +1,5 @@
 // app/src/components/molecules/CommentItem.tsx
 import { useState } from "react";
-import { displayTextPlain } from "@/components/utils/sanitizer";
 import type { Comment } from "@/dummy/types";
 
 type Props = {
@@ -25,11 +24,7 @@ const CommentItem = ({ comment, maxLength = 100 }: Props) => {
     <div className="border-b border-gray-200 dark:border-gray-600 pb-4 last:border-b-0">
       <div className="flex items-start justify-between mb-2">
         <h4 className="font-medium text-sm text-gray-900 dark:text-white">
-          <span
-            dangerouslySetInnerHTML={{
-              __html: displayTextPlain(comment.user_name),
-            }}
-          />
+          {comment.user_name}
         </h4>
         <time
           dateTime={comment.created_at}
@@ -42,13 +37,7 @@ const CommentItem = ({ comment, maxLength = 100 }: Props) => {
         </time>
       </div>
       <div className="text-sm text-gray-700 dark:text-gray-300">
-        <div className="whitespace-pre-wrap">
-          <span
-            dangerouslySetInnerHTML={{
-              __html: displayTextPlain(displayText),
-            }}
-          />
-        </div>
+        <div className="whitespace-pre-wrap">{displayText}</div>
         {isLongComment && (
           <button
             onClick={toggleExpanded}

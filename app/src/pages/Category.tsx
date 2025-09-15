@@ -8,10 +8,6 @@ import { cn } from "@/components/utils/cn";
 import ThemeToggle from "@/components/molecules/ThemeToggle";
 import ArticleSkeleton from "@/components/molecules/ArticleSkeleton";
 import { useStaticEffects } from "@/hooks/useStaticEffects";
-import {
-  displayTextPlain,
-  createSafePreview,
-} from "@/components/utils/sanitizer";
 import type { BlogWithCategoryName, BlogCategory } from "@/dummy/types";
 import "./Category.css";
 import { getReadMoreButtonStyle } from "@/components/utils/colors";
@@ -464,22 +460,14 @@ const Category = () => {
                   </div>
 
                   <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold break-words mb-2 text-gray-900 dark:text-white">
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: displayTextPlain(post.title),
-                      }}
-                    />
+                    {post.title}
                   </h2>
 
                   <div className="text-gray-700 dark:text-gray-300 line-clamp-3 mb-4">
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: createSafePreview(
-                          post.content,
-                          TEXT_LIMITS.PREVIEW_LENGTH,
-                        ),
-                      }}
-                    />
+                    {post.content.length > TEXT_LIMITS.PREVIEW_LENGTH
+                      ? post.content.substring(0, TEXT_LIMITS.PREVIEW_LENGTH) +
+                        "..."
+                      : post.content}
                   </div>
 
                   <Link

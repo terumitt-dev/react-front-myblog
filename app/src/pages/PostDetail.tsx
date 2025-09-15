@@ -7,7 +7,6 @@ import CommentList from "@/components/organisms/CommentList";
 import BackToHomeButton from "@/components/molecules/BackToHomeButton";
 import CommentStartButton from "@/components/molecules/CommentStartButton";
 import PostDetailSkeleton from "@/components/molecules/PostDetailSkeleton";
-import { displayTextSafe } from "@/components/utils/sanitizer";
 import { cn } from "@/components/utils/cn";
 import Container from "@/components/layouts/Container";
 import type { BlogWithCategoryName, Comment } from "@/dummy/types";
@@ -231,20 +230,12 @@ const PostDetail = () => {
             <article className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 sm:p-8 border border-gray-200 dark:border-gray-700">
               <header className="mb-8">
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-                  <span
-                    dangerouslySetInnerHTML={{
-                      __html: displayTextSafe(blog.title),
-                    }}
-                  />
+                  {blog.title}
                 </h1>
               </header>
 
               <div className="prose prose-lg max-w-none dark:prose-invert">
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: displayTextSafe(blog.content),
-                  }}
-                />
+                {blog.content}
               </div>
             </article>
 

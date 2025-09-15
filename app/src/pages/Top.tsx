@@ -4,7 +4,6 @@ import Layout from "@/components/layouts/Layout";
 import { Link } from "react-router-dom";
 import CategoryButtons from "@/components/organisms/CategoryButtons";
 import ArticleSkeleton from "@/components/molecules/ArticleSkeleton";
-import { displayTextSafe } from "@/components/utils/sanitizer";
 import Container from "@/components/layouts/Container";
 import { cn } from "@/components/utils/cn";
 import type { BlogWithCategoryName } from "@/dummy/types";
@@ -218,23 +217,13 @@ const Top = () => {
                       </div>
 
                       <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white line-clamp-2">
-                        <span
-                          dangerouslySetInnerHTML={{
-                            __html: displayTextSafe(post.title),
-                          }}
-                        />
+                        {post.title}
                       </h3>
 
                       <p className="text-gray-600 dark:text-gray-300 text-sm line-clamp-3 mb-4">
-                        <span
-                          dangerouslySetInnerHTML={{
-                            __html: displayTextSafe(
-                              post.content.length > 100
-                                ? post.content.substring(0, 100) + "..."
-                                : post.content,
-                            ),
-                          }}
-                        />
+                        {post.content.length > 100
+                          ? post.content.substring(0, 100) + "..."
+                          : post.content}
                       </p>
 
                       <Link
