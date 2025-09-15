@@ -76,7 +76,7 @@ const Admin = () => {
 
   useEffect(() => {
     loadPosts();
-  }, [loadPosts]);
+  }, []);
 
   // カテゴリー表示名変換
   const getCategoryDisplayName = (categoryName: string) => {

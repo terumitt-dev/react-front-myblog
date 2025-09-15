@@ -183,10 +183,10 @@ const Category = () => {
   }, [category]);
 
   useEffect(() => {
-    if (categoryConfig) {
-      loadPosts();
-    }
-  }, [loadPosts, categoryConfig]);
+    if (!category || !categoryConfig) return;
+
+    loadPosts();
+  }, [category, categoryConfig]);
 
   // カタツムリのホバーハンドラ
   const handleSnailHover = useCallback(
