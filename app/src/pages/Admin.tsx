@@ -55,8 +55,6 @@ const Admin = () => {
   // ========== localStorage削除：ダミーデータからAPI経由で読み込み ==========
   const loadPosts = useCallback(async () => {
     try {
-      console.log("📚 Admin: ダミーデータから投稿一覧を読み込み中...");
-
       const response = await blogsApi.getAll({ limit: 100 });
       if (response.error) {
         throw new Error(response.error);
@@ -81,7 +79,6 @@ const Admin = () => {
       );
 
       setPosts(blogPosts);
-      console.log("✅ Admin: ダミーデータ読み込み成功", blogPosts.length, "件");
     } catch (error) {
       console.error("❌ Admin: ダミーデータ読み込みエラー:", error);
       setError("投稿の読み込みに失敗しました");
@@ -93,7 +90,6 @@ const Admin = () => {
 
   useEffect(() => {
     if (isDevelopment) {
-      console.warn("🚧 開発環境では認証チェックをスキップします");
       loadPosts();
       return;
     }
@@ -190,11 +186,6 @@ const Admin = () => {
           category: categoryToString(sanitizedCategory), // 型安全な文字列化
         };
 
-        console.log("📝 Admin: 投稿更新中...", {
-          id: editingPostId,
-          ...updateData,
-        });
-
         // 認証付きAPIクライアントで更新
         const response = await blogsApi.update(editingPostId, updateData);
 
@@ -203,7 +194,6 @@ const Admin = () => {
         }
 
         const updatedBlog = normalizeBlogResponse(response.data);
-        console.log("✅ Admin: 投稿更新成功:", updatedBlog);
 
         // フロントエンドの状態を更新
         setPosts((prevPosts) =>
@@ -237,16 +227,12 @@ const Admin = () => {
           content: sanitizedContent,
         };
 
-        console.log("📝 Admin: 新規投稿作成中...", newPostData);
-
         // 認証付きAPIクライアントで投稿
         const response = await blogsApi.create(newPostData);
 
         if (response.error) {
           throw new Error(response.error);
         }
-
-        console.log("✅ Admin: 投稿作成成功:", response.data);
 
         // APIレスポンスの正しいBlogオブジェクトを使用
         const createdBlog = normalizeBlogResponse(response.data);
@@ -271,7 +257,6 @@ const Admin = () => {
       }
 
       resetForm();
-      console.log("✅ Admin: フォーム送信完了");
     } catch (error) {
       console.error("❌ Admin: 投稿保存エラー:", error);
       setError("投稿の保存に失敗しました。もう一度お試しください。");
@@ -289,8 +274,6 @@ const Admin = () => {
     setIsDeletingId(id);
 
     try {
-      console.log("🗑️ Admin: 投稿削除中...", id);
-
       // 認証付きAPIクライアントで削除
       const response = await blogsApi.delete(id);
 
@@ -305,8 +288,6 @@ const Admin = () => {
       if (editingPostId === id) {
         resetForm();
       }
-
-      console.log("✅ Admin: 投稿削除成功 (開発環境・メモリ内のみ)");
     } catch (error) {
       console.error("❌ Admin: 投稿削除エラー:", error);
       setError("投稿の削除に失敗しました");
