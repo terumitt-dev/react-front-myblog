@@ -52,6 +52,17 @@
         transform: translateZ(0) !important;
     }
 
+    /* アニメーション無効時のフォーカス効果も控えめに */
+    .spider:focus,
+    .spider:focus-visible {
+        filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.8)) !important;
+    }
+
+    .snail:focus,
+    .snail:focus-visible {
+        filter: drop-shadow(0 0 4px rgba(255, 223, 128, 0.8)) !important;
+    }
+
     .snail-move {
         -webkit-transform: translateZ(0) !important;
         -moz-transform: translateZ(0) !important;
@@ -111,7 +122,7 @@
     -ms-transform: translateZ(0);
     transform: translateZ(0);
 
-    /* アウトラインを完全に無効化 */
+    /* アウトラインを無効化（自然なフォーカス表現を使用） */
     outline: none;
 }
 
@@ -138,7 +149,7 @@
     transform: translateY(-20px) translateZ(0);
 }
 
-/* フォーカス時：ホバーと同じ自然な動作のみ（アウトラインなし） */
+/* フォーカス時：ホバーと同じ動作 + 自然な光の効果（アクセシビリティ改善） */
 .spider:focus {
     /* ホバーと同じ移動効果を適用 */
     -webkit-transform: translateY(-20px) translateZ(0);
@@ -146,17 +157,22 @@
     -ms-transform: translateY(-20px) translateZ(0);
     transform: translateY(-20px) translateZ(0);
 
-    /* フォーカス時の透明度を少し上げる（自然な表現） */
-    opacity: 0.9;
+    /* 自然な白い光の輪郭でフォーカス可視化 */
+    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.8))
+        drop-shadow(0 0 12px rgba(255, 255, 255, 0.4));
 
-    /* アウトラインを完全に無効化 */
-    outline: none !important;
+    /* 完全に不透明にして存在感強調 */
+    opacity: 1;
+
+    /* アウトライン無効化 */
+    outline: none;
 }
 
-/* フォーカス可視化も完全に無効化 */
+/* フォーカス可視化強化（キーボードナビゲーション時） */
 .spider:focus-visible {
-    outline: none !important;
-    box-shadow: none !important;
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.9))
+        drop-shadow(0 0 16px rgba(255, 255, 255, 0.5));
+    outline: none;
 }
 
 /* ホバー + フォーカス同時の場合 */
@@ -169,7 +185,8 @@
     transform: translateY(-20px) translateZ(0);
 
     opacity: 1;
-    outline: none !important;
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 1))
+        drop-shadow(0 0 16px rgba(255, 255, 255, 0.6));
 }
 
 /* 消失時：外側でスケール・移動、内側で回転維持（既存動作保持） */
@@ -199,7 +216,82 @@
 /* 消失中はフォーカススタイルを無効化（アニメーション優先） */
 .spider-disappear:focus,
 .spider-disappear:focus-visible {
-    outline: none !important;
+    filter: none;
+    outline: none;
+}
+
+/* ==================== カタツムリ ==================== */
+.snail {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    opacity: 0.85;
+
+    -webkit-transition: -webkit-transform 15s linear;
+    -moz-transition: -moz-transform 15s linear;
+    transition: transform 15s linear;
+
+    -webkit-transform: scaleX(1) translateZ(0);
+    -moz-transform: scaleX(1) translateZ(0);
+    -ms-transform: scaleX(1) translateZ(0);
+    transform: scaleX(1) translateZ(0);
+
+    cursor: pointer;
+    --snail-shift-x: -80px; /* 既定の移動距離（必要に応じてJSで上書き） */
+
+    /* アウトラインを無効化（自然なフォーカス表現を使用） */
+    outline: none;
+}
+
+/* カタツムリのフォーカススタイル：暖かい光の効果（アクセシビリティ改善） */
+.snail:focus {
+    /* 暖かみのある黄色い光の輪郭でフォーカス可視化 */
+    filter: drop-shadow(0 0 6px rgba(255, 223, 128, 0.9))
+        drop-shadow(0 0 12px rgba(255, 223, 128, 0.5));
+
+    /* 完全に不透明にして存在感強調 */
+    opacity: 1;
+
+    /* アウトライン無効化 */
+    outline: none;
+}
+
+/* カタツムリのフォーカス可視化強化（キーボードナビゲーション時） */
+.snail:focus-visible {
+    filter: drop-shadow(0 0 8px rgba(255, 223, 128, 1))
+        drop-shadow(0 0 16px rgba(255, 223, 128, 0.6));
+    outline: none;
+}
+
+.snail-move {
+    /* CSS変数対応ブラウザ向け */
+    -webkit-transform: translateX(var(--snail-shift-x, -80px)) scaleX(1)
+        translateZ(0);
+    -moz-transform: translateX(var(--snail-shift-x, -80px)) scaleX(1)
+        translateZ(0);
+    transform: translateX(var(--snail-shift-x, -80px)) scaleX(1) translateZ(0);
+
+    -webkit-transition: -webkit-transform 15s linear;
+    -moz-transition: -moz-transform 15s linear;
+    transition: transform 15s linear;
+}
+
+.snail-disappear {
+    opacity: 0;
+    -webkit-transition: opacity 0.6s ease;
+    -moz-transition: opacity 0.6s ease;
+    transition: opacity 0.6s ease;
+
+    -webkit-animation-fill-mode: forwards;
+    -moz-animation-fill-mode: forwards;
+    animation-fill-mode: forwards;
+}
+
+/* カタツムリ消失中はフォーカススタイルを無効化（アニメーション優先） */
+.snail-disappear:focus,
+.snail-disappear:focus-visible {
+    filter: none;
+    outline: none;
 }
 
 /* ==================== 泡 ==================== */
@@ -283,50 +375,6 @@
     }
 }
 
-/* ==================== カタツムリ ==================== */
-.snail {
-    position: absolute;
-    width: 60px;
-    height: 60px;
-    opacity: 0.85;
-
-    -webkit-transition: -webkit-transform 15s linear;
-    -moz-transition: -moz-transform 15s linear;
-    transition: transform 15s linear;
-
-    -webkit-transform: scaleX(1) translateZ(0);
-    -moz-transform: scaleX(1) translateZ(0);
-    -ms-transform: scaleX(1) translateZ(0);
-    transform: scaleX(1) translateZ(0);
-
-    cursor: pointer;
-    --snail-shift-x: -80px; /* 既定の移動距離（必要に応じてJSで上書き） */
-}
-
-.snail-move {
-    /* CSS変数対応ブラウザ向け */
-    -webkit-transform: translateX(var(--snail-shift-x, -80px)) scaleX(1)
-        translateZ(0);
-    -moz-transform: translateX(var(--snail-shift-x, -80px)) scaleX(1)
-        translateZ(0);
-    transform: translateX(var(--snail-shift-x, -80px)) scaleX(1) translateZ(0);
-
-    -webkit-transition: -webkit-transform 15s linear;
-    -moz-transition: -moz-transform 15s linear;
-    transition: transform 15s linear;
-}
-
-.snail-disappear {
-    opacity: 0;
-    -webkit-transition: opacity 0.6s ease;
-    -moz-transition: opacity 0.6s ease;
-    transition: opacity 0.6s ease;
-
-    -webkit-animation-fill-mode: forwards;
-    -moz-animation-fill-mode: forwards;
-    animation-fill-mode: forwards;
-}
-
 /* ==================== パフォーマンス最適化 ==================== */
 
 /* 低スペック端末向けアニメーション簡素化 */
@@ -354,6 +402,17 @@
     -moz-transform: translateY(-10px) translateZ(0) !important;
     -ms-transform: translateY(-10px) translateZ(0) !important;
     transform: translateY(-10px) translateZ(0) !important;
+}
+
+/* 低スペック端末でのフォーカス効果軽量化 */
+.performance-reduced.spider:focus,
+.performance-reduced.spider:focus-visible {
+    filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.6)) !important;
+}
+
+.performance-reduced.snail:focus,
+.performance-reduced.snail:focus-visible {
+    filter: drop-shadow(0 0 3px rgba(255, 223, 128, 0.6)) !important;
 }
 
 .performance-reduced.spider-disappear {
@@ -432,13 +491,19 @@
         transform: translateZ(0);
     }
 
-    /* フォーカスはモバイルでも有効（アウトラインなし） */
+    /* フォーカスはモバイルでも有効（光の効果付き） */
     .spider:focus {
         -webkit-transform: translateY(-20px) translateZ(0);
         -moz-transform: translateY(-20px) translateZ(0);
         -ms-transform: translateY(-20px) translateZ(0);
         transform: translateY(-20px) translateZ(0);
-        outline: none !important;
+        filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.8))
+            drop-shadow(0 0 12px rgba(255, 255, 255, 0.4));
+    }
+
+    .snail:focus {
+        filter: drop-shadow(0 0 6px rgba(255, 223, 128, 0.9))
+            drop-shadow(0 0 12px rgba(255, 223, 128, 0.5));
     }
 }
 
