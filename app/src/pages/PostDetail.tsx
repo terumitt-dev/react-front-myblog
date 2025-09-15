@@ -50,8 +50,8 @@ const PostDetail = () => {
         }
 
         const blogData = await blogResponse.json();
-        setBlog(blogData.blog);
-        console.log("✅ ブログデータ取得成功:", blogData.blog.title);
+        setBlog(blogData);
+        console.log("✅ ブログデータ取得成功:", blogData.title);
 
         // コメントを取得
         const commentsResponse = await fetch(`/api/blogs/${postId}/comments`);

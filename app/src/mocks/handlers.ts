@@ -12,6 +12,24 @@ const CATEGORY_NAMES: Record<number, string> = {
   2: "other",
 };
 
+// セッションスコープでの一貫トークン管理
+let sessionToken: string | null = null;
+
+const getDevToken = (): string => {
+  const envToken = import.meta.env.VITE_DEV_AUTH_TOKEN;
+  if (envToken) {
+    return envToken; // 環境変数優先
+  }
+
+  // セッション開始時に一度だけ生成
+  if (!sessionToken) {
+    sessionToken = `dev-session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    console.warn("⚠️ VITE_DEV_AUTH_TOKEN not set, generated session token");
+  }
+
+  return sessionToken;
+};
+
 // 認証チェック関数
 const requireAuth = (request: Request) => {
   // 本番環境では無効化
@@ -30,14 +48,8 @@ const requireAuth = (request: Request) => {
   }
 
   const token = authHeader.split(" ")[1];
+  const devToken = getDevToken();
 
-  // 開発環境用の簡易トークン検証（環境変数から取得）
-  const devToken =
-    import.meta.env.VITE_DEV_AUTH_TOKEN ||
-    (() => {
-      console.warn("⚠️ VITE_DEV_AUTH_TOKEN not set, using generated token");
-      return `dev-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    })();
   if (token !== devToken) {
     return HttpResponse.json(
       { message: "無効なトークンです" },
@@ -184,15 +196,8 @@ export const handlers = [
 
     // 開発環境用の簡易認証
     if (body.email === "admin@example.com" && body.password === "password") {
-      const devToken =
-        import.meta.env.VITE_DEV_AUTH_TOKEN ||
-        (() => {
-          console.warn("⚠️ VITE_DEV_AUTH_TOKEN not set, using generated token");
-          return `dev-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        })();
-
       const responseData = {
-        token: devToken, // ← 動的トークンを使用
+        token: getDevToken(), // セッション一貫トークン使用
         admin: {
           id: 1,
           email: "admin@example.com",
