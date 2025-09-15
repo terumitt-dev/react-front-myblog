@@ -12,7 +12,7 @@ const CATEGORY_NAMES: Record<number, string> = {
   2: "other",
 };
 
-// セッションスコープでの一貫トークン管理
+// セッションスコープでの一貫トークン管理（テスト対応版）
 let sessionToken: string | null = null;
 
 const getDevToken = (): string => {
@@ -21,7 +21,12 @@ const getDevToken = (): string => {
     return envToken; // 環境変数優先
   }
 
-  // セッション開始時に一度だけ生成
+  // テスト環境では固定値を使用（再現性確保）
+  if (import.meta.env.MODE === "test" || import.meta.env.VITEST === "true") {
+    return "test-token-fixed";
+  }
+
+  // 開発環境のみセッション生成
   if (!sessionToken) {
     sessionToken = `dev-session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     console.warn("⚠️ VITE_DEV_AUTH_TOKEN not set, generated session token");
@@ -30,11 +35,17 @@ const getDevToken = (): string => {
   return sessionToken;
 };
 
-// 認証チェック関数
+// 認証チェック関数（セキュリティ強化版）
 const requireAuth = (request: Request) => {
-  // 本番環境では無効化
-  if (import.meta.env.PROD) {
-    console.warn("🚫 MSW Handler: MSW should not be used in production!");
+  // 複数条件での厳格な本番環境チェック
+  if (
+    import.meta.env.PROD ||
+    import.meta.env.MODE === "production" ||
+    // より汎用的な本番環境チェック
+    (window.location.protocol === "https:" &&
+      !window.location.hostname.includes("localhost"))
+  ) {
+    console.error("🚫 MSW Handler: MSW detected in production environment!");
     return HttpResponse.json(
       { message: "This API is not available in production" },
       { status: 503 },
@@ -197,7 +208,7 @@ export const handlers = [
     // 開発環境用の簡易認証
     if (body.email === "admin@example.com" && body.password === "password") {
       const responseData = {
-        token: getDevToken(), // セッション一貫トークン使用
+        token: getDevToken(), // テスト対応済みトークン使用
         admin: {
           id: 1,
           email: "admin@example.com",

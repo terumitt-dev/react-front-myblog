@@ -4,9 +4,15 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
-// MSWの初期化（修正版）
+// MSWの初期化（セキュリティ強化版）
 async function enableMocking() {
-  if (!import.meta.env.DEV) {
+  // 複数条件での厳格チェック
+  if (
+    import.meta.env.PROD ||
+    import.meta.env.MODE === "production" ||
+    !import.meta.env.DEV ||
+    window.location.hostname === "your-production-domain.com" // 本番ドメインを指定
+  ) {
     console.log("📦 Production mode: MSW disabled");
     return;
   }
