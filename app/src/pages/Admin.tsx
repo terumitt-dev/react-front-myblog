@@ -179,11 +179,10 @@ const Admin = () => {
             post.id === editingPostId
               ? {
                   ...post,
-                  title: updatedBlog.title || sanitizedTitle,
-                  content: updatedBlog.content || sanitizedContent,
-                  category: updatedBlog.category || sanitizedCategory,
-                  updated_at:
-                    updatedBlog.updated_at || new Date().toISOString(),
+                  title: updatedBlog.title,
+                  content: updatedBlog.content,
+                  category: updatedBlog.category,
+                  updated_at: updatedBlog.updated_at,
                 }
               : post,
           ),

@@ -266,7 +266,7 @@ export const handlers = [
       blogs.unshift(newBlog);
 
       return HttpResponse.json(newBlog, { status: 201 });
-    } catch (error) {
+    } catch {
       return HttpResponse.json(
         { message: "投稿の作成に失敗しました" },
         { status: 500 },
