@@ -35,21 +35,42 @@ const getDevToken = (): string => {
   return sessionToken;
 };
 
-// 認証チェック関数（セキュリティ強化版）
+// 認証チェック関数（安全な本番検出 + typeof windowガード版）
 const requireAuth = (request: Request) => {
-  // 複数条件での厳格な本番環境チェック
-  if (
-    import.meta.env.PROD ||
-    import.meta.env.MODE === "production" ||
-    // より汎用的な本番環境チェック
-    (window.location.protocol === "https:" &&
-      !window.location.hostname.includes("localhost"))
-  ) {
+  // 第1段階: 厳密なビルドフラグによる本番環境検出
+  if (import.meta.env.PROD || import.meta.env.MODE === "production") {
     console.error("🚫 MSW Handler: MSW detected in production environment!");
     return HttpResponse.json(
       { message: "This API is not available in production" },
       { status: 503 },
     );
+  }
+
+  // 第2段階: 安全なwindow参照による追加チェック
+  if (typeof window !== "undefined") {
+    try {
+      const isHTTPS = window.location.protocol === "https:";
+      const isNotLocalhost =
+        !window.location.hostname.includes("localhost") &&
+        !window.location.hostname.includes("127.0.0.1") &&
+        !window.location.hostname.includes("local");
+
+      if (isHTTPS && isNotLocalhost) {
+        console.error("🚫 MSW Handler: Production-like environment detected!");
+        return HttpResponse.json(
+          {
+            message:
+              "This API is not available in production-like environments",
+          },
+          { status: 503 },
+        );
+      }
+    } catch (error) {
+      // window.location アクセスエラー時は安全側に倒す
+      console.warn(
+        "⚠️ MSW Handler: Cannot access window.location, assuming safe environment",
+      );
+    }
   }
 
   const authHeader = request.headers.get("authorization");
