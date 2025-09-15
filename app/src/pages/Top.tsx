@@ -90,7 +90,7 @@ const Top = () => {
 
         {/* ヒーロー画像 */}
         <section aria-label="ブログのメインビジュアル">
-          <div className="w-full overflow-hidden rounded-xl shadow-lg">
+          <div className="w-full overflow-hidden rounded-xl">
             <img
               src="/top.svg"
               alt="このブログのイメージを表すトップ画像"
