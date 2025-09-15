@@ -69,6 +69,7 @@ const requireAuth = (request: Request) => {
       // window.location アクセスエラー時は安全側に倒す
       console.warn(
         "⚠️ MSW Handler: Cannot access window.location, assuming safe environment",
+        error,
       );
     }
   }
