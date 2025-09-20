@@ -1,0 +1,49 @@
+// app/src/components/atoms/Textarea.tsx
+import React from "react";
+import { cn } from "@/components/utils/cn";
+
+type Props = {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  placeholder?: string;
+  id: string; // 必須
+  label?: string; // オプション: ラベルテキスト
+  disabled?: boolean; // 無効化プロパティ追加
+  rows?: number; // rows プロパティを追加
+};
+
+const Textarea = ({
+  value,
+  onChange,
+  placeholder,
+  id,
+  label,
+  disabled = false,
+  rows = 4, // デフォルト値を設定
+}: Props) => (
+  <div className="w-full">
+    {label && (
+      <label
+        htmlFor={id}
+        className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
+        {label}
+      </label>
+    )}
+    <textarea
+      id={id}
+      className={cn(
+        "border border-gray-300 dark:border-gray-600 rounded px-2 py-1 w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors",
+        disabled &&
+          "opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800",
+      )}
+      rows={rows}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      disabled={disabled}
+    />
+  </div>
+);
+
+export default Textarea;
